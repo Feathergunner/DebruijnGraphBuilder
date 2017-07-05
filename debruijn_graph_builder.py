@@ -93,9 +93,10 @@ class GraphData:
 	def __init__(self, reads, k, verbose = False):
 		print ("Initializing graph ...")
 		self.k_value = k
-
+		
 		self.reads = []
 		self.kmers = []
+		self.kmer_dict = {}
 		self.sequences = []
 		self.overlaps = []
 
@@ -176,35 +177,27 @@ class GraphData:
 				new_kmer_sequence = current_read_sequence[kmer_start:kmer_start + self.k_value]
 				kmer_already_existing = False
 				this_kmer_id = -1
+				
 				# check if kmer already exists in database:
-				for k_index in range(len(self.kmers)):
+				if new_kmer_sequence in self.kmer_dict:
+					kmer_already_existing = True
+					this_kmer_id = self.kmer_dict[new_kmer_sequence]
+					self.kmers[this_kmer_id].add_evidence(read_index)
 					if verbose:
-						print ("Kmer "+str(k_index)+": "+self.kmers[k_index].sequence)
-						print self.kmers[k_index].evidence_reads
-				k_index = 0
-				#for k_index in range(len(self.kmers)):
-				while k_index < len(self.kmers):
-					if self.kmers[k_index].sequence == new_kmer_sequence:
-						kmer_already_existing = True
-						#if not read_index in self.kmers[k_index].evidence_reads:
-						self.kmers[k_index].add_evidence(read_index)
-						if verbose:
-							print ("Kmer already exists")
-							print ("Add read ("+str(read_index)+") evidence to kmer "+str(k_index))
-						this_kmer_id = k_index
-						#break
-						k_index = len(self.kmers)
-					k_index += 1
+						print ("Kmer already exists")
+						print ("Add read ("+str(read_index)+") evidence to kmer "+str(this_kmer_id))
 				if not kmer_already_existing:
 					if verbose:
 						print ("Kmer does not exist in database. Add new kmer ...")
 					
 					# add kmer:
 					self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index]))
+					self.kmer_dict[new_kmer_sequence] = kmer_counter
 					this_kmer_id = kmer_counter
 					kmer_counter += 1
 					# add inverse kmer:
 					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence), []))
+					self.kmer_dict[get_inverse_sequence(new_kmer_sequence)] = kmer_counter
 					kmer_counter += 1
 					
 				if verbose:
@@ -425,19 +418,18 @@ def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}
 			break
 	return ''.join(inv_sequence)		
 
-dna = dio.genereate_dna(length=500)
-reads, alignment = dio.genereate_reads(dna, coverage=20, avg_read_length=40, remove_pct=0, mutation_pct=0.2, mutation_alphabet=["A","C","G","T"], both_directions=True)
+#dna = dio.genereate_dna(length=500)
+#reads, alignment = dio.genereate_reads(dna, coverage=20, avg_read_length=40, remove_pct=0, mutation_pct=0.2, mutation_alphabet=["A","C","G","T"], both_directions=True)
 
-#reads = [''.join(dna[0:25]), ''.join(dna[15:45]), ''.join(dna[35:65]), ''.join(dna[55:85]), ''.join(dna[75:100])]
-#reads = dio.get_reads_from_file()
-k = 20
+reads = dio.get_reads_from_file(filename = "Data/samplereads.txt")
+k = 15
 
 #dio.print_alignment(dna, alignment)
 
 debruijn = GraphData(reads, k, verbose = False)
 #debruijn.get_asqg_output(filename = "graph_pre_contract")
-debruijn.contract_unique_overlaps(verbose = False)
-debruijn.get_asqg_output(filename = "graph_post_contract")
-debruijn.remove_parallel_sequences(verbose = False)
+#debruijn.contract_unique_overlaps(verbose = False)
+#debruijn.get_asqg_output(filename = "graph_post_contract")
+#debruijn.remove_parallel_sequences(verbose = False)
 debruijn.get_asqg_output(filename = "graph_post_unify")
 debruijn.get_csv_output()
