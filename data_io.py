@@ -59,7 +59,7 @@ def get_reads_from_file(filename="samplereads.txt"):
 	with open(filename) as fh:
 		reads = fh.readlines()
 	for read_index in range(len(reads)):
-		reads[read_index] = re.sub(r"\s", '', reads[read_index])
+		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
