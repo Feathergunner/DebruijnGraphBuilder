@@ -45,9 +45,9 @@ def genereate_reads(dna, coverage=50, avg_read_length=50, mutation_pct=0.1, muta
 					new_read[s_i] = random.choice(mutation_alphabet)
 			if random.choice(range(100)) > remove_pct:
 				if both_directions and random.choice(range(100)) > 50:
-					reads.append(get_inverse_sequence(new_read))
+					reads.append([get_inverse_sequence(new_read)])
 				else:
-					reads.append(''.join(new_read))
+					reads.append([''.join(new_read)])
 				alignment.append([cur_index, next_index-1])
 			cur_index = next_index
 

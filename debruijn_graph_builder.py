@@ -103,8 +103,9 @@ class GraphData:
 			print ("Construct read database")
 		read_id = 0
 		for r in reads:
-			self.reads.append(Read(read_id, r))
-			read_id += 1
+			for read in r:
+				self.reads.append(Read(read_id, read))
+				read_id += 1
 			
 		# init k-mer database:
 		if verbose:
@@ -325,7 +326,7 @@ class GraphData:
 						self.sequences[source_rev_id].id_of_inverse_seq = source_id
 			ov_index += 1
 
-	def remove_parallel_sequences(self):
+	def remove_parallel_sequences(self, verbose=False):
 		print ("Remove parallel sequences ...")
 		checked_sequences = [False for seq in self.sequences]
 		for seq_id in range(len(self.sequences)):
@@ -343,7 +344,8 @@ class GraphData:
 					# start bfs
 					bfs_queue = [seq_id]
 					while (len (bfs_queue) > 0):
-						print bfs_queue
+						if verbose:
+							print bfs_queue
 						current_seq_id = bfs_queue.pop(0)
 						current_inv_seq_id = self.sequences[current_seq_id].id_of_inverse_seq
 						# mark this sequence and its inverse as checked:
@@ -361,14 +363,18 @@ class GraphData:
 
 							# add all adjacent sequences to queue:
 							for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
-								print ("consider adj_seq "+str(adj_seq_id))
+								if verbose:
+									print ("consider adj_seq "+str(adj_seq_id))
 								if (not checked_sequences[adj_seq_id]) and (self.sequences[adj_seq_id].is_relevant):
-									print ("Add to bfs")
+									if verbose:
+										print ("Add to bfs")
 									bfs_queue.append(adj_seq_id)
 							for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
-								print ("consider adj_seq "+str(adj_seq_id))
+								if verbose:
+									print ("consider adj_seq "+str(adj_seq_id))
 								if (not checked_sequences[adj_seq_id]) and (self.sequences[adj_seq_id].is_relevant):
-									print ("Add to bfs")
+									if verbose:
+										print ("Add to bfs")
 									bfs_queue.append(adj_seq_id)
 
 	def get_asqg_output(self, filename="asqg_file"):
@@ -419,19 +425,19 @@ def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}
 			break
 	return ''.join(inv_sequence)		
 
-dna = dio.genereate_dna(length=100)
-reads, alignment = dio.genereate_reads(dna, coverage=20, avg_read_length=20, remove_pct=0, mutation_pct=0.2, mutation_alphabet=["A","C","G","T"], both_directions=True)
+dna = dio.genereate_dna(length=500)
+reads, alignment = dio.genereate_reads(dna, coverage=20, avg_read_length=40, remove_pct=0, mutation_pct=0.2, mutation_alphabet=["A","C","G","T"], both_directions=True)
 
 #reads = [''.join(dna[0:25]), ''.join(dna[15:45]), ''.join(dna[35:65]), ''.join(dna[55:85]), ''.join(dna[75:100])]
 #reads = dio.get_reads_from_file()
-k = 25
+k = 20
 
 #dio.print_alignment(dna, alignment)
 
 debruijn = GraphData(reads, k, verbose = False)
 #debruijn.get_asqg_output(filename = "graph_pre_contract")
 debruijn.contract_unique_overlaps(verbose = False)
-#debruijn.get_asqg_output(filename = "graph_post_contract")
-debruijn.remove_parallel_sequences()
+debruijn.get_asqg_output(filename = "graph_post_contract")
+debruijn.remove_parallel_sequences(verbose = False)
 debruijn.get_asqg_output(filename = "graph_post_unify")
 debruijn.get_csv_output()
