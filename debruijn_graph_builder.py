@@ -289,30 +289,32 @@ class GraphData:
 							self.sequences[adj_seq_id].overlaps_in.pop(target_id)
 
 						# contract reverse overlap (as above):
-						source_rev_id = self.sequences[target_id].id_of_inverse_seq
-						target_rev_id = self.sequences[source_id].id_of_inverse_seq
-						if verbose:
-							print ("Contract edge: " + str(source_rev_id) + " - " + str(target_rev_id))
-							print ("sequence 1: " + self.sequences[source_rev_id].sequence)
-							print ("sequence 2: " + self.sequences[target_rev_id].sequence)
-						rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
-						self.sequences[source_rev_id].sequence += self.sequences[target_rev_id].sequence[self.k_value-1:self.sequences[target_rev_id].get_length()]
-						if verbose:
-							print ("combined sequence: " + self.sequences[source_rev_id].sequence)
-						self.sequences[source_rev_id].overlaps_out = self.sequences[target_rev_id].overlaps_out
-						for kmer in self.sequences[target_rev_id].kmers:
-							if kmer not in self.sequences[source_rev_id].kmers:
-								self.sequences[source_rev_id].kmers.append(kmer)
-						self.sequences[target_rev_id].is_relevant = False
-						self.overlaps[rev_ov_id].is_relevant = False
-						for ov_target_out in self.sequences[target_rev_id].overlaps_out:
-							self.sequences[source_rev_id].overlaps_out[ov_target_out] = self.sequences[target_rev_id].overlaps_out[ov_target_out]
-							self.overlaps[self.sequences[target_rev_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_rev_id
+						# if not sequence is its own inverse:
+						if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
+							source_rev_id = self.sequences[target_id].id_of_inverse_seq
+							target_rev_id = self.sequences[source_id].id_of_inverse_seq
+							if verbose:
+								print ("Contract edge: " + str(source_rev_id) + " - " + str(target_rev_id))
+								print ("sequence 1: " + self.sequences[source_rev_id].sequence)
+								print ("sequence 2: " + self.sequences[target_rev_id].sequence)
+							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
+							self.sequences[source_rev_id].sequence += self.sequences[target_rev_id].sequence[self.k_value-1:self.sequences[target_rev_id].get_length()]
+							if verbose:
+								print ("combined sequence: " + self.sequences[source_rev_id].sequence)
+							self.sequences[source_rev_id].overlaps_out = self.sequences[target_rev_id].overlaps_out
+							for kmer in self.sequences[target_rev_id].kmers:
+								if kmer not in self.sequences[source_rev_id].kmers:
+									self.sequences[source_rev_id].kmers.append(kmer)
+							self.sequences[target_rev_id].is_relevant = False
+							self.overlaps[rev_ov_id].is_relevant = False
+							for ov_target_out in self.sequences[target_rev_id].overlaps_out:
+								self.sequences[source_rev_id].overlaps_out[ov_target_out] = self.sequences[target_rev_id].overlaps_out[ov_target_out]
+								self.overlaps[self.sequences[target_rev_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_rev_id
 
-						# update incoming overlaps for adjacent sequences:
-						for adj_seq_id in self.sequences[source_rev_id].overlaps_out:
-							self.sequences[adj_seq_id].overlaps_in[source_rev_id] = self.sequences[adj_seq_id].overlaps_in[target_rev_id]
-							self.sequences[adj_seq_id].overlaps_in.pop(target_rev_id)
+							# update incoming overlaps for adjacent sequences:
+							for adj_seq_id in self.sequences[source_rev_id].overlaps_out:
+								self.sequences[adj_seq_id].overlaps_in[source_rev_id] = self.sequences[adj_seq_id].overlaps_in[target_rev_id]
+								self.sequences[adj_seq_id].overlaps_in.pop(target_rev_id)
 
 						# update reverse_ids of sequences:
 						self.sequences[source_id].id_of_inverse_seq = source_rev_id
@@ -358,14 +360,14 @@ class GraphData:
 							for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
 								if verbose:
 									print ("consider adj_seq "+str(adj_seq_id))
-								if (not checked_sequences[adj_seq_id]) and (self.sequences[adj_seq_id].is_relevant):
+								if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
 									if verbose:
 										print ("Add to bfs")
 									bfs_queue.append(adj_seq_id)
 							for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
 								if verbose:
 									print ("consider adj_seq "+str(adj_seq_id))
-								if (not checked_sequences[adj_seq_id]) and (self.sequences[adj_seq_id].is_relevant):
+								if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
 									if verbose:
 										print ("Add to bfs")
 									bfs_queue.append(adj_seq_id)
@@ -428,8 +430,8 @@ k = 15
 
 debruijn = GraphData(reads, k, verbose = False)
 #debruijn.get_asqg_output(filename = "graph_pre_contract")
-#debruijn.contract_unique_overlaps(verbose = False)
+debruijn.contract_unique_overlaps(verbose = False)
 #debruijn.get_asqg_output(filename = "graph_post_contract")
-#debruijn.remove_parallel_sequences(verbose = False)
+debruijn.remove_parallel_sequences(verbose = False)
 debruijn.get_asqg_output(filename = "graph_post_unify")
 debruijn.get_csv_output()
