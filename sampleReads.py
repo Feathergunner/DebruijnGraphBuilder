@@ -26,8 +26,45 @@ def read_genomes(input_filename="Data/bvdv_selected_filtered.linsi.aln", output_
 			else:
 				i = 0
 				while i < len(line):
-					if line[i] not in alphabet:
+					if line[i] == '-':
+						# case gap:
 						line = line[:i]+line[(i+1):]
+					elif (line[i] == 'w'):
+						# case weak:
+						if (i > 0 and line[i-1] == 'a'):
+							line = line[:i]+'a'+line[(i+1):]
+						elif (i < len(line)-1 and line[i+1] == 'a'):
+							line = line[:i]+'a'+line[(i+1):]
+						else:
+							line = line[:i]+'t'+line[(i+1):]
+						i += 1
+					elif (line[i] == 's'):
+						# case strong:
+						if (i > 0 and line[i-1] == 'c'):
+							line = line[:i]+'c'+line[(i+1):]
+						elif (i < len(line)-1 and line[i+1] == 'c'):
+							line = line[:i]+'c'+line[(i+1):]
+						else:
+							line = line[:i]+'g'+line[(i+1):]
+						i += 1
+					elif (line[i] == 'r'):
+						# case purin:
+						if (i > 0 and line[i-1] == 'g'):
+							line = line[:i]+'g'+line[(i+1):]
+						elif (i < len(line)-1 and line[i+1] == 'g'):
+							line = line[:i]+'g'+line[(i+1):]
+						else:
+							line = line[:i]+'a'+line[(i+1):]
+						i += 1
+					elif (line[i] == 'y'):
+						# case pyrimidin:
+						if (i > 0 and line[i-1] == 't'):
+							line = line[:i]+'t'+line[(i+1):]
+						elif (i < len(line)-1 and line[i+1] == 't'):
+							line = line[:i]+'t'+line[(i+1):]
+						else:
+							line = line[:i]+'c'+line[(i+1):]
+						i += 1
 					else:
 						i += 1
 				sequences[gname_short] += line.strip()
