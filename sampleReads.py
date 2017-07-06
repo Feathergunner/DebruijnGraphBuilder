@@ -3,17 +3,20 @@
 
 from random import randint, gauss
 
-from data_io import get_inverse_sequence
+import data_io
 
 def samplereads(input_filename="Data/bvdv_selected_filtered.linsi.aln",
 				output_filename="samplereads.txt",
 				read_length=50,
 				length_stddev=0,
+				avg_error_percentage=0,
 				inverted_reads=False):
 
 	# read input genomes:
 	with open(input_filename) as fh:
 		lines = fh.readlines()
+		
+	alphabet = ['a','c','g','t']
 	
 	genomes = []
 	sequences = {}
@@ -61,8 +64,13 @@ def samplereads(input_filename="Data/bvdv_selected_filtered.linsi.aln",
 				else:
 					ind = randint(0, numreads-readlen)
 					sampleread = sequences[curgenome][ind:ind+readlen]
+			
+			for i in range(len(sampleread)):
+				if randint(0,10000) < int(100*avg_error_percentage):
+					sampleread[i] = data_io.get_random_mutation(sampleread[i], alphabet)					
+					
 			if (inverted_reads and randint(0, 100)>50):
-				reads.append(get_inverse_sequence(sampleread.upper()))
+				reads.append(data_io.get_inverse_sequence(sampleread.upper()))
 			else:
 				reads.append(sampleread.upper())
 	
