@@ -76,26 +76,6 @@ def samplereads(input_filedir="Data/genomes/",
 			readlen = read_length + int(gauss(mu=0, sigma=length_stddev))
 			ind = randint(0, len(genome)-readlen)
 			sampleread = genome[ind:ind+readlen]
-			'''
-			while ('-' in sampleread):
-				
-				if closegaps:
-					nreplace = sampleread.count('-')
-					if (ind + nreplace > len(sequences[curgenomeind])):
-						ind = randint(0, numreads-readlen)
-						sampleread = sequences[curgenomeind][ind:ind+readlen]
-					else:
-						added = sequences[curgenomeind][ind+readlen:ind+readlen+nreplace]
-						if ('-' in added):
-							ind = randint(0, numreads-readlen)
-							sampleread = sequences[curgenomeind][ind:ind+readlen]
-						else:
-							sampleread = sampleread.replace('-','') + added
-					
-				else:
-					ind = randint(0, numreads-readlen)
-					sampleread = sequences[curgenomeind][ind:ind+readlen]
-			'''
 			
 			for i in range(len(sampleread)):
 				if randint(0,10000) < int(100*avg_error_percentage):
