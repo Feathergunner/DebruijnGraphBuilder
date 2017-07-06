@@ -28,7 +28,7 @@ def samplereads(input_filename="Data/bvdv_genomes.txt",
 				output_filename="samplereads.txt",
 				read_length=50,
 				length_stddev=0,
-				set_of_viruses=[0,1],
+				set_of_viruses=[],
 				number_of_reads=[5000,5000],
 				avg_error_percentage=0,
 				inverted_reads=False):
@@ -44,6 +44,8 @@ def samplereads(input_filename="Data/bvdv_genomes.txt",
 		
 	closegaps = True
 	numreads = sum(number_of_reads)
+	if len(set_of_viruses) == 0:
+		set_of_viruses = range(len(number_of_reads))
 	reads = []
 	
 	# construct reads:
@@ -89,4 +91,4 @@ def samplereads(input_filename="Data/bvdv_genomes.txt",
 		for read in reads:
 			outf.write(read + '\n')
 		
-samplereads()
+#samplereads()
