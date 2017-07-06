@@ -110,5 +110,5 @@ def samplereads(input_filedir="Data/genomes/",
 		for read in reads:
 			outf.write(read + '\n')
 		
-read_genomes()
-samplereads()
+#read_genomes()
+#samplereads()
