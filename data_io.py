@@ -18,7 +18,7 @@ def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}
 	return ''.join(inv_sequence)
 	
 def get_random_mutation(nucleotide, alphabet=['A', 'C', 'G', 'T']):
-	possible_mutations = [c for c in alphabet if not c == nukleotide]
+	possible_mutations = [c for c in alphabet if not c == nucleotide]
 	return random.choice(possible_mutations)
 
 def genereate_dna(length=100, alphabet=["A","C","G","T"]):

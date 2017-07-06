@@ -5,18 +5,9 @@ from random import randint, gauss
 
 import data_io
 
-def samplereads(input_filename="Data/bvdv_selected_filtered.linsi.aln",
-				output_filename="samplereads.txt",
-				read_length=50,
-				length_stddev=0,
-				avg_error_percentage=0,
-				inverted_reads=False):
-
-	# read input genomes:
+def read_genomes(input_filename="Data/bvdv_selected_filtered.linsi.aln", output_filename="Data/bvdv_genomes.txt"):
 	with open(input_filename) as fh:
 		lines = fh.readlines()
-		
-	alphabet = ['a','c','g','t']
 	
 	genomes = []
 	sequences = {}
@@ -29,45 +20,65 @@ def samplereads(input_filename="Data/bvdv_selected_filtered.linsi.aln",
 			else:
 				sequences[gname] += line.strip()
 	
+	with open(output_filename, 'w') as outf:
+		for genome_name in genomes:
+			outf.write(sequences[genome_name]+"\n")
+
+def samplereads(input_filename="Data/bvdv_genomes.txt",
+				output_filename="samplereads.txt",
+				read_length=50,
+				length_stddev=0,
+				set_of_viruses=[0,1],
+				number_of_reads=[5000,5000],
+				avg_error_percentage=0,
+				inverted_reads=False):
+		
+	alphabet = ['a','c','g','t']
+
+	sequences = []
+	with open(input_filename) as inputfile:
+		lines = inputfile.readlines()
+	
+	for line in lines:
+		sequences.append(line.strip())
+		
 	closegaps = True
-	numreads = 10000
+	numreads = sum(number_of_reads)
 	reads = []
 	
-	fractions = [0.5, 0.5, 0, 0, 0]
-	
-	# construct reads:s
-	for curgenomeind in range(len(fractions)):
+	# construct reads:
+	for curgenomeind_id in range(len(set_of_viruses)):
 		
-		curgenome = genomes[curgenomeind]
-		curnumreads = int(numreads * fractions[curgenomeind])
+		curgenomeind = set_of_viruses[curgenomeind_id]
+		curnumreads = number_of_reads[curgenomeind_id]
 		
 		for n in range(curnumreads):
 			
 			readlen = read_length + int(gauss(mu=0, sigma=length_stddev))
-			ind = randint(0, len(sequences[curgenome])-readlen)
-			sampleread = sequences[curgenome][ind:ind+readlen]
+			ind = randint(0, len(sequences[curgenomeind])-readlen)
+			sampleread = sequences[curgenomeind][ind:ind+readlen]
 			while ('-' in sampleread):
 				
 				if closegaps:
 					nreplace = sampleread.count('-')
-					if (ind + nreplace > len(sequences[curgenome])):
+					if (ind + nreplace > len(sequences[curgenomeind])):
 						ind = randint(0, numreads-readlen)
-						sampleread = sequences[curgenome][ind:ind+readlen]
+						sampleread = sequences[curgenomeind][ind:ind+readlen]
 					else:
-						added = sequences[curgenome][ind+readlen:ind+readlen+nreplace]
+						added = sequences[curgenomeind][ind+readlen:ind+readlen+nreplace]
 						if ('-' in added):
 							ind = randint(0, numreads-readlen)
-							sampleread = sequences[curgenome][ind:ind+readlen]
+							sampleread = sequences[curgenomeind][ind:ind+readlen]
 						else:
 							sampleread = sampleread.replace('-','') + added
 					
 				else:
 					ind = randint(0, numreads-readlen)
-					sampleread = sequences[curgenome][ind:ind+readlen]
+					sampleread = sequences[curgenomeind][ind:ind+readlen]
 			
 			for i in range(len(sampleread)):
 				if randint(0,10000) < int(100*avg_error_percentage):
-					sampleread[i] = data_io.get_random_mutation(sampleread[i], alphabet)					
+					sampleread = sampleread[:i]+data_io.get_random_mutation(sampleread[i], alphabet)+sampleread[(i+1):]
 					
 			if (inverted_reads and randint(0, 100)>50):
 				reads.append(data_io.get_inverse_sequence(sampleread.upper()))
@@ -77,5 +88,5 @@ def samplereads(input_filename="Data/bvdv_selected_filtered.linsi.aln",
 	with open(output_filename, 'w') as outf:
 		for read in reads:
 			outf.write(read + '\n')
-	
+		
 samplereads()
