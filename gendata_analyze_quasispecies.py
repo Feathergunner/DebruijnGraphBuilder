@@ -6,7 +6,7 @@ import random
 import sampleReads
 import data_io as dio
 import debruijn_graph_builder as dgb
-import manjasDefinitionen
+import manjasDefinitionen as md
 
 sampleReads.read_genomes()
 
@@ -14,8 +14,10 @@ k_values = [13,14,15,16,17,20]
 readlength = 50
 error_percentage = 0
 
-num_reads_settings = [[500000,500000,100000,10000], [500000,500000,10000,1000]]#, [50000]*10+[5000]*5+[1000]*5]
-viruses = [md.v1, md.v7, md.v3, md.v5]
+num_reads_settings = [[500000,500000,100000,10000], [500000,500000,10000,1000], [50000]*10+[5000]*5+[1000]*5]
+viruses = [md.v1, md.v7, md.v3, md.v5, md.v2, md.v4, md.v6, "KP941583.1", "KP941584.1", "KC757383.1",
+			"KC963967.1", "KF501393.1", "AB078950.1", "KY849592.1", "LT631725.1",
+			"KU159365.1", "KJ620017.1", "LC089875.1", "U86600.1", "KU756226.1"]
 
 for num_reads in num_reads_settings:
 	num_different_viruses = len(num_reads)
@@ -39,5 +41,5 @@ for num_reads in num_reads_settings:
 		debruijn.contract_unique_overlaps()
 		debruijn.remove_parallel_sequences()
 		
-		debruijn.get_asqg_output(filename = "Output/"+casename)
-		debruijn.get_csv_output(filename = "Output/"+casename)
+		debruijn.get_asqg_output(filename = "Output/"+casename+".asqg")
+		debruijn.get_csv_output(filename = "Output/"+casename+".csv")

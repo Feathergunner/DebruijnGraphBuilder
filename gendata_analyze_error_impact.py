@@ -15,8 +15,8 @@ readlength = 50
 num_different_viruses = 2
 viruses = [md.v1, md.v5]
 num_reads = [5000, 5000]
-error_percentages = [0, 0.1, 0.5, 1, 5, 10, 15, 20]
-
+#error_percentages = [0, 0.1, 0.5, 1, 5, 10, 15, 20]
+error_percentages = [2, 3]#,5 15, 20]
 	
 for ep in error_percentages:
 	casename = "bvdv_sample_"+str(readlength)+"_"+str(num_different_viruses)+"_["
@@ -39,6 +39,7 @@ for ep in error_percentages:
 	debruijn = dgb.GraphData(reads, k)
 	debruijn.contract_unique_overlaps()
 	debruijn.remove_parallel_sequences()
+		
+	debruijn.get_asqg_output(filename = "Output/"+casename+".asqg")
+	debruijn.get_csv_output(filename = "Output/"+casename+".csv")
 	
-	debruijn.get_asqg_output(filename = "Output/"+casename)
-	debruijn.get_csv_output(filename = "Output/"+casename)
