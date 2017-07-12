@@ -131,7 +131,7 @@ class GraphData:
 
 	def print_all_reads(self):
 		print ("Reads:")
-		for read in debruijn.reads:
+		for read in self.reads:
 			print (str(read.id) + ": "+read.sequence)
 			kmer_string = "kmers: "
 			for kmer_id in read.kmers:
@@ -140,7 +140,7 @@ class GraphData:
 
 	def print_all_kmers(self):
 		print ("Kmers:")
-		for kmer in debruijn.kmers:
+		for kmer in self.kmers:
 			kmer_info_string = "("+str(kmer.id) + ") " + kmer.sequence + ": "
 			for read in kmer.evidence_reads:
 				kmer_info_string += str(read) + " "
@@ -148,13 +148,13 @@ class GraphData:
 
 	def print_all_sequences(self):
 		print ("Sequences:")
-		for s in debruijn.sequences:
+		for s in self.sequences:
 			if s.is_relevant:
 				print ("("+str(s.id)+") "+s.sequence) + ": "
 				s.print_data()
 				for kmer_id in s.kmers:
-					kmer_string = debruijn.kmers[kmer_id].sequence + "\t"
-					for read_id in debruijn.kmers[kmer_id].evidence_reads:
+					kmer_string = self.kmers[kmer_id].sequence + "\t"
+					for read_id in self.kmers[kmer_id].evidence_reads:
 						kmer_string += str(read_id)+" "
 					print kmer_string
 				print("")
@@ -240,6 +240,8 @@ class GraphData:
 
 		ov_index = 0
 		while ov_index in range(len(self.overlaps)):
+			if (ov_index%1000 == 0):
+				print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if self.overlaps[ov_index].is_relevant:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				if verbose:

@@ -5,7 +5,7 @@ import random
 
 import sampleReads
 import data_io as dio
-import debruijn_graph_builder as dgb
+import fast_debruijn_graph_builder as fdgb
 import manjasDefinitionen as md
 
 sampleReads.read_genomes()
@@ -34,7 +34,7 @@ for readlength in readlengths_settings:
 		casename = casename_gen + "_"+str(k)
 		
 		reads = dio.get_reads_from_file(filename = readfilename)
-		debruijn = dgb.GraphData(reads, k)
+		debruijn = fdgb.GraphData(reads, k)
 		debruijn.contract_unique_overlaps()
 		debruijn.remove_parallel_sequences()
 		
