@@ -98,6 +98,7 @@ class GraphData:
 		self.kmer_dict = {}
 		self.sequences = []
 		self.overlaps = {}
+		self.is_unified = False
 
 		if verbose:
 			print ("Construct read database")
@@ -257,14 +258,15 @@ class GraphData:
 				
 					ov = self.overlaps[ov_index]
 					self.contract_overlap(ov_index, verbose)
-		               
+		            
 					# contract reverse overlap if not sequence is its own inverse:
 					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
 						source_rev_id = self.sequences[target_id].id_of_inverse_seq
 						target_rev_id = self.sequences[source_id].id_of_inverse_seq
 						
-						rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
-						self.contract_overlap(rev_ov_id, verbose)
+						if not self.is_unified:
+							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
+							self.contract_overlap(rev_ov_id, verbose)
 						
 						self.sequences[source_id].id_of_inverse_seq = source_rev_id
 						self.sequences[source_rev_id].id_of_inverse_seq = source_id
@@ -337,51 +339,66 @@ class GraphData:
 		self.sequences[target_id].is_relevant = False
 		# Don't use delete_overlap, because incident sequences have been handled manually:
 		self.overlaps.pop(overlap_id)
+		
+	def remove_tips(self, verbose=False):
+		print ("Removing tips ...")
+		for seq in self.sequences:
+			if seq.is_relevant:
+				if verbose:
+					print ("Consider sequence:")
+					seq.print_data()
+				# check if sequence is a tip and if sequence is shorter than 2k:
+				if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
+					if verbose:
+						print ("Sequence is a tip, needs to be removed")
+					self.delete_sequence(seq.id, verbose)
 	
 	def remove_parallel_sequences(self, verbose=False):
-		print ("Remove parallel sequences ...")
-		checked_sequences = [False for seq in self.sequences]
-		for seq_id in range(len(self.sequences)):
-			seq = self.sequences[seq_id]
-			if not seq.is_relevant:
-				checked_sequences[seq_id] = True
-			elif not checked_sequences[seq_id]:
-				all_adjacent_sequences = set([ov for ov in seq.overlaps_out] + [ov for ov in seq.overlaps_in])
-				if len(all_adjacent_sequences) == 0:
-					# case no adjacent sequences:
-					checked_sequences[self.sequences[seq_id].id_of_inverse_seq] = True
-					if self.sequences[seq_id].is_relevant:
-						self.sequences[self.sequences[seq_id].id_of_inverse_seq].is_relevant = False
-				else:
-					# start bfs
-					bfs_queue = [seq_id]
-					while (len (bfs_queue) > 0):
-						if verbose:
-							print bfs_queue
-						current_seq_id = bfs_queue.pop(0)
-						current_inv_seq_id = self.sequences[current_seq_id].id_of_inverse_seq
-						# mark this sequence and its inverse as checked:
-						checked_sequences[current_seq_id] = True
-						checked_sequences[current_inv_seq_id] = True
-						if self.sequences[current_seq_id].is_relevant:
-							# inverse sequense is not relevant:
-							self.delete_sequence(current_inv_seq_id, verbose)
-
-							# add all adjacent sequences to queue:
-							for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
-								if verbose:
-									print ("consider adj_seq "+str(adj_seq_id))
-								if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
+		if not self.is_unified:
+			print ("Remove parallel sequences ...")
+			checked_sequences = [False for seq in self.sequences]
+			for seq_id in range(len(self.sequences)):
+				seq = self.sequences[seq_id]
+				if not seq.is_relevant:
+					checked_sequences[seq_id] = True
+				elif not checked_sequences[seq_id]:
+					all_adjacent_sequences = set([ov for ov in seq.overlaps_out] + [ov for ov in seq.overlaps_in])
+					if len(all_adjacent_sequences) == 0:
+						# case no adjacent sequences:
+						checked_sequences[self.sequences[seq_id].id_of_inverse_seq] = True
+						if self.sequences[seq_id].is_relevant:
+							self.sequences[self.sequences[seq_id].id_of_inverse_seq].is_relevant = False
+					else:
+						# start bfs
+						bfs_queue = [seq_id]
+						while (len (bfs_queue) > 0):
+							if verbose:
+								print bfs_queue
+							current_seq_id = bfs_queue.pop(0)
+							current_inv_seq_id = self.sequences[current_seq_id].id_of_inverse_seq
+							# mark this sequence and its inverse as checked:
+							checked_sequences[current_seq_id] = True
+							checked_sequences[current_inv_seq_id] = True
+							if self.sequences[current_seq_id].is_relevant:
+								# inverse sequense is not relevant:
+								self.delete_sequence(current_inv_seq_id, verbose)
+	
+								# add all adjacent sequences to queue:
+								for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
 									if verbose:
-										print ("Add to bfs")
-									bfs_queue.append(adj_seq_id)
-							for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
-								if verbose:
-									print ("consider adj_seq "+str(adj_seq_id))
-								if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
+										print ("consider adj_seq "+str(adj_seq_id))
+									if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
+										if verbose:
+											print ("Add to bfs")
+										bfs_queue.append(adj_seq_id)
+								for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
 									if verbose:
-										print ("Add to bfs")
-									bfs_queue.append(adj_seq_id)
+										print ("consider adj_seq "+str(adj_seq_id))
+									if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
+										if verbose:
+											print ("Add to bfs")
+										bfs_queue.append(adj_seq_id)
+			self.is_unified = True
 
 	def get_asqg_output(self, filename="asqg_file"):
 		print ("Writing asqg-file ...")
