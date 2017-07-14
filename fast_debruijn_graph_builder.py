@@ -237,16 +237,15 @@ class GraphData:
 	def contract_unique_overlaps(self, verbose = False):
 		print ("Contract overlaps ...")
 
-		#ov_index = 0
 		ov_index_list = [ov_id for ov_id in self.overlaps]
 		
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
 				print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
-				if not self.overlaps[ov_index].is_relevant:
-					self.overlaps.pop(ov_index)
-				else:
+				#if not self.overlaps[ov_index].is_relevant:
+				#	self.overlaps.pop(ov_index)
+				#else:
 					source_id = self.overlaps[ov_index].contig_sequence_1
 					target_id = self.overlaps[ov_index].contig_sequence_2
 					if verbose:
@@ -255,144 +254,100 @@ class GraphData:
 						print ("Source: ")
 						print (self.sequences[source_id].print_data())
 						print ("")
-					#if source_id in self.sequences and target_id in self.sequences:
-					if (self.sequences[source_id].is_relevant) and (len(self.sequences[source_id].overlaps_out) == 1):
+					#if (self.sequences[source_id].is_relevant) and 
+					if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
+					
 						ov = self.overlaps[ov_index]
-						if verbose:
-							print ("contract this overlap")
-							print ("target:")
-							self.sequences[target_id].print_data()
-							print ("")
-						if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
-							# if source node has exactly one outgoing edge
-							# and the target node has exactly one incoming edge, 
-							# then contract edge:
-							if verbose:
-								print ("Contract edge: " + str(source_id) + " - " + str(target_id))
-								print ("sequence 1: " + self.sequences[source_id].sequence)
-								print ("sequence 2: " + self.sequences[target_id].sequence)
-							self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
-							if verbose:
-								print ("combined sequence: " + self.sequences[source_id].sequence)
-							# update outgoing overlaps:
-							self.sequences[source_id].overlaps_out = self.sequences[target_id].overlaps_out
-							# update list of kmers:
-							for kmer in self.sequences[target_id].kmers:
-								if kmer not in self.sequences[source_id].kmers:
-									self.sequences[source_id].kmers.append(kmer)
-		
-							# move outgoing overlaps from target_seq to source_seq:
-							for ov_target_out in self.sequences[target_id].overlaps_out:
-								if self.sequences[target_id].overlaps_out[ov_target_out] in self.overlaps:
-									self.sequences[source_id].overlaps_out[ov_target_out] = self.sequences[target_id].overlaps_out[ov_target_out]
-									self.overlaps[self.sequences[target_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_id
-		
-							# update incoming overlaps for adjacent sequences:
-							for adj_seq_id in self.sequences[source_id].overlaps_out:
-								self.sequences[adj_seq_id].overlaps_in[source_id] = self.sequences[adj_seq_id].overlaps_in[target_id]
-								self.sequences[adj_seq_id].overlaps_in.pop(target_id)
-		
-							# contract reverse overlap (as above):
-							# if not sequence is its own inverse:
-							if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
-								source_rev_id = self.sequences[target_id].id_of_inverse_seq
-								target_rev_id = self.sequences[source_id].id_of_inverse_seq
-								if verbose:
-									print ("Contract edge: " + str(source_rev_id) + " - " + str(target_rev_id))
-									print ("sequence 1: " + self.sequences[source_rev_id].sequence)
-									print ("sequence 2: " + self.sequences[target_rev_id].sequence)
-								
-								if target_rev_id not in self.sequences[source_rev_id].overlaps_out:
-									self.sequences[source_rev_id].print_data()
-								rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
-								self.sequences[source_rev_id].sequence += self.sequences[target_rev_id].sequence[self.k_value-1:self.sequences[target_rev_id].get_length()]
-								if verbose:
-									print ("combined sequence: " + self.sequences[source_rev_id].sequence)
-								self.sequences[source_rev_id].overlaps_out = self.sequences[target_rev_id].overlaps_out
-								for kmer in self.sequences[target_rev_id].kmers:
-									if kmer not in self.sequences[source_rev_id].kmers:
-										self.sequences[source_rev_id].kmers.append(kmer)
-										
-								for ov_target_out in self.sequences[target_rev_id].overlaps_out:
-									self.sequences[source_rev_id].overlaps_out[ov_target_out] = self.sequences[target_rev_id].overlaps_out[ov_target_out]
-									self.overlaps[self.sequences[target_rev_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_rev_id
-		
-								# update incoming overlaps for adjacent sequences:
-								for adj_seq_id in self.sequences[source_rev_id].overlaps_out:
-									self.sequences[adj_seq_id].overlaps_in[source_rev_id] = self.sequences[adj_seq_id].overlaps_in[target_rev_id]
-									self.sequences[adj_seq_id].overlaps_in.pop(target_rev_id)
-									
-								#self.sequences.pop(target_rev_id)
-								self.sequences[target_rev_id].is_relevant = False
-								self.overlaps.pop(rev_ov_id)
-								
-								# update reverse_ids of sequences:
-								self.sequences[source_id].id_of_inverse_seq = source_rev_id
-								self.sequences[source_rev_id].id_of_inverse_seq = source_id
-									
-							# remove target sequence and overlap from relevant dataset:
-							#self.sequences.pop(target_id)
-							self.sequences[target_id].is_relevant = False
-							self.overlaps.pop(ov_index)
-				
-			#ov_index += 1
-	
-	'''
-	def remove_parallel_sequences(self, verbose=False):
-		print ("Remove parallel sequences ...")
-		checked_sequences = [False for seq in self.sequences]
-		for seq_id in range(len(self.sequences)):
-			seq = self.sequences[seq_id]
-			if not seq.is_relevant:
-				checked_sequences[seq_id] = True
-			elif not checked_sequences[seq_id]:
-				all_adjacent_sequences = set([ov for ov in seq.overlaps_out] + [ov for ov in seq.overlaps_in])
-				if len(all_adjacent_sequences) == 0:
-					# case no adjacent sequences:
-					checked_sequences[self.sequences[seq_id].id_of_inverse_seq] = True
-					if self.sequences[seq_id].is_relevant:
-						self.sequences[self.sequences[seq_id].id_of_inverse_seq].is_relevant = False
-				else:
-					# start bfs
-					bfs_queue = [seq_id]
-					while (len (bfs_queue) > 0):
-						if verbose:
-							print bfs_queue
-						current_seq_id = bfs_queue.pop(0)
-						current_inv_seq_id = self.sequences[current_seq_id].id_of_inverse_seq
-						# mark this sequence and its inverse as checked:
-						checked_sequences[current_seq_id] = True
-						checked_sequences[current_inv_seq_id] = True
-						if self.sequences[current_seq_id].is_relevant:
-							# inverse sequense is not relevant:
-							self.sequences[current_inv_seq_id].is_relevant = False
+						
+						# if source node has exactly one outgoing edge
+						# and the target node has exactly one incoming edge, 
+						# then contract edge:
+						self.contract_overlap(ov_index, verbose)
+		                
+						# contract reverse overlap (as above):
+						# if not sequence is its own inverse:
+						if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
+							source_rev_id = self.sequences[target_id].id_of_inverse_seq
+							target_rev_id = self.sequences[source_id].id_of_inverse_seq
 							
-							# remove all overlaps starting from inverse seq:
-							for ov_out in self.sequences[current_inv_seq_id].overlaps_out:
-								#self.overlaps[self.sequences[current_inv_seq_id].overlaps_out[ov_out]].is_relevant = False
-								if ov_out in self.overlaps:
-									self.overlaps.pop(ov_out)
-							for ov_in in self.sequences[current_inv_seq_id].overlaps_in:
-								#self.overlaps[self.sequences[current_inv_seq_id].overlaps_in[ov_in]].is_relevant = False
-								if ov_in in self.overlaps:
-									self.overlaps.pop(ov_in)
-
-							# add all adjacent sequences to queue:
-							for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
-								if verbose:
-									print ("consider adj_seq "+str(adj_seq_id))
-								if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
-									if verbose:
-										print ("Add to bfs")
-									bfs_queue.append(adj_seq_id)
-							for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
-								if verbose:
-									print ("consider adj_seq "+str(adj_seq_id))
-								if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
-									if verbose:
-										print ("Add to bfs")
-									bfs_queue.append(adj_seq_id
-	'''
+							#if target_rev_id not in self.sequences[source_rev_id].overlaps_out:
+							#	self.sequences[source_rev_id].print_data()
+							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
+							
+							self.contract_overlap(rev_ov_id, verbose)
+							
+							self.sequences[source_id].id_of_inverse_seq = source_rev_id
+							self.sequences[source_rev_id].id_of_inverse_seq = source_id
+	
+	def delete_overlap(self, overlap_id, verbose=False):
+		if verbose:
+			print ("Delete overlap "+str(overlap_id))
+			self.overlaps[overlap_id].print_data()
+		if overlap_id not in self.overlaps:
+			print ("Error! Overlap doesn't exist!")
+		else:
+			source_id = self.overlaps[overlap_id].contig_sequence_1
+			target_id = self.overlaps[overlap_id].contig_sequence_2
+			self.sequences[source_id].overlaps_out.pop(target_id)
+			self.sequences[target_id].overlaps_in.pop(source_id)
+			self.overlaps.pop(overlap_id)
+		
+	def delete_sequence(self, sequence_id, verbose=False):
+		if verbose:
+			print ("Removing Sequence "+str(sequence_id))
+		adj_seq_out = self.sequences[sequence_id].overlaps_out.keys()
+		for adj_seq in adj_seq_out:
+			#self.sequences[adj_seq].overlaps_in.pop(sequence_id)
+			self.delete_overlap(self.sequences[sequence_id].overlaps_out[adj_seq], verbose)
+		adj_seq_in = self.sequences[sequence_id].overlaps_in.keys()
+		for adj_seq in adj_seq_in:
+			#self.sequences[adj_seq].overlaps_out.pop(sequence_id)
+			self.delete_overlap(self.sequences[sequence_id].overlaps_in[adj_seq], verbose)
+		self.sequences[sequence_id].is_relevant = False
+			
+	def contract_overlap(self, overlap_id, verbose=False):
+		source_id = self.overlaps[overlap_id].contig_sequence_1
+		target_id = self.overlaps[overlap_id].contig_sequence_2
+		if verbose:
+			print ("Contract overlap: ")
+			print (self.overlaps[ov_index].print_data())
+			print ("Source: ")
+			print (self.sequences[source_id].print_data())
+			print ("Target: ")
+			print (self.sequences[target_id].print_data())
+		self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
+		if verbose:
+			print ("combined sequence: " + self.sequences[source_id].sequence)
+		# update outgoing overlaps:
+		self.sequences[source_id].overlaps_out = self.sequences[target_id].overlaps_out
+		# update list of kmers:
+		for kmer in self.sequences[target_id].kmers:
+			if kmer not in self.sequences[source_id].kmers:
+				self.sequences[source_id].kmers.append(kmer)
+		
+		# move outgoing overlaps from target_seq to source_seq:
+		for ov_target_out in self.sequences[target_id].overlaps_out:
+			# check if overlap_id exists:
+			if self.sequences[target_id].overlaps_out[ov_target_out] in self.overlaps:
+				# add overlap at source:
+				self.sequences[source_id].overlaps_out[ov_target_out] = self.sequences[target_id].overlaps_out[ov_target_out]
+				# update source of overlap:
+				self.overlaps[self.sequences[target_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_id
+			else:
+				self.sequences[source_id].overlaps_out.pop(ov_target_out)
+		
+		# update incoming overlaps for adjacent sequences:
+		for adj_seq_id in self.sequences[source_id].overlaps_out:
+			# add source to list of incoming overlaps:
+			self.sequences[adj_seq_id].overlaps_in[source_id] = self.sequences[adj_seq_id].overlaps_in[target_id]
+			# remove target from list of incoming overlaps:
+			self.sequences[adj_seq_id].overlaps_in.pop(target_id)
+			
+		self.sequences[target_id].overlaps_in = {}
+		self.sequences[target_id].overlaps_out = {}
+		self.sequences[target_id].is_relevant = False
+		self.overlaps.pop(overlap_id)
+	
 	def remove_parallel_sequences(self, verbose=False):
 		print ("Remove parallel sequences ...")
 		checked_sequences = [False for seq in self.sequences]
@@ -420,6 +375,8 @@ class GraphData:
 						checked_sequences[current_inv_seq_id] = True
 						if self.sequences[current_seq_id].is_relevant:
 							# inverse sequense is not relevant:
+							self.delete_sequence(current_inv_seq_id, verbose)
+							'''
 							self.sequences[current_inv_seq_id].is_relevant = False
 							
 							# remove all overlaps starting from inverse seq:
@@ -433,6 +390,7 @@ class GraphData:
 									self.overlaps.pop(self.sequences[current_inv_seq_id].overlaps_in[ov_in])
 									#self.sequences[current_inv_seq_id].overlaps_in.pop(ov_in)
 									#self.overlaps[self.sequences[current_inv_seq_id].overlaps_in[ov_in]].is_relevant = False
+							'''
 
 							# add all adjacent sequences to queue:
 							for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
