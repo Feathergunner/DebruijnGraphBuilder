@@ -236,48 +236,38 @@ class GraphData:
 
 	def contract_unique_overlaps(self, verbose = False):
 		print ("Contract overlaps ...")
-
-		ov_index_list = [ov_id for ov_id in self.overlaps]
 		
+		ov_index_list = [ov_id for ov_id in self.overlaps]
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
 				print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
-				#if not self.overlaps[ov_index].is_relevant:
-				#	self.overlaps.pop(ov_index)
-				#else:
-					source_id = self.overlaps[ov_index].contig_sequence_1
-					target_id = self.overlaps[ov_index].contig_sequence_2
-					if verbose:
-						print ("consider overlap: ")
-						print (self.overlaps[ov_index].print_data())
-						print ("Source: ")
-						print (self.sequences[source_id].print_data())
-						print ("")
-					#if (self.sequences[source_id].is_relevant) and 
-					if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
-					
-						ov = self.overlaps[ov_index]
+				source_id = self.overlaps[ov_index].contig_sequence_1
+				target_id = self.overlaps[ov_index].contig_sequence_2
+				if verbose:
+					print ("consider overlap: ")
+					print (self.overlaps[ov_index].print_data())
+					print ("Source: ")
+					print (self.sequences[source_id].print_data())
+					print ("")
+				if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
+					# if source node has exactly one outgoing edge
+					# and the target node has exactly one incoming edge, 
+					# then contract edge:
+				
+					ov = self.overlaps[ov_index]
+					self.contract_overlap(ov_index, verbose)
+		               
+					# contract reverse overlap if not sequence is its own inverse:
+					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
+						source_rev_id = self.sequences[target_id].id_of_inverse_seq
+						target_rev_id = self.sequences[source_id].id_of_inverse_seq
 						
-						# if source node has exactly one outgoing edge
-						# and the target node has exactly one incoming edge, 
-						# then contract edge:
-						self.contract_overlap(ov_index, verbose)
-		                
-						# contract reverse overlap (as above):
-						# if not sequence is its own inverse:
-						if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
-							source_rev_id = self.sequences[target_id].id_of_inverse_seq
-							target_rev_id = self.sequences[source_id].id_of_inverse_seq
-							
-							#if target_rev_id not in self.sequences[source_rev_id].overlaps_out:
-							#	self.sequences[source_rev_id].print_data()
-							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
-							
-							self.contract_overlap(rev_ov_id, verbose)
-							
-							self.sequences[source_id].id_of_inverse_seq = source_rev_id
-							self.sequences[source_rev_id].id_of_inverse_seq = source_id
+						rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
+						self.contract_overlap(rev_ov_id, verbose)
+						
+						self.sequences[source_id].id_of_inverse_seq = source_rev_id
+						self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
 		if verbose:
@@ -297,11 +287,9 @@ class GraphData:
 			print ("Removing Sequence "+str(sequence_id))
 		adj_seq_out = self.sequences[sequence_id].overlaps_out.keys()
 		for adj_seq in adj_seq_out:
-			#self.sequences[adj_seq].overlaps_in.pop(sequence_id)
 			self.delete_overlap(self.sequences[sequence_id].overlaps_out[adj_seq], verbose)
 		adj_seq_in = self.sequences[sequence_id].overlaps_in.keys()
 		for adj_seq in adj_seq_in:
-			#self.sequences[adj_seq].overlaps_out.pop(sequence_id)
 			self.delete_overlap(self.sequences[sequence_id].overlaps_in[adj_seq], verbose)
 		self.sequences[sequence_id].is_relevant = False
 			
@@ -315,6 +303,7 @@ class GraphData:
 			print (self.sequences[source_id].print_data())
 			print ("Target: ")
 			print (self.sequences[target_id].print_data())
+		# combine nucleotide sequences:
 		self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
 		if verbose:
 			print ("combined sequence: " + self.sequences[source_id].sequence)
@@ -346,6 +335,7 @@ class GraphData:
 		self.sequences[target_id].overlaps_in = {}
 		self.sequences[target_id].overlaps_out = {}
 		self.sequences[target_id].is_relevant = False
+		# Don't use delete_overlap, because incident sequences have been handled manually:
 		self.overlaps.pop(overlap_id)
 	
 	def remove_parallel_sequences(self, verbose=False):
@@ -376,21 +366,6 @@ class GraphData:
 						if self.sequences[current_seq_id].is_relevant:
 							# inverse sequense is not relevant:
 							self.delete_sequence(current_inv_seq_id, verbose)
-							'''
-							self.sequences[current_inv_seq_id].is_relevant = False
-							
-							# remove all overlaps starting from inverse seq:
-							for ov_out in self.sequences[current_inv_seq_id].overlaps_out:
-								#self.overlaps[self.sequences[current_inv_seq_id].overlaps_out[ov_out]].is_relevant = False
-								if self.sequences[current_inv_seq_id].overlaps_out[ov_out] in self.overlaps:
-									self.overlaps.pop(self.sequences[current_inv_seq_id].overlaps_out[ov_out])
-									#self.sequences[current_inv_seq_id].overlaps_out.pop(ov_out)
-							for ov_in in self.sequences[current_inv_seq_id].overlaps_in:
-								if self.sequences[current_inv_seq_id].overlaps_in[ov_in] in self.overlaps:
-									self.overlaps.pop(self.sequences[current_inv_seq_id].overlaps_in[ov_in])
-									#self.sequences[current_inv_seq_id].overlaps_in.pop(ov_in)
-									#self.overlaps[self.sequences[current_inv_seq_id].overlaps_in[ov_in]].is_relevant = False
-							'''
 
 							# add all adjacent sequences to queue:
 							for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
@@ -415,7 +390,6 @@ class GraphData:
 		asqg_vertices = ""
 		vertex_count = 0
 		for seq in self.sequences:
-			#seq = self.sequences[seq_id]
 			if seq.is_relevant:
 				asqg_vertices += "VT\tk_"+str(seq.id)+"\t"+seq.sequence+"\n"
 				vertex_count += 1
@@ -423,14 +397,11 @@ class GraphData:
 		asqg_edges = ""
 		for ov_id in self.overlaps:
 			ov = self.overlaps[ov_id]
-			#if ov.contig_sequence_1 in self.sequences and ov.contig_sequence_2 in self.sequences:
 			if ov.is_relevant:
 				seq_1_length = self.sequences[ov.contig_sequence_1].get_length()
 				seq_2_length = self.sequences[ov.contig_sequence_2].get_length()
 				asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0\n"
 
-		#print (asqg_vertices)
-		#print (asqg_edges)
 		print filename
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
@@ -442,7 +413,6 @@ class GraphData:
 		headline = "Node_Label, Sequence\n"
 		data = ""
 		for seq in self.sequences:
-			#seq = self.sequences[seq_id]
 			if seq.is_relevant:
 				data += "k_"+str(seq.id)+","+seq.sequence+"\n"
 		outputfile = file(filename, 'w')
