@@ -417,7 +417,7 @@ class GraphData:
 			if ov.is_relevant:
 				seq_1_length = self.sequences[ov.contig_sequence_1].get_length()
 				seq_2_length = self.sequences[ov.contig_sequence_2].get_length()
-				asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0\n"
+				asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0 "+str(len(ov.evidence_reads))+"\n"
 
 		print filename
 		outputfile = file(filename, 'w')
