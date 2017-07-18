@@ -152,7 +152,7 @@ class GraphAnalyzer:
 						
 					self.graphdatas.append(gd)
 					
-	def lineplot(self, data, x_axis, style='-'):
+	def lineplot(self, data, x_axis, style='-', verbose=False):
 		if not (data in ["num_of_nodes", "num_of_edges"] and x_axis in ["k_value", "readlength", "error_percentage"]):
 			print ("Error! Wrong Specifier!")
 		else:
@@ -177,6 +177,9 @@ class GraphAnalyzer:
 				elif x_axis == "error_percentage":
 					x = gd.error_percentage
 					this_label += "k="+str(gd.k_value)+"_rl="+str(gd.readlength)+"_nr="+str(gd.num_of_reads)
+				
+				if verbose:
+					print ("Add tuple ("+str(x)+","+str(y)+") to data")
 				
 				if not this_label in label_data:
 					label_data.append(this_label)
