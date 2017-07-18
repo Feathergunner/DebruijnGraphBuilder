@@ -49,7 +49,8 @@ for cf in coverage_factors:
 				k = int(readlength * k_rel)
 				casename = casename_gen + "_"+str(k)
 				
-				if not os.path.isfile("Output/"+casename+".asqg"):			
+				if not os.path.isfile("Output/"+casename+".asqg"):
+					print ("Working on case "+casename)
 					reads = dio.get_reads_from_file(filename = readfilename)
 					debruijn = fdgb.GraphData(reads, k)
 					# delete reads and kmers to save ram:
