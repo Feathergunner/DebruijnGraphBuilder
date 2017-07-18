@@ -1,6 +1,8 @@
 #!usr/bin/python
 
 import random
+import re
+
 import gc
 
 class Read:
@@ -90,17 +92,21 @@ class SequenceOverlap:
 			print ("is not relevant")
 	
 class GraphData:
-	def __init__(self, reads, k, verbose = False):
-		print ("Initializing graph ...")
-		self.k_value = k
+	def __init__(self, reads=0, k=0, verbose=False):
+		print ("Creating empty graph ...")
 		
+		self.k_value = k
 		self.reads = []
 		self.kmers = []
 		self.kmer_dict = {}
 		self.sequences = []
 		self.overlaps = {}
 		self.is_unified = False
+		
+		if not reads == 0:
+			self.init_graph_database(reads, verbose=verbose)
 
+	def init_graph_database(self, reads, verbose=False):
 		if verbose:
 			print ("Construct read database")
 		read_id = 0
