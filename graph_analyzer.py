@@ -119,7 +119,7 @@ class GraphAnalyzer:
 		self.graphdatas = []
 	
 	def get_data(self, verbose=False, case_restrict=CaseRestriction()):
-		datapath = "Output/"+sourcedir
+		datapath = "Output/"+self.sourcedir
 		for file in os.listdir(datapath):
 			filenameparts = re.split(r'\.', file)
 			filename = filenameparts[0]
