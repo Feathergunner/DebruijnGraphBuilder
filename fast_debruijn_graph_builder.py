@@ -446,6 +446,33 @@ class GraphData:
 		outputfile.write(headline)
 		outputfile.write(data)
 		
+	def load_from_asqg(self, filename="asqg_file"):
+		print ("Loading from asqg-file ...")
+		with open(filename) as asqg_source:
+			for line in asqg_source:
+				linedata = re.split(r'\t', line)
+				
+				if linedata[0] == "VT":
+					# case sequence data:
+					sequence_id = int(re.split(r'_',linedata[1])[1])
+					while len(self.sequences) < sequence_id:
+						# add dummy sequences:
+						self.sequences.append(ContigSequence(len(self.sequences), -1, "", [-1], is_relevant=False))
+					# add actual sequence (id of inverse and evidence_kmers are unknown)
+					self.sequence.append(ContigSequence(sequence_id, -1, linedata[2], [-1]))
+					
+				if linedate[0] == "ED":
+					# case overlap data:
+					overlap_data = re.split(r'\w',linedata[1])
+					source_seq_id = int(re.split(r'_',overlap_data[0])[1])
+					target_seq_id = int(re.split(r'_',overlap_data[1])[1])
+					# increase overlap (read_evidence is unknown)
+					self.increment_overlap(source_seq_id, target_seq_id, [-1])
+					# if k is still unknown at this point, recover k from overlap_data:
+					if self.k_value < 1:
+						self.k_value = int(overlap_data[6])
+					
+		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
 	inv_sequence = [""]*n
