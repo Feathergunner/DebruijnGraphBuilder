@@ -16,7 +16,7 @@ k_absolute_settings = [10,12,14,16,18,20,25,30]
 readlength_settings = [50, 100, 250, 500, 1000]
 number_of_reads_settings = [[500,500],[250,250],[100,100],[50,50],[25,25]]
 coverage_factors = [1,5,10,15,20]
-error_percentages = [0.0, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0]
+error_percentages = [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0]
 set_of_viruses = [md.v1, md.v5]
 num_different_viruses = 2
 
