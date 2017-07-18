@@ -1,6 +1,7 @@
 #!usr/bin/python
 
 import random
+import gc
 
 class Read:
 	def __init__(self, r_id, sequence):
@@ -242,6 +243,9 @@ class GraphData:
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
 				print (str(ov_index)+"/"+str(len(self.overlaps)))
+			if (ov_index%100000 == 0):
+				# run garbage collector:
+				gc.collect()
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2

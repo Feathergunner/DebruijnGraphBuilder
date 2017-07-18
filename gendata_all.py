@@ -3,6 +3,7 @@
 
 import re
 import os.path
+import gc
 
 import sampleReads
 import data_io as dio
@@ -32,7 +33,6 @@ for cf in coverage_factors:
 			casename_gen += str(num_reads[-1])+"]_"+ep_string
 			readfilename = "Data/reads_"+casename_gen+".txt"
 			
-			
 			if not os.path.isfile(readfilename):
 				sampleReads.samplereads(output_filename			= readfilename,
 										read_length				= readlength,
@@ -43,16 +43,25 @@ for cf in coverage_factors:
 				print ("Reads already exist!")
 									
 			for k_rel in k_relative_settings:
+				# run garbage collector:
+				gc.collect()
+				
 				k = int(readlength * k_rel)
 				casename = casename_gen + "_"+str(k)
 				
 				if not os.path.isfile("Output/"+casename+".asqg"):			
 					reads = dio.get_reads_from_file(filename = readfilename)
 					debruijn = fdgb.GraphData(reads, k)
+					# delete reads and kmers to save ram:
+					debruijn.reads = []
+					debruijn.kmers = []
+					# run garbage collector:
+					gc.collect()
 					debruijn.contract_unique_overlaps()
 					debruijn.remove_parallel_sequences()
 				
 					debruijn.get_asqg_output(filename = "Output/"+casename+".asqg")
 					debruijn.get_csv_output(filename = "Output/"+casename+".csv")
+					
 				else:
 					print ("Data already exists!")
