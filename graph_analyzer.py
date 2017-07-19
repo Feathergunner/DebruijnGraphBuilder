@@ -80,19 +80,33 @@ class GraphData:
 		self.num_of_edges = 0
 		self.node_sequence_lengths = []
 		self.node_adjacencies = {}
+		self.node_reverse_adjacencies = {}
+		self.node_name_dictionary = {}
 		
 	def add_node(self, node_name, node_seq):
-		self.num_of_nodes += 1
-		self.nodes.append(node_name)
+		self.nodes.append(node_seq)
 		self.node_sequence_lengths.append(len(node_seq))
-		self.node_adjacencies[node_name] = []
+		self.node_adjacencies[self.num_of_nodes] = []#[node_name] = []
+		self.node_reverse_adjacencies[self.num_of_nodes] = []
+		self.node_name_dictionary[node_name] = self.num_of_nodes
+		self.num_of_nodes += 1
 	
 	def add_edge(self, node_s, node_t):
 		self.num_of_edges += 1
-		if node_s not in self.node_adjacencies:
-			self.node_adjacencies[node_s] = [node_t]
+		node_s_id = self.node_name_dictionary[node_s]
+		node_t_id = self.node_name_dictionary[node_t]
+		'''
+		if node_s_id not in self.node_adjacencies:
+			self.node_adjacencies[node_s_id] = [node_t_id]
 		else:
-			self.node_adjacencies[node_s].append(node_t)
+		'''
+		self.node_adjacencies[node_s_id].append(node_t_id)
+		'''	
+		if node_t_id not in self.node_reverse_adjacencies:
+			self.node_reverse_adjacencies[node_t_id] = [node_s_id]
+		else:
+		'''
+		self.node_reverse_adjacencies[node_t_id].append(node_s_id)
 			
 	def get_degree_distribution(self):
 		node_degrees = {}
@@ -112,6 +126,35 @@ class GraphData:
 			node_degree_list.append(node_degrees[node])
 			
 		return node_degree_list
+	
+	def get_number_of_components(self):
+		number_of_components = 0
+		queue = []
+		visited_nodes = [False]*self.num_of_nodes
+		
+		all_nodes_visited = False
+		while not all_nodes_visited:
+			node_index = 0
+			while node_index < self.num_of_nodes and visited_nodes[node_index]:
+				node_index += 1
+			if node_index == self.num_of_nodes:
+				all_nodes_visited = True
+			else:
+				number_of_components += 1
+				queue.append(node_index)
+				visited_nodes[node_index] = True
+				while len(queue) > 0:
+					current_node = queue.pop(0)
+					for adj_node_id in self.node_adjacencies[current_node]:
+						if not visited_nodes[adj_node_id]:
+							queue.append(adj_node_id)
+							visited_nodes[adj_node_id] = True
+					for adj_node_id in self.node_reverse_adjacencies[current_node]:
+						if not visited_nodes[adj_node_id]:
+							queue.append(adj_node_id)
+							visited_nodes[adj_node_id] = True
+							
+		return number_of_components
 
 class GraphAnalyzer:
 	def __init__(self, sourcedir):
@@ -152,8 +195,8 @@ class GraphAnalyzer:
 						
 					self.graphdatas.append(gd)
 					
-	def lineplot(self, data, x_axis, style='-', verbose=False):
-		if not (data in ["num_of_nodes", "num_of_edges"] and x_axis in ["k_value", "readlength", "error_percentage"]):
+	def lineplot(self, data, x_axis, style='-', axis=0, verbose=False):
+		if not (data in ["num_of_nodes", "num_of_edges", "num_of_components"] and x_axis in ["k_value", "readlength", "error_percentage"]):
 			print ("Error! Wrong Specifier!")
 		else:
 			x_values = []
@@ -167,6 +210,9 @@ class GraphAnalyzer:
 				elif data == "num_of_edges":
 					y = gd.num_of_edges
 					this_label += "edges_"
+				elif data == "num_of_components":
+					y = gd.get_number_of_components()
+					this_label += "components_"
 				
 				if x_axis == "k_value":
 					x = gd.k_value
@@ -195,8 +241,16 @@ class GraphAnalyzer:
 			for i in range(len(x_values)):
 				x_sorted = sorted(x_values[i])
 				y_sorted = [y for (x,y) in sorted(zip(x_values[i], y_values[i]))]
-				plt.plot(x_sorted, y_sorted, label=label_data[i], linestyle=style)
-				
-			plt.xlabel(x_axis)
-			plt.ylabel("total number")
-			plt.legend()
+				if axis == 0:
+					plt.plot(x_sorted, y_sorted, label=label_data[i], linestyle=style, linewidth=3)
+				else:
+					axis.plot(x_sorted, y_sorted, label=label_data[i], linestyle=style,  linewidth=3)
+			
+			if axis == 0:
+				plt.xlabel(x_axis)
+				plt.ylabel("total number")
+				plt.legend()
+			else:
+				axis.set_xlabel(x_axis)
+				axis.set_ylabel("total number")
+				axis.legend(loc=0)
