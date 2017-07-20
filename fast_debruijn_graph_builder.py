@@ -135,7 +135,7 @@ class GraphData:
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
-				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, False)
+				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
 
 	def print_all_reads(self):
 		print ("Reads:")
@@ -276,6 +276,8 @@ class GraphData:
 						target_rev_id = self.sequences[source_id].id_of_inverse_seq
 						
 						if not self.is_unified:
+							print source_rev_id
+							print target_rev_id
 							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
 							self.contract_overlap(rev_ov_id, verbose)
 						
@@ -311,7 +313,7 @@ class GraphData:
 		target_id = self.overlaps[overlap_id].contig_sequence_2
 		if verbose:
 			print ("Contract overlap: ")
-			print (self.overlaps[ov_index].print_data())
+			print (self.overlaps[overlap_id].print_data())
 			print ("Source: ")
 			print (self.sequences[source_id].print_data())
 			print ("Target: ")
