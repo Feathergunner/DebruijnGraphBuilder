@@ -195,7 +195,7 @@ class GraphAnalyzer:
 						
 					self.graphdatas.append(gd)
 					
-	def lineplot(self, data, x_axis, style='-', axis=0, verbose=False):
+	def lineplot(self, data, x_axis, style='-', axis=0, legend_pos=0, verbose=False):
 		if not (data in ["num_of_nodes", "num_of_edges", "num_of_components"] and x_axis in ["k_value", "readlength", "error_percentage"]):
 			print ("Error! Wrong Specifier!")
 		else:
@@ -204,15 +204,19 @@ class GraphAnalyzer:
 			label_data = []
 			for gd in self.graphdatas:
 				this_label = ""
+				y_label = ""
 				if data == "num_of_nodes":
 					y = gd.num_of_nodes
 					this_label += "nodes_"
+					y_label += "nodes/edges"
 				elif data == "num_of_edges":
 					y = gd.num_of_edges
 					this_label += "edges_"
+					y_label += "nodes/edges"
 				elif data == "num_of_components":
 					y = gd.get_number_of_components()
 					this_label += "components_"
+					y_label += "components"
 				
 				if x_axis == "k_value":
 					x = gd.k_value
@@ -248,9 +252,9 @@ class GraphAnalyzer:
 			
 			if axis == 0:
 				plt.xlabel(x_axis)
-				plt.ylabel("total number")
-				plt.legend()
+				plt.ylabel(y_label)
+				plt.legend(loc=legend_pos)
 			else:
 				axis.set_xlabel(x_axis)
-				axis.set_ylabel("total number")
-				axis.legend(loc=0)
+				axis.set_ylabel(y_label)
+				axis.legend(loc=legend_pos)

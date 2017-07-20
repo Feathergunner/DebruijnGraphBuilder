@@ -16,7 +16,7 @@ for filename in os.listdir(source_directory_name):
 			print ("Working on case "+filenameparts[0])
 			try:
 				debruijn = fdgb.GraphData()
-				debruijn.load_from_asqg(source_directory_name+"/"+filename, verbose=True)
+				debruijn.load_from_asqg(source_directory_name+"/"+filename, verbose=False)
 				debruijn.remove_tips()
 				debruijn.contract_unique_overlaps()
 				debruijn.get_asqg_output(target_directory_name+"/"+filename)

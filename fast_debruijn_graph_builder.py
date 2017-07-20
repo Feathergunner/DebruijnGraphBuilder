@@ -214,7 +214,7 @@ class GraphData:
 				kmer_start += 1
 			read_index += 1
 			
-	def increment_overlap(self, source_seq_id, target_seq_id, read_evidence, verbose = False):
+	def increment_overlap(self, source_seq_id, target_seq_id, read_evidence, consider_inverse = True, verbose = False):
 		if target_seq_id not in self.sequences[source_seq_id].overlaps_out:
 			if verbose:
 				print ("Add overlap of tuple " + str(source_seq_id) + " - " + str(target_seq_id))
@@ -226,17 +226,18 @@ class GraphData:
 			self.sequences[source_seq_id].overlaps_out[target_seq_id] = ov_id
 			self.sequences[target_seq_id].overlaps_in[source_seq_id] = ov_id
 			
-			# add inverse overlap:
-			rev_ov_id = ov_id + 1
-			source_rev_seq_id = self.sequences[target_seq_id].id_of_inverse_seq
-			target_rev_seq_id = self.sequences[source_seq_id].id_of_inverse_seq
-			if verbose:
-				print ("Add inverse overlap: "+str(source_rev_seq_id) + " - " + str(target_rev_seq_id))
-				print ("seq_1: "+self.sequences[source_rev_seq_id].sequence)
-				print ("seq_2: "+self.sequences[target_rev_seq_id].sequence)
-			self.overlaps[rev_ov_id] = SequenceOverlap(rev_ov_id, self.k_value-1, source_rev_seq_id, target_rev_seq_id, [])
-			self.sequences[source_rev_seq_id].overlaps_out[target_rev_seq_id] = rev_ov_id
-			self.sequences[target_rev_seq_id].overlaps_in[source_rev_seq_id] = rev_ov_id
+			if consider_inverse:
+				# add inverse overlap:
+				rev_ov_id = ov_id + 1
+				source_rev_seq_id = self.sequences[target_seq_id].id_of_inverse_seq
+				target_rev_seq_id = self.sequences[source_seq_id].id_of_inverse_seq
+				if verbose:
+					print ("Add inverse overlap: "+str(source_rev_seq_id) + " - " + str(target_rev_seq_id))
+					print ("seq_1: "+self.sequences[source_rev_seq_id].sequence)
+					print ("seq_2: "+self.sequences[target_rev_seq_id].sequence)
+				self.overlaps[rev_ov_id] = SequenceOverlap(rev_ov_id, self.k_value-1, source_rev_seq_id, target_rev_seq_id, [])
+				self.sequences[source_rev_seq_id].overlaps_out[target_rev_seq_id] = rev_ov_id
+				self.sequences[target_rev_seq_id].overlaps_in[source_rev_seq_id] = rev_ov_id
 			
 		else:
 			ov_id = self.sequences[source_seq_id].overlaps_out[target_seq_id]
@@ -467,8 +468,9 @@ class GraphData:
 					overlap_data = re.split(r'\s',linedata[1])
 					source_seq_id = int(re.split(r'_',overlap_data[0])[1])
 					target_seq_id = int(re.split(r'_',overlap_data[1])[1])
-					# increase overlap (read_evidence is unknown)
-					self.increment_overlap(source_seq_id, target_seq_id, [-1])
+					if source_seq_id > 0 and target_seq_id > 0:
+						# increase overlap (read_evidence is unknown)
+						self.increment_overlap(source_seq_id, target_seq_id, [-1], verbose=verbose,consider_inverse = False)
 					# if k is still unknown at this point, recover k from overlap_data:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
