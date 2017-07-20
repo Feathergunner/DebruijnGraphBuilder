@@ -276,8 +276,6 @@ class GraphData:
 						target_rev_id = self.sequences[source_id].id_of_inverse_seq
 						
 						if not self.is_unified:
-							print source_rev_id
-							print target_rev_id
 							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
 							self.contract_overlap(rev_ov_id, verbose)
 						
