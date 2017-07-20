@@ -115,12 +115,10 @@ class GraphData:
 				self.reads.append(Read(read_id, read))
 				read_id += 1
 			
-		# init k-mer database:
-		if verbose:
-			print ("Construct k-mers and sequences ...")
-		# get kmer data:
+		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
 		# construct sequences from kmers:
+		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
 			if verbose:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
@@ -128,8 +126,7 @@ class GraphData:
 			seq_inv_id = kmer.id_of_inverse_kmer
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id]))
 
-		if verbose:
-			print ("Construct overlaps ...")			
+		print ("Construct overlaps ...")			
 		# construct overlaps between adjacent sequences with read-evidence:
 		for read in self.reads:
 			for kmer_index in range(len(read.kmers)-1):
@@ -173,8 +170,10 @@ class GraphData:
 		read_index = 0
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
-			if verbose:
-				print ("Current read: "+str(read_index)+" - "+self.reads[read_index].sequence)
+			if read_index%100 == 0 and not verbose:
+				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
+			elif verbose:
+				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
 			kmer_start = 0
 			while kmer_start <= (len(current_read_sequence) - self.k_value):
