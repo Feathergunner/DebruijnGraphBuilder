@@ -6,12 +6,12 @@ import numpy as np
 
 import stochastic as st
 
-ep = np.arange(0,0.7, 0.1)#np.arange(0.05, 0.4, 0.05)
+ep = np.arange(0.1,0.8, 0.1)#np.arange(0.05, 0.4, 0.05)
 
 ks = range(10,51,1)
 g = 10000
 n = 5000
-r = 50
+r = 100
 
 def plot_expected_correct_kmers():
 	x = ks
@@ -20,7 +20,7 @@ def plot_expected_correct_kmers():
 		ys.append([max(0, st.expected_number_of_correct_kmers_at_position(g, r, n, k, e)) for k in ks])
 			
 	for i in range(len(ep)):
-		plt.plot(x,ys[i], label = "correct kmers, error_percentage = "+str(ep[i]))
+		plt.plot(x,ys[i], label = "correct kmers, p = "+str(ep[i]))
 			
 	plt.legend(loc=1)
 	plt.xlabel("k")
@@ -28,17 +28,23 @@ def plot_expected_correct_kmers():
 	plt.show()
 
 def plot_average_number_of_kmers_with_errors():
-	x = range(12,26,1)
+	x = range(14,31,1)
 	ys = []
+	zs = []
 	for e in ep:
 		ys.append([max(0, st.average_number_of_kmers_with_exactly_identical_errors(g, r, n, k, e)) for k in x])
+		zs.append([max(0, st.expected_number_of_correct_kmers_at_position(g, r, n, k, e)) for k in x])
 
 	for i in range(len(ep)):
-		plt.plot(x,ys[i], label = "error_percentage = "+str(ep[i]))
+		plt.plot(x,ys[i], label = "incorrect kmers, p = "+str(ep[i]))
+
+	for i in range(len(ep)):
+		plt.plot(x,zs[i], linestyle="--", label = "correct kmers, p = "+str(ep[i]))
 
 	plt.legend(loc=1)
 	plt.xlabel("k")
-	plt.ylabel("Expected avg. number of identical kmers with errors")
+	plt.ylabel("expected or average number")
+	#plt.ylabel("Expected avg. number of identical kmers with errors")
 	plt.show()
 
 def plot_expected_number_of_kmers():

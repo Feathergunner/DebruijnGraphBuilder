@@ -96,9 +96,5 @@ def expected_number_of_kmers(genome_length, read_length, number_of_reads, k_valu
 
 	expected_number_of_kmers_with_error = (g-k)*n*l*(1-prob_kmer_is_correct(k_value, error_percentage))
 	expected_number_of_kmers_without_error = max((g-k), (g-k)*n*l*prob_kmer_is_correct(k_value, error_percentage))
-	#print ("4**k = "+str(4**k))
-	#print ("(g-k)*n*l = "+str((g-k)*n*l))
-	#print ("expected_number_of_kmers_with_error = "+str(expected_number_of_kmers_with_error))
-	#print ("expected_number_of_kmers_without_error = "+str(expected_number_of_kmers_without_error))
 
 	return expected_number_of_kmers_with_error + expected_number_of_kmers_without_error
