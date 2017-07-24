@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import scipy.misc as scm
+import scipy.stats as scs
 
 def prob_of_complete_sequence_reconstruction(genome_length, read_length, number_of_reads, k_value, error_percentage):
 	g = float(genome_length)
@@ -44,7 +45,7 @@ def prob_kmer_has_specific_number_of_errors(k_value, error_percentage, number_of
 	e = float(error_percentage)
 	n = float(number_of_errors)
 	
-	p = (1-e)**(k-n) * e * scm.comb(k,n)
+	p = (1-e)**(k-n) * e**n * scm.comb(k,n)
 	return p
 	
 def prob_multiple_identical_wrong_kmers(genome_length, read_length, number_of_reads, k_value, error_percentage):
@@ -98,3 +99,25 @@ def expected_number_of_kmers(genome_length, read_length, number_of_reads, k_valu
 	expected_number_of_kmers_without_error = max((g-k), (g-k)*n*l*prob_kmer_is_correct(k_value, error_percentage))
 
 	return expected_number_of_kmers_with_error + expected_number_of_kmers_without_error
+	
+def expected_number_of_kmers_with_exactly_identical_errors(genome_length, read_length, number_of_reads, k_value, error_percentage):
+	g = float(genome_length)
+	l = float(read_length)
+	n = float(number_of_reads)
+	k = float(k_value)
+	e = float(error_percentage)
+	
+	number_of_possible_error_kmers = 4.0**k
+	prob_kmer_with_error = (1-prob_kmer_is_correct(k_value, error_percentage))
+	prob_specific_kmer = prob_kmer_with_error * (1.0/number_of_possible_error_kmers)
+	total_maximum_number_of_kmers = (l-k)*n
+	
+	binomprob = scs.binum(total_maximum_number_of_kmers, prob_specific_kmer)
+	
+	i = 0
+	p = 0
+	while binomprob.pmf(i) > p:
+		i += 1
+		
+	return i
+	
