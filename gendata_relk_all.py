@@ -12,15 +12,15 @@ import manjasDefinitionen as md
 
 sampleReads.read_genomes()
 
-k_absolute_settings = [10,12,14,16,18,20,25,30]
-readlength_settings = [50, 100, 250, 500, 1000]
-number_of_reads_settings = [[500,500],[250,250],[100,100],[50,50],[25,25]]
+k_relative_settings = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+readlength_settings = [50, 100, 150, 200]
+number_of_reads_settings = [[500,500],[250,250],[166,166],[125,125]]
 coverage_factors = [1,5,10,15,20]
-error_percentages = [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0]#, 15.0]
+error_percentages = [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
 set_of_viruses = [md.v1, md.v5]
 num_different_viruses = 2
 
-output_dir = "Output/general_absk"
+output_dir = "Output/general_relk"
 
 for cf in coverage_factors:
 	for i in range(len(readlength_settings)):
@@ -44,7 +44,8 @@ for cf in coverage_factors:
 			else:
 				print ("Reads already exist!")
 									
-			for k in k_absolute_settings:
+			for k_rel in k_relative_settings:
+				k = int(readlength * k_rel)
 				# run garbage collector:
 				gc.collect()
 				
