@@ -92,21 +92,14 @@ class GraphData:
 		self.num_of_nodes += 1
 	
 	def add_edge(self, node_s, node_t):
-		self.num_of_edges += 1
-		node_s_id = self.node_name_dictionary[node_s]
-		node_t_id = self.node_name_dictionary[node_t]
-		'''
-		if node_s_id not in self.node_adjacencies:
-			self.node_adjacencies[node_s_id] = [node_t_id]
-		else:
-		'''
-		self.node_adjacencies[node_s_id].append(node_t_id)
-		'''	
-		if node_t_id not in self.node_reverse_adjacencies:
-			self.node_reverse_adjacencies[node_t_id] = [node_s_id]
-		else:
-		'''
-		self.node_reverse_adjacencies[node_t_id].append(node_s_id)
+		if node_s in self.node_name_dictionary and node_t in self.node_name_dictionary:
+			# check is necessary, because a bug (?) left an edge from a self-inverse-sequence somewhere
+			self.num_of_edges += 1
+			node_s_id = self.node_name_dictionary[node_s]
+			node_t_id = self.node_name_dictionary[node_t]
+			
+			self.node_adjacencies[node_s_id].append(node_t_id)
+			self.node_reverse_adjacencies[node_t_id].append(node_s_id)
 			
 	def get_degree_distribution(self):
 		node_degrees = {}
