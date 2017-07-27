@@ -121,7 +121,7 @@ class GraphData:
 		return node_degree_list
 		
 	def get_avg_seq_length(self):
-		return float(sum(node_sequence_lengths))/num_of_nodes
+		return float(sum(self.node_sequence_lengths))/float(self.num_of_nodes)
 	
 	def get_number_of_components(self):
 		number_of_components = 0
@@ -215,8 +215,8 @@ class GraphAnalyzer:
 					y_label += "components"
 				elif data == "avg_seq_lengths":
 					y = gd.get_avg_seq_length()
-					this_label += "seqlengths"
-					y_label += "seq-lengths"
+					this_label += "seqlengths_"
+					y_label += "average sequence length"
 				
 				if x_axis == "k_value":
 					x = gd.k_value
@@ -260,5 +260,47 @@ class GraphAnalyzer:
 				plt.legend(loc=legend_pos)
 			else:
 				axis.set_xlabel(x_axis)
+				axis.set_ylabel(y_label)
+				axis.legend(loc=legend_pos)
+
+	def distribution_lineplot(self, data, style='-', axis=0, legend_pos=0, verbose=False):
+		if not (data in ["seq_length", "degree_dist"]):
+			print ("Error! Wrong Specifier!")
+		else:
+			x_values = []
+			y_values = []
+			label_data = []
+			for gd in self.graphdatas:
+				this_label = ""
+				y_label = "Frequency"
+				x_label = ""
+				if data == "seq_length":
+					y = compute_distribution(gd.node_sequence_lengths)
+					this_label += "sequence-lengths_"
+					x_label += "Sequence-length"
+				elif data == "degree_dist":
+					y = gd.get_degree_distribution()
+					this_label += "degree_distribution"
+					x_label += "Node-degree"
+					
+				this_label += "rl="+str(gd.readlength)+"_ep="+str(gd.error_percentage)+"_nr="+str(gd.num_of_reads)+"_k="+str(gd.k_value)
+				
+				if not this_label in label_data:
+					label_data.append(this_label)
+					x_values.append(range(len(y)))
+					y_values.append(y)
+			
+			for i in range(len(x_values)):
+				if axis == 0:
+					plt.plot(x_values[i], y_values[i], label=label_data[i], linestyle=style, linewidth=3)
+				else:
+					axis.plot(x_values[i], y_values[i], label=label_data[i], linestyle=style,  linewidth=3)
+			
+			if axis == 0:
+				plt.xlabel(x_label)
+				plt.ylabel(y_label)
+				plt.legend(loc=legend_pos)
+			else:
+				axis.set_xlabel(x_label)
 				axis.set_ylabel(y_label)
 				axis.legend(loc=legend_pos)
