@@ -119,6 +119,9 @@ class GraphData:
 			node_degree_list.append(node_degrees[node])
 			
 		return node_degree_list
+		
+	def get_avg_seq_length(self):
+		return float(sum(node_sequence_lengths))/num_of_nodes
 	
 	def get_number_of_components(self):
 		number_of_components = 0
@@ -189,7 +192,7 @@ class GraphAnalyzer:
 					self.graphdatas.append(gd)
 					
 	def lineplot(self, data, x_axis, style='-', axis=0, legend_pos=0, verbose=False):
-		if not (data in ["num_of_nodes", "num_of_edges", "num_of_components"] and x_axis in ["k_value", "rel_k_value", "readlength", "error_percentage"]):
+		if not (data in ["num_of_nodes", "num_of_edges", "num_of_components", "avg_seq_lengths"] and x_axis in ["k_value", "rel_k_value", "readlength", "error_percentage"]):
 			print ("Error! Wrong Specifier!")
 		else:
 			x_values = []
@@ -210,6 +213,10 @@ class GraphAnalyzer:
 					y = gd.get_number_of_components()
 					this_label += "components_"
 					y_label += "components"
+				elif data == "avg_seq_lengths":
+					y = gd.get_avg_seq_length()
+					this_label += "seqlengths"
+					y_label += "seq-lengths"
 				
 				if x_axis == "k_value":
 					x = gd.k_value
