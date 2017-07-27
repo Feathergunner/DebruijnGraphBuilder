@@ -279,7 +279,7 @@ class GraphAnalyzer:
 					this_label += "sequence-lengths_"
 					x_label += "Sequence-length"
 				elif data == "degree_dist":
-					y = gd.get_degree_distribution()
+					y = compute_distribution(gd.get_degree_distribution())
 					this_label += "degree_distribution"
 					x_label += "Node-degree"
 					
