@@ -12,8 +12,9 @@ sourcedirs_relk = ["general_relk"]#, "general_relk_wot"]
 
 def multiple_lineplot_nodes_edges_components(graph_analyzer, data, filename, y1=["num_of_nodes", "num_of_edges"], y2="num_of_components"):
 	fig = plt.figure()
-	ax1 = fig.add_subplot(111)
-	ax2 = ax1.twinx()
+	if not y2 == "":
+		ax1 = fig.add_subplot(111)
+		ax2 = ax1.twinx()
 	fig.set_size_inches(20,20)
 	graph_analyzer.lineplot(y1[0], data, axis=ax1, legend_pos=1)
 	if len(y1) > 1:
@@ -51,7 +52,7 @@ def plots_absk(sourcedirs):
 					gaga.get_data(case_restrict=gacr, verbose=True)
 					
 				if len(gaga.graphdatas) > 0:
-					multiple_lineplot_nodes_edges_components(gaga, "k_value", "Output/"+sourcedir+"/plots/k(-1)_ep("+str(ep)+")_coveragefactor("+str(coverage_factors[i])+")_"+data+".png")
+					multiple_lineplot_nodes_edges_components(gaga, "k_value", "Output/"+sourcedir+"/plots/k(-1)_ep("+str(ep)+")_coveragefactor("+str(coverage_factors[i])+")_k_value.png")
 
 def plots_relk(sourcedirs):
 	k_rel_values = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
@@ -82,6 +83,52 @@ def plots_relk(sourcedirs):
 				
 				if len(gaga.graphdatas) > 0:
 					multiple_lineplot_nodes_edges_components(gaga, "rel_k_value", "Output/"+sourcedir+"/plots/k(-1)_ep("+str(ep)+")_coveragefactor("+str(coverage_factor[i])+")_rel_k_value.png")
+					
+def plot_distribution(sourcedirs, k_values):
+	nr = 10000
+	rl = 50
+	eps = [0, 0.1, 0.25, 0.5, 1, 2, 5]
+	for sourcedir in sourcedirs:
+		for k_value in k_values:
+			gaga = ga.GraphAnalyzer(sourcedir)
+			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps, k_values=[k_value])
+			gaga.get_data(case_restrict=gacr, verbose=True)
+			
+			if len(gaga.graphdatas) > 0:
+				fig = plt.figure()
+				fig.set_size_inches(20,20)
+				gaga.distribution_lineplot(data="degree_dist", legend_pos=1)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_k("+str(k_value)+")_ep("+str(eps)+")_nr(10000)_rl(50).png", dpi=80)
+				plt.close()
 				
-plots_relk(sourcedirs_relk)
-plots_absk(sourcedirs_absk)
+				fig = plt.figure()
+				fig.set_size_inches(20,20)
+				gaga.distribution_lineplot(data="seq_length", legend_pos=2)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_k("+str(k_value)+")_ep("+str(eps)+")_nr(10000)_rl(50).png", dpi=80)
+				plt.close()
+				
+		for ep in eps:
+			gaga = ga.GraphAnalyzer(sourcedir)
+			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=[ep], k_values=k_values)
+			gaga.get_data(case_restrict=gacr, verbose=True)
+			
+			if len(gaga.graphdatas) > 0:
+				fig = plt.figure()
+				fig.set_size_inches(20,20)
+				gaga.distribution_lineplot(data="degree_dist", legend_pos=1)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_k("+str(k_values)+")_ep("+str(ep)+")_nr(10000)_rl(50).png", dpi=80)
+				plt.close()
+				
+				fig = plt.figure()
+				fig.set_size_inches(20,20)
+				gaga.distribution_lineplot(data="seq_length", legend_pos=2)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_k("+str(k_values)+")_ep("+str(ep)+")_nr(10000)_rl(50).png", dpi=80)
+				plt.close()
+				
+		
+				
+#plots_relk(sourcedirs_relk)
+#plots_absk(sourcedirs_absk)
+
+plot_distribution(sourcedirs_absk,[12,14,16,18,20,25,30])
+#plot_distribution(sourcedirs_relk,[10,15,20,25,30,35,40])
