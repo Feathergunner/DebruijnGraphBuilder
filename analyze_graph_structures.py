@@ -10,14 +10,16 @@ import stochastic as st
 sourcedirs_absk = ["general_absk"]#, "general_absk_wot"]
 sourcedirs_relk = ["general_relk"]#, "general_relk_wot"]
 
-def multiple_lineplot_nodes_edges_components(graph_analyzer, data, filename):
+def multiple_lineplot_nodes_edges_components(graph_analyzer, data, filename, y1=["num_of_nodes", "num_of_edges"], y2="num_of_components"):
 	fig = plt.figure()
 	ax1 = fig.add_subplot(111)
 	ax2 = ax1.twinx()
 	fig.set_size_inches(20,20)
-	graph_analyzer.lineplot("num_of_nodes", data, axis=ax1, legend_pos=1)
-	graph_analyzer.lineplot("num_of_edges", data, style='--', axis=ax1, legend_pos=1)
-	graph_analyzer.lineplot("num_of_components", data, style=':', axis=ax2, legend_pos=2)
+	graph_analyzer.lineplot(y1[0], data, axis=ax1, legend_pos=1)
+	if len(y1) > 1:
+		graph_analyzer.lineplot(y1[1], data, style='--', axis=ax1, legend_pos=1)
+	if not y2 == "":
+		graph_analyzer.lineplot(y2, data, style=':', axis=ax2, legend_pos=2)
 	fig.savefig(filename, dpi=80)
 	plt.close()
 
@@ -34,18 +36,11 @@ def plots_absk(sourcedirs):
 				gaga.get_data(case_restrict=gacr, verbose=True)
 				
 				if len(gaga.graphdatas) > 0:
-					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", "Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage.png")
-					multiple_lineplot_nodes_edges_components(gaga, "k_value", "Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_k_value.png")
+					print ("Case "+gacr.construct_casename())
+					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage.png")
+					multiple_lineplot_nodes_edges_components(gaga, "k_value", filename="Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_k_value.png")
 				
-					fig = plt.figure()
-					ax1 = fig.add_subplot(111)
-					ax2 = ax1.twinx()
-					fig.set_size_inches(20,20)
-					data = "error_percentage"
-					gaga.lineplot("avg_seq_lengths", data)
-					fig.savefig("Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_"+data+"_seqlengths.png")
-					plt.close()
-					
+					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage_seqlengths.png", y1=["avg_seq_lengths"], y2 = "num_of_nodes")
 	
 		for ep in [0, 0.1, 0.25, 0.5, 1, 2, 5]:
 			for i in range(len(coverage_factors)):
