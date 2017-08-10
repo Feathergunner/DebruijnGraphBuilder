@@ -6,22 +6,26 @@ import re
 import matplotlib.pyplot as plt
 
 def compute_distribution(data, verbose=False):
-	if verbose:
-		print ("Max(data) is " + str(max(data)))
-	dist = [0]*(max(data)+1)
-	for d in data:
-		dist[d] += 1
-	return dist
+	if len(data) == 0:
+		return [0]
+	else:
+		if verbose:
+			print ("Max(data) is " + str(max(data)))
+		dist = [0]*(max(data)+1)
+		for d in data:
+			dist[d] += 1
+		return dist
 	
 class CaseRestriction:
 	# the parameters have to be either -1 or a list of values
 	# a specific set of values is compatible with this restriction,
 	# if the restriction is either -1 or the values is included in the list
-	def __init__(self, k_values=-1, readlengths=-1, error_percentages=-1, number_of_reads=-1):
+	def __init__(self, k_values=-1, readlengths=-1, error_percentages=-1, number_of_reads=-1, num_genomes=1):
 		self.k_values = k_values
 		self.readlengths = readlengths
 		self.error_percentages = error_percentages
 		self.number_of_reads = number_of_reads
+		self.number_of_genomes = num_genomes
 		
 	def check_compatibility(self, k, readlength, error_percentage, number_of_reads):
 		is_compatible = True
@@ -36,13 +40,13 @@ class CaseRestriction:
 		return is_compatible
 		
 	def construct_casename(self):
-		casename = "k("
+		casename = "ng("+str(self.number_of_genomes)+")_k("
 		if self.k_values == -1:
 			casename += "-1"
 		else:
 			for i in range(len(self.k_values)-1):
-				casename += str(self.k_values[i])+"-"
-			casename += str(self.k_values[-1])
+				casename += str(int(self.k_values[i]))+"-"
+			casename += str(int(self.k_values[-1]))
 		casename += ")_rl("
 		if self.readlengths == -1:
 			casename += "-1)_nr("
@@ -62,8 +66,9 @@ class CaseRestriction:
 			casename += "-1"
 		else:
 			for i in range(len(self.error_percentages)-1):
-				casename += str(self.error_percentages[i])+"-"
-			casename += str(self.error_percentages[-1])
+				ep_string = "".join(re.split(r'\.',str(self.error_percentages[i])))
+				casename += ep_string+"-"
+			casename += "".join(re.split(r'\.',str(self.error_percentages[-1])))
 		casename += ")"
 		return casename
 
@@ -159,6 +164,7 @@ class GraphAnalyzer:
 	
 	def get_data(self, verbose=False, case_restrict=CaseRestriction()):
 		datapath = "Output/"+self.sourcedir
+		
 		for file in os.listdir(datapath):
 			filenameparts = re.split(r'\.', file)
 			filename = filenameparts[0]
@@ -168,7 +174,8 @@ class GraphAnalyzer:
 				readlength = int(casedata[2])
 				error_percentage = float(".".join(re.split(r'-',casedata[5])))
 				num_of_reads_data = re.split(r'[\[,\]]', casedata[4])
-				num_of_reads = int(num_of_reads_data[1])*(len(num_of_reads_data)-2)
+				num_of_reads = int(num_of_reads_data[1])#*(len(num_of_reads_data)-2)
+				
 				if case_restrict.check_compatibility(k_value, readlength, error_percentage, num_of_reads):
 					if verbose:
 						print ("Open file "+datapath+"/"+file)
@@ -198,6 +205,7 @@ class GraphAnalyzer:
 			x_values = []
 			y_values = []
 			label_data = []
+			y_label = ""
 			for gd in self.graphdatas:
 				this_label = ""
 				y_label = ""

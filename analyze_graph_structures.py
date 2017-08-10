@@ -24,26 +24,24 @@ def multiple_lineplot_nodes_edges_components(graph_analyzer, data, filename, y1=
 	fig.savefig(filename, dpi=80)
 	plt.close()
 
-def plots_absk(sourcedirs):
-	readlength_settings = [50, 100, 250, 500, 1000]
-	number_of_reads_settings = [1000, 500, 200, 100, 50]
-	coverage_factors = [1,5,10,15,20]
+def plots_absk(sourcedirs, readlength_settings=[50, 100, 250, 500, 1000], number_of_reads_settings=[500, 250, 100, 50, 25], coverage_factors=[1,5,10,15,20], eps=[0, 0.1, 0.25, 0.5, 1, 2, 5], ks=[12,14,16,18,20,25,30], num_genomes=1):
 	for sourcedir in sourcedirs:
-		for rl in readlength_settings:
-			for i in range(len(coverage_factors)):
-				nr = number_of_reads_settings[i]*coverage_factors[i]
+		for i in range(len(readlength_settings)):
+			rl = readlength_settings[i]
+			for cov in coverage_factors:
+				nr = number_of_reads_settings[i]*cov
 				gaga = ga.GraphAnalyzer(sourcedir)
-				gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=[0, 0.1, 0.25, 0.5, 1, 2, 5], k_values=[12,14,16,18,20,25,30])
-				gaga.get_data(case_restrict=gacr, verbose=True)
+				gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps, k_values=ks, num_genomes=num_genomes)
+				print ("Case "+gacr.construct_casename())
+				gaga.get_data(case_restrict=gacr, verbose=False)
 				
 				if len(gaga.graphdatas) > 0:
-					print ("Case "+gacr.construct_casename())
-					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage.png")
-					multiple_lineplot_nodes_edges_components(gaga, "k_value", filename="Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_k_value.png")
+					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/num_nec_"+gacr.construct_casename()+"_error_percentage.png")
+					multiple_lineplot_nodes_edges_components(gaga, "k_value", filename="Output/"+sourcedir+"/plots/num_nec_"+gacr.construct_casename()+"_k_value.png")
 				
-					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage_seqlengths.png", y1=["avg_seq_lengths"], y2 = "num_of_nodes")
+					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/avgseqlengths_"+gacr.construct_casename()+"_error_percentage.png", y1=["avg_seq_lengths"], y2 = "num_of_components")
 	
-		for ep in [0, 0.1, 0.25, 0.5, 1, 2, 5]:
+		for ep in eps:
 			for i in range(len(coverage_factors)):
 				nrs = [nr*coverage_factors[i] for nr in number_of_reads_settings]
 				gaga = ga.GraphAnalyzer(sourcedir)
@@ -52,7 +50,7 @@ def plots_absk(sourcedirs):
 					gaga.get_data(case_restrict=gacr, verbose=True)
 					
 				if len(gaga.graphdatas) > 0:
-					multiple_lineplot_nodes_edges_components(gaga, "k_value", "Output/"+sourcedir+"/plots/k(-1)_ep("+str(ep)+")_coveragefactor("+str(coverage_factors[i])+")_k_value.png")
+					multiple_lineplot_nodes_edges_components(gaga, "k_value", "Output/"+sourcedir+"/plots/num_nec_coverage_"+gacr.construct_casename()+"_k_value.png")
 
 def plots_relk(sourcedirs):
 	k_rel_values = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
@@ -65,8 +63,8 @@ def plots_relk(sourcedirs):
 			gaga.get_data(case_restrict=gacr, verbose=True)
 			
 			if len(gaga.graphdatas) > 0:
-				multiple_lineplot_nodes_edges_components(gaga, "error_percentage", "Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage.png")
-				multiple_lineplot_nodes_edges_components(gaga, "rel_k_value", "Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_rel_k_value.png")
+				#multiple_lineplot_nodes_edges_components(gaga, "error_percentage", "Output/"+sourcedir+"/plots/"+gacr.construct_casename()+"_error_percentage.png")
+				multiple_lineplot_nodes_edges_components(gaga, "rel_k_value", "Output/"+sourcedir+"/plots/num_nec_"+gacr.construct_casename()+"_rel_k_value.png")
 
 		readlength_settings = [50, 100, 150, 200]
 		number_of_reads_settings = [1000,500,333,250]
@@ -82,61 +80,67 @@ def plots_relk(sourcedirs):
 					gaga.get_data(case_restrict=gacr, verbose=True)
 				
 				if len(gaga.graphdatas) > 0:
-					multiple_lineplot_nodes_edges_components(gaga, "rel_k_value", "Output/"+sourcedir+"/plots/k(-1)_ep("+str(ep)+")_coveragefactor("+str(coverage_factor[i])+")_rel_k_value.png")
+					multiple_lineplot_nodes_edges_components(gaga, "rel_k_value", "Output/"+sourcedir+"/plots/num_nec_coverage_"+gacr.construct_casename()+"_rel_k_value.png")
 					
-def plot_distribution(sourcedirs, k_values):
-	nr = 5000
-	rl = 100
-	eps = [0, 0.1, 0.25, 0.5, 1, 2, 5]
+def plot_distribution(sourcedirs, k_values=[12,14,16,18,20,25,30], rl=50, nr=5000, eps=[0, 0.1, 0.25, 0.5, 1, 2, 5], num_genomes=1):
 	for sourcedir in sourcedirs:
 		for k_value in k_values:
 			gaga = ga.GraphAnalyzer(sourcedir)
-			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps, k_values=[k_value])
+			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps[1:], k_values=[k_value], num_genomes=num_genomes)
 			gaga.get_data(case_restrict=gacr, verbose=True)
 			
 			if len(gaga.graphdatas) > 0:
+				
 				fig = plt.figure()
 				fig.set_size_inches(20,20)
 				gaga.distribution_lineplot(data="degree_dist", legend_pos=1)
-				fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_k("+str(k_value)+")_ep("+str(eps)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				
+				#fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_k("+str(k_value)+")_ep("+str(eps)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_"+gacr.construct_casename()+"_k_value.png", dpi=80)
 				plt.close()
 				
 				fig = plt.figure()
 				fig.set_size_inches(20,20)
 				gaga.distribution_lineplot(data="seq_length", legend_pos=2)
-				fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_k("+str(k_value)+")_ep("+str(eps)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				#fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_k("+str(k_value)+")_ep("+str(eps)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_"+gacr.construct_casename()+"_k_value.png", dpi=80)
 				plt.close()
 				
 		for ep in eps:
 			gaga = ga.GraphAnalyzer(sourcedir)
-			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=[ep], k_values=k_values)
+			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=[ep], k_values=k_values, num_genomes=num_genomes)
 			gaga.get_data(case_restrict=gacr, verbose=True)
 			
 			if len(gaga.graphdatas) > 0:
 				fig = plt.figure()
 				fig.set_size_inches(20,20)
 				gaga.distribution_lineplot(data="degree_dist", legend_pos=1)
-				fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_k("+str(k_values)+")_ep("+str(ep)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				#fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_k("+str(k_values)+")_ep("+str(ep)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_deg_"+gacr.construct_casename()+"_error_percentage.png", dpi=80)
 				plt.close()
 				
 				fig = plt.figure()
 				fig.set_size_inches(20,20)
 				gaga.distribution_lineplot(data="seq_length", legend_pos=2)
-				fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_k("+str(k_values)+")_ep("+str(ep)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				#fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_k("+str(k_values)+")_ep("+str(ep)+")_nr("+str(nr)+")_rl("+str(rl)+").png", dpi=80)
+				fig.savefig("Output/"+sourcedir+"/plots/distributions_seqlength_"+gacr.construct_casename()+"_error_percentage.png", dpi=80)
 				plt.close()
 				
-def plot_avg_seqlength(sourcedirs):
-	nr = 1000
-	rl = 50
-	eps = [0,0.1, 0.25, 0.5, 1, 2, 5]
+def plot_avg_seqlength(sourcedirs, num_genomes=1):
+	eps = [0.1, 0.25, 0.5, 1, 2, 5]
 	ks = [12,14,16,18,20,25,30]
-	gaga = ga.GraphAnalyzer(sourcedirs_absk[0])
-	gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps, k_values=ks)
-	gaga.get_data(case_restrict=gacr, verbose=True)
-	multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedirs_absk[0]+"/plots/distributions_avgseqlength_k("+str(ks)+")_ep("+str(eps)+")_nr("+str(nr)+")_rl("+str(rl)+").png", y1=["avg_seq_lengths"], y2="num_of_components")
+	for [rl,nr] in [[50,500], [50,2500], [50,5000], [100, 2500]]:
+		gaga = ga.GraphAnalyzer(sourcedirs[0])
+		gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps, k_values=ks, num_genomes=num_genomes)
+		gaga.get_data(case_restrict=gacr, verbose=True)
+		if len(gaga.graphdatas) > 0:
+			multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedirs[0]+"/plots/avgseqlengths_"+gacr.construct_casename()+"_error_percentage.png", y1=["avg_seq_lengths"], y2="num_of_components")
 				
-#plots_relk(sourcedirs_relk)
-#plots_absk(sourcedirs_absk)
+#plots_relk(["general_relk_1"])
+#plots_absk(["general_absk_2"], num_genomes=2)
+#plot_avg_seqlength(["general_absk_2"], num_genomes=2)
+plot_distribution(["general_absk_2"], rl=50, nr=5000, num_genomes=2)
+plot_distribution(["general_absk_2"], rl=100, nr=2500, num_genomes=2)
 
 #plot_distribution(sourcedirs_absk,[12,14,16,18,20,25,30])
 #plot_distribution(sourcedirs_relk,[10,15,20,25,30,35,40])

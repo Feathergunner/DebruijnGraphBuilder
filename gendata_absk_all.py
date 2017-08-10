@@ -12,8 +12,19 @@ import manjasDefinitionen as md
 
 sampleReads.read_genomes()
 
+check_mdv5 = [md.v5]
 set_of_viruses_2 = [md.v1, md.v5]
 set_of_viruses_4 = [md.v1, md.v7, md.v3, md.v5]
+
+setting_check_mdv5 = {
+	"k_absolute_settings" : [16,20,25,30],
+	"readlength_settings" : [50],
+	"number_of_reads_settings" : [5000],
+	"coverage_factors" : [1],
+	"error_percentages" : [0.0],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : check_mdv5,
+	"output_dir" : "Output/checkmdv5"}
 
 setting_absk_1 = {
 	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
@@ -57,7 +68,7 @@ def gendata(setting):
 	for cf in coverage_factors:
 		for i in range(len(readlength_settings)):
 			readlength = readlength_settings[i]
-			num_reads = [cf*number_of_reads_settings[i]]#[cf*nr for nr in number_of_reads_settings[i]]
+			num_reads = [cf*number_of_reads_settings[i]]*num_different_viruses#[cf*nr for nr in number_of_reads_settings[i]]
 			
 			for error_percentage in error_percentages:
 				ep_string = "-".join(re.split(r'\.',str(error_percentage)))
@@ -103,4 +114,4 @@ def gendata(setting):
 					else:
 						print ("Data already exists!")
 
-gendata(setting_absk_1)
+gendata(setting_absk_4)
