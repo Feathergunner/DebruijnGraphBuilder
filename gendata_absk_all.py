@@ -13,6 +13,7 @@ import manjasDefinitionen as md
 sampleReads.read_genomes()
 
 check_mdv5 = [md.v5]
+set_of_viruses_corona = [md.cv, md.v1]
 set_of_viruses_2 = [md.v1, md.v5]
 set_of_viruses_4 = [md.v1, md.v7, md.v3, md.v5]
 
@@ -55,6 +56,26 @@ setting_absk_4 = {
 	"num_different_viruses" : 4,
 	"set_of_viruses" : set_of_viruses_4,
 	"output_dir" : "Output/general_absk_4"}
+	
+setting_corona_absk_1 = {
+	"k_absolute_settings" : [14,16,18,20,25,30],
+	"readlength_settings" : [50, 100],
+	"number_of_reads_settings" : [500, 250],
+	"coverage_factors" : [1, 5, 10, 15, 20],
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : set_of_viruses_corona,
+	"output_dir" : "Output/general_corona_absk_1"}
+
+setting_corona_vs_bvdv = {
+	"k_absolute_settings" : [14,16,18,20,25,30],
+	"readlength_settings" : [50, 100],
+	"number_of_reads_settings" : [500, 250],
+	"coverage_factors" : [1, 5, 10, 15, 20],
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"num_different_viruses" : 2,
+	"set_of_viruses" : set_of_viruses_corona,
+	"output_dir" : "Output/general_corona_vs_bvdv"}
 
 def gendata(setting):
 	k_absolute_settings = setting["k_absolute_settings"]
@@ -114,4 +135,5 @@ def gendata(setting):
 					else:
 						print ("Data already exists!")
 
-gendata(setting_absk_4)
+gendata(setting_corona_absk_1)
+gendata(setting_corona_vs_bvdv)
