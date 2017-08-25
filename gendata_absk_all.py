@@ -8,7 +8,6 @@ import gc
 import sampleReads
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
-import veryfast_debruijn_graph_builder as vfdgb
 import manjasDefinitionen as md
 
 sampleReads.read_genomes()
@@ -72,8 +71,8 @@ setting_absk_4 = {
 setting_corona_absk_1 = {
 	"k_absolute_settings" : [14,16,18,20,25,30],
 	"readlength_settings" : [50, 100],
-	"number_of_reads_settings" : [500, 250],
-	"coverage_factors" : [1, 5, 10, 15, 20],
+	"number_of_reads_settings" : [5000, 2500],
+	"coverage_factors" : [1, 2, 5],
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_of_viruses_corona,
@@ -82,8 +81,8 @@ setting_corona_absk_1 = {
 setting_corona_vs_bvdv = {
 	"k_absolute_settings" : [14,16,18,20,25,30],
 	"readlength_settings" : [50, 100],
-	"number_of_reads_settings" : [500, 250],
-	"coverage_factors" : [1, 5, 10, 15, 20],
+	"number_of_reads_settings" : [5000, 2500],
+	"coverage_factors" : [1, 2, 5],
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_of_viruses_corona,
@@ -93,13 +92,13 @@ setting_absk_large_corona_1 = {
 	"k_absolute_settings" : [14,16,18,20,25,30],
 	"readlength_settings" : [4000, 8000, 10000],
 	"number_of_reads_settings" : [50, 25,20],
-	"coverage_factors" : [1,2,5],
+	"coverage_factors" : [1, 2, 5],
 	"error_percentages" : [1.0, 5.0, 10.0, 15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_of_viruses_corona,
 	"output_dir" : "Output/general_corona_absk_large_1"}
 
-def gendata(setting):
+def gendata(setting, name="bvdv_sample"):
 	k_absolute_settings = setting["k_absolute_settings"]
 	coverage_factors = setting["coverage_factors"]
 	readlength_settings = setting["readlength_settings"]
@@ -115,7 +114,7 @@ def gendata(setting):
 			
 			for error_percentage in error_percentages:
 				ep_string = "-".join(re.split(r'\.',str(error_percentage)))
-				casename_gen = "bvdv_sample_"+str(readlength)+"_"+str(num_different_viruses)+"_["
+				casename_gen = name+"_"+str(readlength)+"_"+str(num_different_viruses)+"_["
 				for n_r_i in range(len(num_reads)-1):
 					casename_gen += str(num_reads[n_r_i])+","
 				casename_gen += str(num_reads[-1])+"]_"+ep_string
@@ -155,5 +154,5 @@ def gendata(setting):
 
 
 #gendata(setting_absk_large_1)
-gendata(setting_absk_large_corona_1)
+gendata(setting_corona_vs_bvdv, "corona_vs_bvdv")
 
