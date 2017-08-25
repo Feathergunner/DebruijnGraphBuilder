@@ -8,6 +8,7 @@ import gc
 import sampleReads
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
+import veryfast_debruijn_graph_builder as vfdgb
 import manjasDefinitionen as md
 
 sampleReads.read_genomes()
@@ -15,6 +16,7 @@ sampleReads.read_genomes()
 check_mdv5 = [md.v5]
 set_of_viruses_2 = [md.v1, md.v5]
 set_of_viruses_4 = [md.v1, md.v7, md.v3, md.v5]
+set_of_viruses_corona = [md.cv, md.v1]
 
 setting_check_mdv5 = {
 	"k_absolute_settings" : [16,20,25,30],
@@ -27,14 +29,24 @@ setting_check_mdv5 = {
 	"output_dir" : "Output/checkmdv5"}
 
 setting_absk_1 = {
-	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
-	"readlength_settings" : [50, 100, 250, 500, 1000],
-	"number_of_reads_settings" : [500, 250, 100, 50, 25],
-	"coverage_factors" : [1, 5, 10, 15, 20],
-	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
-	"num_different_viruses" : 1,
-	"set_of_viruses" : set_of_viruses_2,
-	"output_dir" : "Output/general_absk_1"}
+        "k_absolute_settings" : [10,12,14,16,18,20,25,30],
+        "readlength_settings" : [50, 100, 250, 500, 1000],
+        "number_of_reads_settings" : [500, 250, 100, 50, 25],
+        "coverage_factors" : [1, 5, 10, 15, 20],
+        "error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+        "num_different_viruses" : 1,
+        "set_of_viruses" : set_of_viruses_2,
+        "output_dir" : "Output/general_absk_1"}
+
+setting_absk_large_1 = {
+        "k_absolute_settings" : [14,16,18,20,25,30],
+        "readlength_settings" : [4000, 8000, 10000],
+        "number_of_reads_settings" : [50, 25, 20],
+        "coverage_factors" : [1, 2, 5],
+        "error_percentages" : [0.0, 1.0, 5.0, 10.0, 15.0],
+        "num_different_viruses" : 1,
+        "set_of_viruses" : set_of_viruses_2,
+        "output_dir" : "Output/general_absk_large_1"}
 	
 setting_absk_2 = {
 	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
@@ -55,6 +67,15 @@ setting_absk_4 = {
 	"num_different_viruses" : 4,
 	"set_of_viruses" : set_of_viruses_4,
 	"output_dir" : "Output/general_absk_4"}
+
+setting_absk_large_corona_1 = {
+	"k_absolute_settings" : [14,16,18,20,25,30],
+	"readlength_settings" : [4000, 8000, 10000],
+	"number_of_reads_settings" : [50, 25,20],
+	"coverage_factors" : [1,2,5],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : set_of_viruses_corona,
+	"output_dir" : "Output/general_corona_absk_large_1"}
 
 def gendata(setting):
 	k_absolute_settings = setting["k_absolute_settings"]
@@ -79,11 +100,7 @@ def gendata(setting):
 				readfilename = "Data/reads_"+casename_gen+".txt"
 				
 				if not os.path.isfile(readfilename):
-					sampleReads.samplereads(output_filename			= readfilename,
-											read_length				= readlength,
-											set_of_viruses			= set_of_viruses[:num_different_viruses],
-											number_of_reads			= num_reads,
-											avg_error_percentage	= error_percentage)
+					sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	avg_error_percentage = error_percentage)
 				else:
 					print ("Reads already exist!")
 										
@@ -114,4 +131,6 @@ def gendata(setting):
 					else:
 						print ("Data already exists!")
 
-gendata(setting_absk_4)
+#gendata(setting_absk_large_1)
+gendata(setting_absk_large_corona_1)
+
