@@ -94,6 +94,7 @@ setting_absk_large_corona_1 = {
 	"readlength_settings" : [4000, 8000, 10000],
 	"number_of_reads_settings" : [50, 25,20],
 	"coverage_factors" : [1,2,5],
+	"error_percentages" : [1.0, 5.0, 10.0, 15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_of_viruses_corona,
 	"output_dir" : "Output/general_corona_absk_large_1"}
