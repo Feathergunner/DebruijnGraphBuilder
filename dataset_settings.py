@@ -24,7 +24,7 @@ setting_absk_1 = {
     "error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
     "num_different_viruses" : 1,
     "set_of_viruses" : set_bvdv_2,
-	"name" : "bvdv_absk_1",
+	"name" : "bvdv-absk-1",
     "output_dir" : "Output/general_absk_1"}
 
 setting_absk_large_1 = {
@@ -36,7 +36,7 @@ setting_absk_large_1 = {
     "error_percentages" : [0.0, 1.0, 5.0, 10.0, 15.0],
     "num_different_viruses" : 1,
     "set_of_viruses" : set_bvdv_2,
-	"name" : "bvdv_absk_largereads_1",
+	"name" : "bvdv-absk-largereads-1",
     "output_dir" : "Output/general_absk_large_1"}
 	
 setting_absk_2 = {
@@ -48,7 +48,7 @@ setting_absk_2 = {
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],#, 10.0, 15.0. 20.0],
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
-	"name" : "bvdv_absk_2",
+	"name" : "bvdv-absk-2",
 	"output_dir" : "Output/general_absk_2"}
 	
 setting_absk_4 = {
@@ -60,7 +60,7 @@ setting_absk_4 = {
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],#, 10.0, 15.0. 20.0],
 	"num_different_viruses" : 4,
 	"set_of_viruses" : set_bvdv_4,
-	"name" : "bvdv_absk_4",
+	"name" : "bvdv-absk-4",
 	"output_dir" : "Output/general_absk_4"}
 	
 setting_corona_absk_1 = {
@@ -72,7 +72,7 @@ setting_corona_absk_1 = {
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_corona_1,
-	"name" : "corona_absk_1",
+	"name" : "corona-absk-1",
 	"output_dir" : "Output/general_corona_absk_1"}
 
 setting_corona_vs_bvdv = {
@@ -84,7 +84,7 @@ setting_corona_vs_bvdv = {
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_corona_1,
-	"name" : "coronavsbvdv_absk",
+	"name" : "corona-vs-bvdv-absk",
 	"output_dir" : "Output/general_corona_vs_bvdv"}
 
 setting_absk_large_corona_1 = {
@@ -96,5 +96,5 @@ setting_absk_large_corona_1 = {
 	"error_percentages" : [1.0, 5.0, 10.0, 15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_corona_1,
-	"name" : "corona_asbk_largereads_1",
+	"name" : "corona-asbk-largereads-1",
 	"output_dir" : "Output/general_corona_absk_large_1"}
