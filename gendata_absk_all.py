@@ -36,8 +36,15 @@ def gendata(setting):
 				casename_gen += str(num_reads[-1])+"]_"+ep_string
 				readfilename = "Data/reads_"+casename_gen+".txt"
 				
+				if setting["error_type"] == "replace":
+					epr = error_percentage
+					epi = 0
+				else:
+					epr = 0
+					epi = error_percentage
+				
 				if not os.path.isfile(readfilename):
-					sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	avg_error_percentage = error_percentage)
+					sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
 				else:
 					print ("Reads already exist!")
 										

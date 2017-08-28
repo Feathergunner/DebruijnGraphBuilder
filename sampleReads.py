@@ -80,8 +80,8 @@ def samplereads(input_filedir="Data/genomes/",
 				length_stddev=0,
 				set_of_viruses=[md.v1, md.v5],
 				number_of_reads=[5000,5000],
-				replace_error_percentage=0,
-				indel_error_percentage=0,
+				replace_error_percentage=0.0,
+				indel_error_percentage=0.0,
 				inverted_reads=False):
 				
 	print ("Sample reads from genomes ...")
