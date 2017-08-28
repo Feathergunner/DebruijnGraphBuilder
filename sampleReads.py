@@ -80,7 +80,8 @@ def samplereads(input_filedir="Data/genomes/",
 				length_stddev=0,
 				set_of_viruses=[md.v1, md.v5],
 				number_of_reads=[5000,5000],
-				avg_error_percentage=0,
+				replace_error_percentage=0,
+				indel_error_percentage=0,
 				inverted_reads=False):
 				
 	print ("Sample reads from genomes ...")
@@ -115,8 +116,18 @@ def samplereads(input_filedir="Data/genomes/",
 			sampleread = genome[ind:ind+readlen]
 			
 			for i in range(len(sampleread)):
-				if randint(0,10000) < int(100*avg_error_percentage):
+				# replacement error:
+				if randint(0,10000) < int(100*replace_error_percentage):
 					sampleread = sampleread[:i]+data_io.get_random_mutation(sampleread[i], alphabet)+sampleread[(i+1):]
+				# indel error:
+				if randint(0,10000) < int(100*indel_error_percentage):
+					# in/del 50/50:
+					if randint(0,100) < 50:
+						# insert:
+						inseertbase = random.choice(alphabet)
+						sampleread = sampleread[:i] + insertbase + sampleread[i:]
+					else:
+						sampleread = sampleread[:i] + sampleread[(i+1):]				
 					
 			if (inverted_reads and randint(0, 100)>50):
 				reads.append(data_io.get_inverse_sequence(sampleread.upper()))
