@@ -89,16 +89,16 @@ setting_corona_vs_bvdv = {
 	"name" : "corona-vs-bvdv-absk",
 	"output_dir" : "Output/general_corona_vs_bvdv"}
 
-setting_absk_large_corona_1 = {
-	"k_absolute_settings" : [14,16,18,20,25,30],
-	"readlength_settings" : [4000, 8000, 10000],
-	"number_of_reads_settings" : [50, 25,20],
+corona_large_absk_1 = {
+	"k_absolute_settings" : [14,16,18,20,25,30,40],
+	"readlength_settings" : [8000, 10000],
+	"number_of_reads_settings" : [250,200],
 	"coverage_factors" : [1, 2, 5],
-	"error_type" : "replace",
+	"error_type" : "indel",
 	"error_percentages" : [1.0, 5.0, 10.0, 15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_corona_1,
-	"name" : "corona-asbk-largereads-1",
+	"name" : "corona-largereads-asbk-1",
 	"output_dir" : "Output/general_corona_absk_large_1"}
 	
 bvdv_absk_1 = {
