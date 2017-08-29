@@ -23,6 +23,11 @@ def gendata(setting):
 	output_dir = "Output/"+setting["name"]
 	name = setting["name"]
 	
+	if setting["error_type"] == "replace":
+		name += "-r"
+	else:
+		name += "-i"
+					
 	if not os.path.exists(output_dir):
 		os.makedirs(output_dir)
 	if not os.path.exists(output_dir+"/reads"):
@@ -34,10 +39,6 @@ def gendata(setting):
 			num_reads = [cf*number_of_reads_settings[i]]*num_different_viruses#[cf*nr for nr in number_of_reads_settings[i]]
 			
 			for error_percentage in error_percentages:
-				if setting["error_type"] == "replace":
-					name += "-r"
-				else:
-					name += "-i"
 				ep_string = "-".join(re.split(r'\.',str(error_percentage)))
 				casename_gen = name+"_"+str(readlength)+"_"+str(num_different_viruses)+"_["
 				for n_r_i in range(len(num_reads)-1):
