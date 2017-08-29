@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import re
-import os.path
+import os
 import gc
 
 import sampleReads
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
-import manjasDefinitionen as md
 import dataset_settings as ds
 
 sampleReads.read_genomes()
@@ -23,13 +22,19 @@ def gendata(setting):
 	set_of_viruses = setting["set_of_viruses"]
 	output_dir = "Output/"+setting["name"]
 	name = setting["name"]
+	
+	if not os.path.exists(output_dir):
+		os.makedirs(output_dir)
+	if not os.path.exists(output_dir+"/reads"):
+		os.makedirs(output_dir+"/reads")
+	
 	for cf in coverage_factors:
 		for i in range(len(readlength_settings)):
 			readlength = readlength_settings[i]
 			num_reads = [cf*number_of_reads_settings[i]]*num_different_viruses#[cf*nr for nr in number_of_reads_settings[i]]
 			
 			for error_percentage in error_percentages:
-				if setting["error_tpye"] == "replace":
+				if setting["error_type"] == "replace":
 					name += "-r"
 				else:
 					name += "-i"
@@ -38,7 +43,8 @@ def gendata(setting):
 				for n_r_i in range(len(num_reads)-1):
 					casename_gen += str(num_reads[n_r_i])+","
 				casename_gen += str(num_reads[-1])+"]_"+ep_string
-				readfilename = "Data/reads_"+casename_gen+".txt"
+				#readfilename = "Data/reads_"+casename_gen+".txt"
+				readfilename = output_dir + "/reads/" + casename_gen + ".txt"
 				
 				if setting["error_type"] == "replace":
 					epr = error_percentage
@@ -79,7 +85,9 @@ def gendata(setting):
 					else:
 						print ("Data already exists!")
 
-
+gendata(ds.bvdv_absk_1)
+gendata(ds.bvdv_absk_2)
+gendata(ds.bvdv_absk_4)
 #gendata(setting_absk_large_1)
-gendata(ds.setting_corona_vs_bvdv)
+#gendata(ds.setting_corona_vs_bvdv)
 

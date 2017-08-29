@@ -1,4 +1,6 @@
 
+import manjasDefinitionen as md
+
 set_corona_1 = [md.cv, md.v1]
 set_bvdv_2 = [md.v1, md.v5]
 set_bvdv_4 = [md.v1, md.v7, md.v3, md.v5]
