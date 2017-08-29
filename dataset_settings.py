@@ -98,3 +98,39 @@ setting_absk_large_corona_1 = {
 	"set_of_viruses" : set_corona_1,
 	"name" : "corona-asbk-largereads-1",
 	"output_dir" : "Output/general_corona_absk_large_1"}
+	
+bvdv_absk_1 = {
+	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
+    "readlength_settings" : [50, 100],
+    "number_of_reads_settings" : [2500, 1250],
+    "coverage_factors" : [1, 2, 4],
+	"error_type" : "replace",
+    "error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+    "num_different_viruses" : 1,
+    "set_of_viruses" : set_bvdv_2,
+	"name" : "bvdv-absk-1",
+    "output_dir" : "Output/bvdv_absk_1"}
+	
+bvdv_absk_2 = {
+	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
+	"readlength_settings" : [50, 100],
+    "number_of_reads_settings" : [2500, 1250],
+    "coverage_factors" : [1, 2, 4],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"num_different_viruses" : 2,
+	"set_of_viruses" : set_bvdv_2,
+	"name" : "bvdv-absk-2",
+	"output_dir" : "Output/bvdv_absk_2"}
+	
+bvdv_absk_4 = {
+	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
+	"readlength_settings" : [50, 100],
+    "number_of_reads_settings" : [2500, 1250],
+    "coverage_factors" : [1, 2, 4],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"num_different_viruses" : 4,
+	"set_of_viruses" : set_bvdv_4,
+	"name" : "bvdv-absk-4",
+	"output_dir" : "Output/bvdv_absk_4"}
