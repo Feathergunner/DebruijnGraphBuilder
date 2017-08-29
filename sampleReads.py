@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from random import randint, gauss
+from random import randint, gauss, choice
 import re
 import os.path
 
@@ -124,7 +124,7 @@ def samplereads(input_filedir="Data/genomes/",
 					# in/del 50/50:
 					if randint(0,100) < 50:
 						# insert:
-						inseertbase = random.choice(alphabet)
+						insertbase = choice(alphabet)
 						sampleread = sampleread[:i] + insertbase + sampleread[i:]
 					else:
 						sampleread = sampleread[:i] + sampleread[(i+1):]				
