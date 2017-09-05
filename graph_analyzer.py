@@ -171,10 +171,17 @@ class GraphAnalyzer:
 			if len(filenameparts) > 1 and filenameparts[-1] == "asqg":
 				casedata = re.split(r'_', filename)
 				k_value = int(casedata[-1])
-				readlength = int(casedata[2])
-				error_percentage = float(".".join(re.split(r'-',casedata[5])))
-				num_of_reads_data = re.split(r'[\[,\]]', casedata[4])
-				num_of_reads = int(num_of_reads_data[1])#*(len(num_of_reads_data)-2)
+				# DIFFERENT VERSIONS OF FILENAMES:
+				if len(casedata) == 6:
+					readlength = int(casedata[1])
+					error_percentage = float(".".join(re.split(r'-',casedata[4])))
+					num_of_reads_data = re.split(r'[\[,\]]', casedata[3])
+					num_of_reads = int(num_of_reads_data[1])#*(len(num_of_reads_data)-2)
+				else:
+					readlength = int(casedata[2])
+					error_percentage = float(".".join(re.split(r'-',casedata[5])))
+					num_of_reads_data = re.split(r'[\[,\]]', casedata[4])
+					num_of_reads = int(num_of_reads_data[1])#*(len(num_of_reads_data)-2)
 				
 				if case_restrict.check_compatibility(k_value, readlength, error_percentage, num_of_reads):
 					if verbose:
