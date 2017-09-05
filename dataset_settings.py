@@ -136,3 +136,15 @@ bvdv_absk_4 = {
 	"set_of_viruses" : set_bvdv_4,
 	"name" : "bvdv-absk-4",
 	"output_dir" : "Output/bvdv_absk_4"}
+	
+bvdv_large_absk_2 = {
+	"k_absolute_settings" : [20,30],
+	"readlength_settings" : [8000, 1000],
+    "number_of_reads_settings" : [250, 200],
+    "coverage_factors" : [4],
+	"error_type" : "replace",
+	"error_percentages" : [1.0, 5.0, 10.0, 15.0],
+	"num_different_viruses" : 2,
+	"set_of_viruses" : set_bvdv_2,
+	"name" : "bvdv-largereads-absk-2",
+	"output_dir" : "Output/bvdv_absk_2"}
