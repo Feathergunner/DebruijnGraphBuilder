@@ -66,9 +66,11 @@ class CaseRestriction:
 			casename += "-1"
 		else:
 			for i in range(len(self.error_percentages)-1):
-				ep_string = "".join(re.split(r'\.',str(self.error_percentages[i])))
+				#ep_string = "".join(re.split(r'\.',str(self.error_percentages[i])))
+				ep_string = "".join(re.split(r'-',str(self.error_percentages[i])))
 				casename += ep_string+"-"
-			casename += "".join(re.split(r'\.',str(self.error_percentages[-1])))
+			#casename += "".join(re.split(r'\.',str(self.error_percentages[-1])))
+			casename += "".join(re.split(r'-',str(self.error_percentages[-1])))
 		casename += ")"
 		return casename
 
@@ -182,7 +184,6 @@ class GraphAnalyzer:
 					error_percentage = float(".".join(re.split(r'-',casedata[5])))
 					num_of_reads_data = re.split(r'[\[,\]]', casedata[4])
 					num_of_reads = int(num_of_reads_data[1])#*(len(num_of_reads_data)-2)
-				
 				if case_restrict.check_compatibility(k_value, readlength, error_percentage, num_of_reads):
 					if verbose:
 						print ("Open file "+datapath+"/"+file)

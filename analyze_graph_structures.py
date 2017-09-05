@@ -88,12 +88,12 @@ def plots_relk(sourcedirs):
 def plot_distribution(sourcedirs, k_values=[12,14,16,18,20,25,30], rl=50, nr=5000, eps=[0, 0.1, 0.25, 0.5, 1, 2, 5], num_genomes=1):
 	for sourcedir in sourcedirs:
 		for k_value in k_values:
+			#print k_value
 			gaga = ga.GraphAnalyzer(sourcedir)
 			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps[1:], k_values=[k_value], num_genomes=num_genomes)
 			gaga.get_data(case_restrict=gacr, verbose=True)
 			
 			if len(gaga.graphdatas) > 0:
-				
 				fig = plt.figure()
 				fig.set_size_inches(figure_size,figure_size)
 				gaga.distribution_lineplot(data="degree_dist", legend_pos=1)
@@ -110,6 +110,7 @@ def plot_distribution(sourcedirs, k_values=[12,14,16,18,20,25,30], rl=50, nr=500
 				plt.close()
 				
 		for ep in eps:
+			#print ep
 			gaga = ga.GraphAnalyzer(sourcedir)
 			gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=[ep], k_values=k_values, num_genomes=num_genomes)
 			gaga.get_data(case_restrict=gacr, verbose=True)
@@ -146,7 +147,7 @@ def plot_distribution_from_setting(setting):
 				sourcedirs = [setting["name"]],
 				k_values = setting["k_absolute_settings"],
 				rl = setting["readlength_settings"][i],
-				nr = cf * setting["number_of_reads_settings"],
+				nr = cf * setting["number_of_reads_settings"][i],
 				eps = setting["error_percentages"],
 				num_genomes = setting["num_different_viruses"])
 
@@ -171,4 +172,4 @@ def plots_absk_from_setting(setting):
 
 import dataset_settings as ds
 plot_distribution_from_setting(ds.corona_large_absk_1)
-plots_absk_from_setting(ds.corona_large_absk_1)
+#plots_absk_from_setting(ds.corona_large_absk_1)
