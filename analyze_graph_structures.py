@@ -36,7 +36,7 @@ def plots_absk(sourcedirs, readlength_settings=[50, 100, 250, 500, 1000], number
 				gaga = ga.GraphAnalyzer(sourcedir)
 				gacr = ga.CaseRestriction(readlengths=[rl], number_of_reads=[nr], error_percentages=eps, k_values=ks, num_genomes=num_genomes)
 				print ("Case "+gacr.construct_casename())
-				gaga.get_data(case_restrict=gacr, verbose=False)
+				gaga.get_data(case_restrict=gacr, verbose=True)
 				
 				if len(gaga.graphdatas) > 0:
 					multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedir+"/plots/num_nec_"+gacr.construct_casename()+"_error_percentage")
@@ -139,12 +139,36 @@ def plot_avg_seqlength(sourcedirs, num_genomes=1):
 		if len(gaga.graphdatas) > 0:
 			multiple_lineplot_nodes_edges_components(gaga, "error_percentage", filename="Output/"+sourcedirs[0]+"/plots/avgseqlengths_"+gacr.construct_casename()+"_error_percentage", y1=["avg_seq_lengths"], y2="num_of_components")
 				
+def plot_distribution_from_setting(setting):
+	for cf in setting["coverage_factors"]:
+		for i in range(len(setting["readlength_settings"])):
+			plot_distribution(
+				sourcedirs = [setting["name"]],
+				k_values = setting["k_absolute_settings"],
+				rl = setting["readlength_settings"][i],
+				nr = cf * setting["number_of_reads_settings"],
+				eps = setting["error_percentages"],
+				num_genomes = setting["num_different_viruses"])
+
+def plots_absk_from_setting(setting):
+	plots_absk(
+		sourcedirs = [setting["name"]],
+		readlength_settings = setting["readlength_settings"],
+		number_of_reads_settings = setting["number_of_reads_settings"],
+		coverage_factors = setting["coverage_factors"],
+		eps = setting["error_percentages"],
+		ks = setting["k_absolute_settings"],
+		num_genomes = setting["num_different_viruses"])
+				
 #plots_relk(["general_relk_1"])
 #plots_absk(["general_absk_2"], num_genomes=2)
-plot_avg_seqlength(["general_absk_2"], num_genomes=2)
-plot_distribution(["general_absk_2"], rl=50, nr=5000, num_genomes=2)
+#plot_avg_seqlength(["general_absk_2"], num_genomes=2)
+#plot_distribution(["general_absk_2"], rl=50, nr=5000, num_genomes=2)
 #plot_distribution(["general_absk_2"], rl=100, nr=2500, num_genomes=2)
 
 #plot_distribution(sourcedirs_absk,[12,14,16,18,20,25,30])
 #plot_distribution(sourcedirs_relk,[10,15,20,25,30,35,40])
 
+import dataset_settings as ds
+plot_distribution_from_setting(ds.corona_large_absk_1)
+plots_absk_from_setting(ds.corona_large_absk_1)
