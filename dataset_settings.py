@@ -139,9 +139,9 @@ bvdv_absk_4 = {
 	
 bvdv_large_absk_2 = {
 	"k_absolute_settings" : [20,30],
-	"readlength_settings" : [6000],
-    "number_of_reads_settings" : [100],
-    "coverage_factors" : [1],
+	"readlength_settings" : [6000, 8000],
+    "number_of_reads_settings" : [200, 150],
+    "coverage_factors" : [1, 2],
 	"error_type" : "indel",
 	"error_percentages" : [10.0, 15.0],
 	"num_different_viruses" : 2,
