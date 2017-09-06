@@ -139,12 +139,22 @@ bvdv_absk_4 = {
 	
 bvdv_large_absk_2 = {
 	"k_absolute_settings" : [20,30],
-	"readlength_settings" : [8000, 1000],
-    "number_of_reads_settings" : [250, 200],
-    "coverage_factors" : [4],
-	"error_type" : "replace",
-	"error_percentages" : [1.0, 5.0, 10.0, 15.0],
+	"readlength_settings" : [6000],
+    "number_of_reads_settings" : [100],
+    "coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [10.0, 15.0],
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
-	"name" : "bvdv-largereads-absk-2",
-	"output_dir" : "Output/bvdv_absk_2"}
+	"name" : "bvdv-largereads-absk-2"}
+
+bvdv_large_absk_4 = {
+	"k_absolute_settings" : [20,30],
+	"readlength_settings" : [6000, 8000],
+	"number_of_reads_settings" : [200, 150],
+	"coverage_factors" : [1, 2],
+	"error_type" : "indel",
+	"error_percentages" : [10.0, 15.0],
+	"num_different_viruses" : 4,
+	"set_of_viruses" : set_bvdv_4,
+	"name" : "bvdv-largereads-absk-4"}
