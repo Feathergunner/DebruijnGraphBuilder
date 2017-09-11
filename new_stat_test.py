@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 import scipy.stats as scs
 import scipy.misc as scm
 
