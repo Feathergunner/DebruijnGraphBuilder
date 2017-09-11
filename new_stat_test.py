@@ -33,81 +33,45 @@ def compute_n(r, k, i):
 			max_number_reached = True
 	return n
 
-r = 10
-k = 2
-for i in range (r/k, r):
-	print i
-	print compute_n(r, k, i)
-
 def compute_T(n, k, i):
 	# n: size of array
 	# k: total number of 1's
 	# i: (i-1) is maximal allowed number of consecutive 1's
+	
+	data_T = [[-1]*(k+1) for nn in range(n+1)]
+	return compute_T_recursion(n, k, i, data_T)[n][k]
+	
+def compute_T_recursion(n, k, i, data_T):
+	print "n="+str(n)
+	print "k="+str(k)
+	print "i="+str(i)
+	if data_T[n][k] > 0:
+		return data_T
 	if k > n:
+		#print "k>n"
 		# not possible
-		return 0
+		data_T[n][k] = 0
+		return data_T
 	if i > k:
+		#print "i>k"
 		# every combination is valid
-		return scm.comb(k,n)
-		
-	if k*(i-1) > n:
-		# no legal combination possible:
-		return 0
-	
-	d = n-k
-	data_T = [[-1]*k for nn in range(n)]
-	# data_T[n_j][k_j] = T(n_j, k_j)
-	
-	for j in range(d)
-		data_T[j] = 
-		
-	
-	
-	return compute_T_recursion(n, n-k, i, data_T, 0)
-	
-def compute_T_recursion(n, k, i, data_T, j):
-	#print ("n="+str(n)+" k="+str(k)+" i="+str(i))
-	#print data_T
-	
-	if data_T[j] > 0:
-		return data_T
-		
-	'''
-	if n < k/i:
-		data_T[j] = 1
-		return data_T
-	
-	if k == 0:
-		if i == n:
-			data_T[j] = 1
-		else:
-			data_T[j] = 0
-		return data_T
-	
-	if k <= 0:
-		data_T[j] = 0
-		return data_T
-		
-	if n <= 0:
-		data_T[j] = 0
-		return data_T
-	
-	if k < n/i:
-		data_T[j] = 0
-		return data_T
-	'''
+		data_T[n][k] = int(scm.comb(n,k))
+		print "tnk="+str(data_T[n][k])
+		return data_T 
 	
 	data_T_tmp = 0		
-	for jj in range(0, i-1):
-		#print ("j+jj="+str(j+jj))
-		data_T = compute_T_recursion(n-j-jj-1, k-j-jj, i, data_T, j+jj)
-		data_T_tmp += data_T[j+jj]
+	for j in range(i):
+		data_T = compute_T_recursion(n-j-1, k-j, i, data_T)
+		data_T_tmp += data_T[n-j-1][k-j]
 		
-	data_T[j] = data_T_tmp
+	data_T[n][k] = data_T_tmp
 	return data_T
-	
-r = 10
+
+r = 4
 k = 2
-for i in range (r/k, r):
+for i in range (r/k, r+1):
+	print ""
 	print i
-	print compute_T(r, k, i)
+	print compute_n(r, k, i)
+	print compute_T(r, r-k, i)
+	#compute_T(r, k, i)
