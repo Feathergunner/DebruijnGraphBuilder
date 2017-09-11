@@ -4,20 +4,21 @@ import scipy.stats as scs
 import scipy.misc as scm
 
 def compute_n(r, k, i):
+	# brute-force-check
 	n = 0
 	max_number_reached = False
 	a = [0]*r
 	#print a
 	while not max_number_reached:
-		if sum(a) == i:
+		if sum(a) == k:
 			number_valid = True
-			num_ajd_zeros = 0
+			num_ajd_ones = 0
 			for j in a:
-				if j == 1:
-					num_ajd_zeros = 0
+				if j == 0:
+					num_ajd_ones = 0
 				else:
-					num_ajd_zeros += 1
-					if num_ajd_zeros >= k:
+					num_ajd_ones += 1
+					if num_ajd_ones >= i:
 						number_valid = False
 			if number_valid:
 				#print a
@@ -42,9 +43,9 @@ def compute_T(n, k, i):
 	return compute_T_recursion(n, k, i, data_T)[n][k]
 	
 def compute_T_recursion(n, k, i, data_T):
-	print "n="+str(n)
-	print "k="+str(k)
-	print "i="+str(i)
+	#print "n="+str(n)
+	#print "k="+str(k)
+	#print "i="+str(i)
 	if data_T[n][k] > 0:
 		return data_T
 	if k > n:
@@ -56,7 +57,6 @@ def compute_T_recursion(n, k, i, data_T):
 		#print "i>k"
 		# every combination is valid
 		data_T[n][k] = int(scm.comb(n,k))
-		print "tnk="+str(data_T[n][k])
 		return data_T 
 	
 	data_T_tmp = 0		
@@ -67,8 +67,8 @@ def compute_T_recursion(n, k, i, data_T):
 	data_T[n][k] = data_T_tmp
 	return data_T
 
-r = 4
-k = 2
+r = 10
+k = 5
 for i in range (r/k, r+1):
 	print ""
 	print i
