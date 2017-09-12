@@ -107,7 +107,8 @@ class Graph:
 		outputfile.write(sequence_string)
 		
 g = Graph()
-g.read_graph_from_asqg("Output/corona-largereads-asbk-1/corona-largereads-asbk-1-i_8000_1_[250]_1-0_30.asqg")
+
+g.read_graph_from_asqg("Output/corona-largereads-asbk-1/corona-largereads-asbk-1-i_8000_1_[250]_15-0_30.asqg")
 g.construct_assembly_ordering_labels()
 #g.print_nodes_sorted_by_label()
 
@@ -116,11 +117,11 @@ nodesets = g.get_partition_of_sequences(100)
 i = 0
 for nodeset in nodesets:
 	if i == 20:
-		readfile_name = "reconstruct_sequence_reads_"+str(i)
+		readfile_name = "reconstruct_sequence_reads_e15_"+str(i)
 		g.write_node_sequences_to_file(readfile_name, nodeset)
 
 		reads = dio.get_reads_from_file(filename = readfile_name)
-		debruijn = fdgb.GraphData(reads, 20)
+		debruijn = fdgb.GraphData(reads, 12)
 		# delete reads and kmers to save ram:
 		debruijn.reads = []
 		debruijn.kmers = []
@@ -129,7 +130,22 @@ for nodeset in nodesets:
 		debruijn.contract_unique_overlaps(verbose=False)
 		debruijn.remove_parallel_sequences()
 		
-		debruijn.get_asqg_output(filename = "reconstruct_test_"+str(i)+".asqg")
-		debruijn.get_csv_output(filename = "reconstruct_test_"+str(i)+".csv")
+		debruijn.get_asqg_output(filename = "reconstruct_test_e15_preremove"+str(i)+".asqg")
+		debruijn.get_csv_output(filename = "reconstruct_test_e15_preremove"+str(i)+".csv")
+
+		debruijn.remove_insignificant_sequences(verbose=True)
+		
+		debruijn.get_asqg_output(filename = "reconstruct_test_e15_postremove"+str(i)+".asqg")
+		debruijn.get_csv_output(filename = "reconstruct_test_e15_postremove"+str(i)+".csv")
+		
+		debruijn.contract_unique_overlaps(verbose=False)
+
+		debruijn.get_asqg_output(filename = "reconstruct_test_e15_postcontract"+str(i)+".asqg")
+		debruijn.get_csv_output(filename = "reconstruct_test_e15_postcontract"+str(i)+".csv")
+
+		debruijn.remove_tips()
+		debruijn.contract_unique_overlaps(verbose=False)
+		
+		debruijn.get_asqg_output(filename = "reconstruct_test_e15_posttipremoval"+str(i)+".asqg")
+		debruijn.get_csv_output(filename = "reconstruct_test_e15_posttipremoval"+str(i)+".csv")
 	i += 1
-	
