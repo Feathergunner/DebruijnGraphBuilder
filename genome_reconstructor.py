@@ -81,22 +81,21 @@ class Graph:
 		sorted_nodes = sorted(self.nodes, key=lambda x: x.label)
 		print [str(n.id)+" ("+n.name+"): "+str(n.label) for n in sorted_nodes]
 
-	def get_partition_of_sequences(self, number_of_parts, overlap):
+	def get_partition_of_sequences(self, number_of_parts, verbose=False):
 		sorted_nodes = sorted(self.nodes, key=lambda x: x.label)
 		label_div = self.max_label-self.min_label
+		part_size = label_div/(number_of_parts+1)
 		
 		parts = []
 		for i in range(number_of_parts):
-			if i == 0:
-				current_start = self.min_label
-			else:
-				current_start = self.min_label+i*(label_div/number_of_parts)-overlap
+			current_start = self.min_label+i*(part_size)
 			if i == number_of_parts-1:
 				current_end = self.max_label
 			else:
-				current_end = current_start+(i+1)*(label_div/number_of_parts)+overlap
-			print str(i)+": "+str(current_start)+" - "+str(current_end)
+				current_end = self.min_label+(i+2)*(part_size)
 			parts.append([node for node in sorted_nodes if node.label >= current_start and node.label <= current_end])
+			if verbose:
+				print str(i)+": "+str(current_start)+" - "+str(current_end)+" : "+str(len(parts[-1]))+" sequences"
 		return parts
 
 	def write_node_sequences_to_file(self, filename, nodes):
@@ -112,20 +111,25 @@ g.read_graph_from_asqg("Output/corona-largereads-asbk-1/corona-largereads-asbk-1
 g.construct_assembly_ordering_labels()
 #g.print_nodes_sorted_by_label()
 
-nodesets = g.get_partition_of_sequences(10, 1000)
+nodesets = g.get_partition_of_sequences(100)
+
 i = 0
 for nodeset in nodesets:
-	readfile_name = "reconstruct_sequence_reads_"+str(i)
-	g.write_node_sequences_to_file(readfile_name, nodeset)
+	if i == 20:
+		readfile_name = "reconstruct_sequence_reads_"+str(i)
+		g.write_node_sequences_to_file(readfile_name, nodeset)
 
-	reads = dio.get_reads_from_file(filename = readfile_name)
-	debruijn = fdgb.GraphData(reads, 20)
-	# delete reads and kmers to save ram:
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
-	debruijn.contract_unique_overlaps(verbose=False)
-	debruijn.remove_parallel_sequences()
+		reads = dio.get_reads_from_file(filename = readfile_name)
+		debruijn = fdgb.GraphData(reads, 20)
+		# delete reads and kmers to save ram:
+		debruijn.reads = []
+		debruijn.kmers = []
+		# run garbage collector:
+		gc.collect()
+		debruijn.contract_unique_overlaps(verbose=False)
+		debruijn.remove_parallel_sequences()
+		
+		debruijn.get_asqg_output(filename = "reconstruct_test_"+str(i)+".asqg")
+		debruijn.get_csv_output(filename = "reconstruct_test_"+str(i)+".csv")
+	i += 1
 	
-	debruijn.get_asqg_output(filename = "reconstruct_test_"+str(i)+".asqg")
