@@ -369,6 +369,12 @@ class GraphData:
 					if verbose:
 						print ("Sequence is a tip, needs to be removed")
 					self.delete_sequence(seq.id, verbose)
+
+	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
+		# removes all sequences with weight less than minimal_weight
+		for seq in self.sequences:
+			if seq.max_weight < minimal_weight:
+				self.delete_sequence(seq.id, verbose)
 	
 	def remove_parallel_sequences(self, verbose=False):
 		if not self.is_unified:
