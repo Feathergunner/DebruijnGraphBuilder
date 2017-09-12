@@ -33,11 +33,13 @@ class Kmer:
 		return len(self.evidence_reads)
 
 class ContigSequence:
-	def __init__(self, seq_id, inv_id, sequence, kmers, is_relevant = True):
+	def __init__(self, seq_id, inv_id, sequence, kmers, weight, is_relevant = True):
 		self.id = seq_id
 		self.id_of_inverse_seq = inv_id
 		self.sequence = sequence
 		self.kmers = kmers
+		# the maximal read eavidence this sequence has for any subsequence
+		self.max_weight = weight
 		# overlaps (aka edges) are stored in dictionaries
 		# self.overlap[other_sequence] = overlap_id
 		self.overlaps_out = {}
@@ -124,7 +126,9 @@ class GraphData:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
-			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id]))
+			weight = len(kmer.evidence_reads)
+			
+			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 
 		print ("Construct overlaps ...")			
 		# construct overlaps between adjacent sequences with read-evidence:
@@ -202,7 +206,7 @@ class GraphData:
 					this_kmer_id = kmer_counter
 					kmer_counter += 1
 					# add inverse kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence), []))
+					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence), [read_index]))
 					self.kmer_dict[get_inverse_sequence(new_kmer_sequence)] = kmer_counter
 					kmer_counter += 1
 					
@@ -325,6 +329,9 @@ class GraphData:
 		for kmer in self.sequences[target_id].kmers:
 			if kmer not in self.sequences[source_id].kmers:
 				self.sequences[source_id].kmers.append(kmer)
+		# update maxweight:
+		if self.sequences[target_id].max_weight > self.sequences[source_id].max_weight:
+			self.sequences[source_id].max_weight = self.sequences[target_id].max_weight
 		
 		# move outgoing overlaps from target_seq to source_seq:
 		for ov_target_out in self.sequences[target_id].overlaps_out:
@@ -437,11 +444,11 @@ class GraphData:
 
 	def get_csv_output(self, filename="csv_file.csv"):
 		print ("writing csv-file ...")
-		headline = "Node_Label, Sequence\n"
+		headline = "Node_Label, Sequence, maxweight\n"
 		data = ""
 		for seq in self.sequences:
 			if seq.is_relevant:
-				data += "k_"+str(seq.id)+","+seq.sequence+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+"\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
 		outputfile.write(data)
