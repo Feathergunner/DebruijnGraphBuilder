@@ -41,10 +41,11 @@ class ContigSequence:
 		# the maximal read eavidence this sequence has for any subsequence
 		self.max_weight = weight
 		# overlaps (aka edges) are stored in dictionaries
-		# self.overlap[other_sequence] = overlap_id
+		# self.overlap[other_sequence_id] = overlap_id
 		self.overlaps_out = {}
 		self.overlaps_in = {}
 		self.is_relevant = is_relevant
+		self.label = False
 
 	def get_length(self):
 		return len(self.sequence)
@@ -104,6 +105,10 @@ class GraphData:
 		self.sequences = []
 		self.overlaps = {}
 		self.is_unified = False
+		
+		# min and max label of sequences
+		self.max_label = 0
+		self.min_label = 0
 		
 		if not reads == 0:
 			self.init_graph_database(reads, verbose=verbose)
@@ -486,6 +491,69 @@ class GraphData:
 					# if k is still unknown at this point, recover k from overlap_data:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
+						
+	def construct_assembly_ordering_labels(self):
+		# algorithm assumes that graph
+		# 	is not empty and
+		#	has only one component and
+		# 	has no cycles, i.e. implies a partial order
+		print "Construct assembly ordering labels..."
+		
+		for start_seq_id in range(len(self.sequences)):
+			if not self.sequences[start_seq_id].label:
+				queue = [[self.sequences[0].id, 0]]
+				while (len(queue) > 0):
+					current_data = queue[0]
+					queue.pop(0)
+					current_node_id = current_data[0]
+					#print self.sequences[current_node_id].label
+					#print current_node_id
+					#print self.sequences[current_node_id].overlaps_out
+					#print self.sequences[current_node_id].overlaps_in
+					for seq_id in self.sequences[current_node_id].overlaps_out:
+						if self.sequences[seq_id].label == False:
+							start_label = current_data[1] + self.sequences[current_node_id].get_length()
+							if start_label > self.max_label:
+								self.max_label = start_label
+							self.sequences[seq_id].label = start_label
+							queue.append([seq_id, start_label])
+					for seq_id in self.sequences[current_node_id].overlaps_in:
+						if self.sequences[seq_id].label == False:
+							start_label = current_data[1] - self.sequences[seq_id].get_length()
+							if start_label < self.min_label:
+								self.min_label = start_label
+							self.sequences[seq_id].label = start_label
+							queue.append([seq_id, start_label])
+					
+	def get_partition_of_sequences(self, number_of_parts, verbose=False):
+		# returns a partition of all read-ids based on intervals of labels
+		sorted_nodes = sorted(self.sequences, key=lambda x: x.label)
+		label_div = self.max_label-self.min_label
+		part_size = label_div/(number_of_parts+1)
+		
+		if verbose:
+			print label_div
+			print part_size
+		
+		parts = []
+		for i in range(number_of_parts):
+			current_start = self.min_label+i*(part_size)
+			if i == number_of_parts-1:
+				current_end = self.max_label
+			else:
+				current_end = self.min_label+(i+2)*(part_size)
+			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
+			this_part_kmers = []
+			for seq in this_part_sequences:
+				this_part_kmers += seq.kmers
+			this_part_reads = []
+			for kmer_id in this_part_kmers:
+				this_part_reads += self.kmers[kmer_id].evidence_reads
+			this_part_reads = list(set(this_part_reads))#[self.kmers[kmer_id].evidence_reads for kmer_id in this_part_kmers]))
+			parts.append(this_part_reads)
+			if verbose:
+				print str(i)+": "+str(current_start)+" - "+str(current_end)+" : "+str(len(parts[-1]))+" sequences"
+		return parts
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
