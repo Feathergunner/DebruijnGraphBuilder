@@ -27,8 +27,12 @@ def genereate_dna(length=100, alphabet=["A","C","G","T"]):
 	for i in range(length):
 		dna.append(random.choice(alphabet))
 	return dna
+	
+def write_dna_to_file(filename, dna):
+	with open(filename, 'w') as outf:
+		outf.write(''.join(dna) + '\n')
 
-def genereate_reads(dna, coverage=50, avg_read_length=50, mutation_pct=0.1, mutation_alphabet=["A","C","G","T"], remove_pct=5, paired_end=False, both_directions=False, verbose=False):
+def genereate_reads(dna, coverage=50, avg_read_length=50, mutation_pct=0.1, mutation_alphabet=["A","C","G","T"], remove_pct=5, variation=0, paired_end=False, both_directions=False, verbose=False):
 	print ("Generating reads ...")
 	#print ("mutation_pct = "+str(mutation_pct) + ", remove_pct = "+str(remove_pct))
 	dna_length = len(dna)
@@ -40,7 +44,12 @@ def genereate_reads(dna, coverage=50, avg_read_length=50, mutation_pct=0.1, muta
 		cur_index = 0
 		while cur_index < dna_length:
 			#next_index = min(cur_index+avg_read_length+random.choice(range(-10,10)), dna_length)
-			next_index = min(cur_index+avg_read_length+int(random.gauss(mu=0, sigma=(1+avg_read_length/5))), dna_length)
+			if variation < 0:
+				variation = 1+avg_read_length/5
+			read_lengt_variation = int(random.gauss(mu=0, sigma=variation))
+			if verbose:
+				print "read_length_variation: "+str(read_lengt_variation)
+			next_index = min(cur_index+avg_read_length+read_lengt_variation, dna_length)
 			new_read = dna[cur_index:next_index]
 			for s_i in range(len(new_read)):
 				if random.choice(range(10000)) < mutation_pct*100:
