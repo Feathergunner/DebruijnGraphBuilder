@@ -75,6 +75,18 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
+def get_reads_from_fastq_file(filename="fastqreads.fq"):
+	with open(filename) as fh:
+		status = 0
+		reads = []
+		for line in fh.readlines:
+			if line[0] == "@":
+				status = 1
+			if status == 1:
+				reads.append(line)
+				status == 0
+	return reads
+	
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
 	print ("Writing asqg-file ...")
 	headline = "HT\t\n"
