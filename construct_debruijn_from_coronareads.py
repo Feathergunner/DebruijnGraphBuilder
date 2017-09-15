@@ -11,9 +11,9 @@ output_dir = "Output"
 k = 30
 casename = "corona_realreads_k"+str(k)
 
-reads = dio.get_reads_from_fastq_file(readfilename, 1)
+reads = dio.get_reads_from_fastq_file(readfilename)
 
-debruijn = fdgb.GraphData([reads], k, verbose=False)
+debruijn = fdgb.GraphData([reads], k, alphabet={"A":"U", "U":"A", "G":"C", "C":"G"}, verbose=False)
 #print reads
 #print len(reads)
 # delete reads and kmers to save ram:
@@ -22,7 +22,7 @@ debruijn.reads = []
 debruijn.kmers = []
 # run garbage collector:
 gc.collect()
-debruijn.contract_unique_overlaps(verbose=True)
+debruijn.contract_unique_overlaps(verbose=False)
 debruijn.remove_parallel_sequences()
 
 debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
