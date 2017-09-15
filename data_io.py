@@ -83,14 +83,17 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1):
 	with open(filename) as fh:
 		readdata = fh.readlines()
 		for line in readdata:
-			if line[0] == "@":
-				status = 1
+			print line[:10]
 			if status == 1:
+				#print "- get read"
+				#print "- status set to 0"
 				reads.append(line)
 				status == 0
 				n += 1
 				if num_of_reads > 0 and n > num_of_reads:
 					break
+			if line[0] == "@":
+				status = 1
 	return reads
 	
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
