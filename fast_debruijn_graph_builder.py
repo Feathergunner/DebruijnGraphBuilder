@@ -562,7 +562,7 @@ def get_inverse_sequence(sequence):#, alphabet={"A":"T", "C":"G", "G":"C", "T":"
 	inv_sequence = [""]*n
 	for char_position in range(len(sequence)):
 		current_char = sequence[char_position]
-		if current_char in alphabet:
+		if current_char in self.alphabet:
 			inv_sequence[n-char_position-1] = self.alphabet[current_char]
 		else:
 			print (sequence)
