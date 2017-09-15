@@ -84,11 +84,11 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1):
 		readdata = fh.readlines()
 		for line in readdata:
 			print line[:10]
-			if status == 1:
-				#print "- get read"
+			if status == 1 and not line[0] == "@":
+				print "- get read"
 				#print "- status set to 0"
-				reads.append(line)
-				status == 0
+				reads.append(line.strip())
+				status = 0
 				n += 1
 				if num_of_reads > 0 and n > num_of_reads:
 					break
