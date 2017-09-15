@@ -81,7 +81,7 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1):
 	reads = []
 	n = 1
 	with open(filename) as fh:
-		readdata = fh.readlines():
+		readdata = fh.readlines()
 		for line in readdata:
 			if line[0] == "@":
 				status = 1
