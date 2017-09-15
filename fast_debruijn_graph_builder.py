@@ -95,7 +95,7 @@ class SequenceOverlap:
 			print ("is not relevant")
 	
 class GraphData:
-	def __init__(self, reads=0, k=0, verbose=False):
+	def __init__(self, reads=0, k=0, verbose=False, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 		print ("Creating empty graph ...")
 		
 		self.k_value = k
@@ -555,13 +555,13 @@ class GraphData:
 				print str(i)+": "+str(current_start)+" - "+str(current_end)+" : "+str(len(parts[-1]))+" sequences"
 		return parts
 		
-def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
+def get_inverse_sequence(sequence):#, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
 	inv_sequence = [""]*n
 	for char_position in range(len(sequence)):
 		current_char = sequence[char_position]
 		if current_char in alphabet:
-			inv_sequence[n-char_position-1] = alphabet[current_char]
+			inv_sequence[n-char_position-1] = self.alphabet[current_char]
 		else:
 			print (sequence)
 			print (current_char)
