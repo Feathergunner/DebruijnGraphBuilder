@@ -213,8 +213,8 @@ class GraphData:
 					this_kmer_id = kmer_counter
 					kmer_counter += 1
 					# add inverse kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence), [read_index]))
-					self.kmer_dict[get_inverse_sequence(new_kmer_sequence)] = kmer_counter
+					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence, self.alphabet), [read_index]))
+					self.kmer_dict[get_inverse_sequence(new_kmer_sequence, self.alphabet)] = kmer_counter
 					kmer_counter += 1
 					
 				if verbose:
@@ -281,7 +281,7 @@ class GraphData:
 					self.contract_overlap(ov_index, verbose)
 		            
 					# contract reverse overlap if not sequence is its own inverse:
-					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence):
+					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
 						source_rev_id = self.sequences[target_id].id_of_inverse_seq
 						target_rev_id = self.sequences[source_id].id_of_inverse_seq
 						
@@ -557,13 +557,13 @@ class GraphData:
 				print str(i)+": "+str(current_start)+" - "+str(current_end)+" : "+str(len(parts[-1]))+" sequences"
 		return parts
 		
-def get_inverse_sequence(sequence):#, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
+def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
 	inv_sequence = [""]*n
 	for char_position in range(len(sequence)):
 		current_char = sequence[char_position]
-		if current_char in self.alphabet:
-			inv_sequence[n-char_position-1] = self.alphabet[current_char]
+		if current_char in alphabet:
+			inv_sequence[n-char_position-1] = alphabet[current_char]
 		else:
 			print (sequence)
 			print (current_char)
