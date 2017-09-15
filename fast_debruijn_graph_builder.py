@@ -106,6 +106,8 @@ class GraphData:
 		self.overlaps = {}
 		self.is_unified = False
 		
+		self.alphabet = alphabet
+		
 		# min and max label of sequences
 		self.max_label = 0
 		self.min_label = 0
