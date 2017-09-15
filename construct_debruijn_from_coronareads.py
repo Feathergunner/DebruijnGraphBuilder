@@ -8,7 +8,7 @@ import fast_debruijn_graph_builder as fdgb
 
 readfilename = "Data/2017-09-05_coronavirus.fq"
 output_dir = "Output"
-k = 30
+
 for k in [30, 40]:
 	for num_reads in [2000, 5000]:
 		casename = "corona_realreads_n"+str(num_reads)+"_k"+str(k)
