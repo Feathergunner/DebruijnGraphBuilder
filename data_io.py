@@ -75,16 +75,22 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
-def get_reads_from_fastq_file(filename="fastqreads.fq"):
+def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1):
+	# if num_of_reads > 0, only the specified number of reads will be read from the file.
+	status = 0
+	reads = []
+	n = 1
 	with open(filename) as fh:
-		status = 0
-		reads = []
-		for line in fh.readlines():
+		readdata = fh.readlines():
+		for line in readdata:
 			if line[0] == "@":
 				status = 1
 			if status == 1:
 				reads.append(line)
 				status == 0
+				n += 1
+				if num_of_reads > 0 and n > num_of_reads:
+					break
 	return reads
 	
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
