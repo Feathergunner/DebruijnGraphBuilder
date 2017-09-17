@@ -19,6 +19,7 @@ class Node:
 		self.label = False
 
 class Graph:
+	# reconstructed graph from asqg-file
 	def __init__(self):
 		self.number_of_nodes = 0
 		self.number_of_edges = 0
@@ -106,50 +107,115 @@ class Graph:
 		outputfile = file(filename, 'w')
 		outputfile.write(sequence_string)
 		
-g = Graph()
-for p in [5, 10, 15]:
-	for k in [30,40]:
-		for k2 in [13,15,17]:
-			g.read_graph_from_asqg("Output/corona-largereads-asbk-1/corona-largereads-asbk-1-i_8000_1_[250]_"+str(p)+"-0_"+str(k)+".asqg")
-			g.construct_assembly_ordering_labels()
-			#g.print_nodes_sorted_by_label()
-			testcasename = "test-reconstruct_p"+str(p)+"_k"+str(k)+"_k"+str(k2)+"_"
-			
-			nodesets = g.get_partition_of_sequences(100)
-			
-			i = 0
-			for nodeset in nodesets:
-				if i == 20:
-					path="Output/test/"
-					readfile_name = testcasename+"reads_"+str(i)
-					g.write_node_sequences_to_file(path+readfile_name, nodeset)
-			
-					reads = dio.get_reads_from_file(filename = path+readfile_name)
-					debruijn = fdgb.GraphData(reads, k2)
-					# delete reads and kmers to save ram:
-					debruijn.reads = []
-					debruijn.kmers = []
-					# run garbage collector:
-					gc.collect()
-					debruijn.contract_unique_overlaps(verbose=False)
-					debruijn.remove_parallel_sequences()
-					
-					debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_preremove"+".asqg")
-					debruijn.get_csv_output(filename = path+testcasename+str(i)+"_preremove"+".csv")
-			
-					debruijn.remove_insignificant_sequences(verbose=False)
-					
-					debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_postremove"+".asqg")
-					debruijn.get_csv_output(filename = path+testcasename+str(i)+"_postremove"+".csv")
-					
-					debruijn.contract_unique_overlaps(verbose=False)
-			
-					debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_postcontract"+".asqg")
-					debruijn.get_csv_output(filename = path+testcasename+str(i)+"_postcontract"+".csv")
-			
-					debruijn.remove_tips()
-					debruijn.contract_unique_overlaps(verbose=False)
-					
-					debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_posttipremoval"+".asqg")
-					debruijn.get_csv_output(filename = path+testcasename+str(i)+"_posttipremoval"+".csv")
-				i += 1
+def test_with_read_from_asqg():
+	for p in [5, 10, 15]:
+		for k in [30,40]:
+			for k2 in [13,15,17]:
+				g = Graph()
+				g.read_graph_from_asqg("Output/corona-largereads-asbk-1/corona-largereads-asbk-1-i_8000_1_[250]_"+str(p)+"-0_"+str(k)+".asqg")
+				g.construct_assembly_ordering_labels()
+				#g.print_nodes_sorted_by_label()
+				testcasename = "test-reconstruct_p"+str(p)+"_k"+str(k)+"_k"+str(k2)+"_"
+				
+				nodesets = g.get_partition_of_sequences(100)
+				
+				i = 0
+				for nodeset in nodesets:
+					if i == 20:
+						path="Output/test/"
+						readfile_name = testcasename+"reads_"+str(i)
+						g.write_node_sequences_to_file(path+readfile_name, nodeset)
+				
+						reads = dio.get_reads_from_file(filename = path+readfile_name)
+						debruijn = fdgb.GraphData(reads, k2)
+						# delete reads and kmers to save ram:
+						debruijn.reads = []
+						debruijn.kmers = []
+						# run garbage collector:
+						gc.collect()
+						debruijn.contract_unique_overlaps(verbose=False)
+						debruijn.remove_parallel_sequences()
+						
+						debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_preremove"+".asqg")
+						debruijn.get_csv_output(filename = path+testcasename+str(i)+"_preremove"+".csv")
+				
+						debruijn.remove_insignificant_sequences(verbose=False)
+						
+						debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_postremove"+".asqg")
+						debruijn.get_csv_output(filename = path+testcasename+str(i)+"_postremove"+".csv")
+						
+						debruijn.contract_unique_overlaps(verbose=False)
+				
+						debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_postcontract"+".asqg")
+						debruijn.get_csv_output(filename = path+testcasename+str(i)+"_postcontract"+".csv")
+				
+						debruijn.remove_tips()
+						debruijn.contract_unique_overlaps(verbose=False)
+						
+						debruijn.get_asqg_output(filename = path+testcasename+str(i)+"_posttipremoval"+".asqg")
+						debruijn.get_csv_output(filename = path+testcasename+str(i)+"_posttipremoval"+".csv")
+					i += 1
+
+def test_from_scratch():
+	path = "Output/test/"
+	set_of_viruses = md.cv
+	readlength = 6000
+	num_reads = 100
+	epr = 0
+	epi = 15
+	
+	k1 = 30
+	k2 = 17
+	
+	casename = "l"+str(readlength)+"_n"+str(num_reads)+"_e"+str(epi)
+	
+	readfilename = "test_read.txt"
+	if not os.path.isfile(readfilename):
+		sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
+	
+	reads = dio.get_reads_from_file(filename = readfilename)
+	
+	debruijn = fdgb.GraphData(reads, k1)
+	# delete reads and kmers to save ram:
+	debruijn.reads = []
+	debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+	debruijn.contract_unique_overlaps(verbose=False)
+	debruijn.remove_parallel_sequences()
+	debruijn.construct_assembly_ordering_labels()
+	
+	debruijn.get_asqg_output(filename = output_dir+"/"+casename+"_base.asqg")
+	debruijn.get_csv_output(filename = output_dir+"/"+casename+"_base.csv")
+	
+	parts = debruijn.get_partition_of_sequences(100, verbose=False)
+	p = 1
+	
+	part_seqs = parts[p]
+	#part_reads = [reads[i] for i in parts[p]]
+	debruijn_part = fdgb.GraphData(part_seqs, k2)
+	
+	postfix = "_p"+str(p)+"_preremove"
+	
+	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
+	debruijn_part.get_csv_output(filename = output_dir+"/"+casename+postfix+".csv")
+	
+	debruijn_part.remove_insignificant_sequences(verbose=False)
+	debruijn_part.remove_single_sequence_components
+	
+	postfix = "_p"+str(p)+"_postremove"
+	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
+	debruijn_part.get_csv_output(filename = output_dir+"/"+casename+postfix+".csv")
+	
+	debruijn_part.contract_unique_overlaps(verbose=False)
+	
+	postfix = "_p"+str(p)+"_postcontract"
+	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
+	debruijn_part.get_csv_output(filename = output_dir+"/"+casename+postfix+".csv")
+	
+	debruijn_part.remove_tips()
+	debruijn_part.contract_unique_overlaps(verbose=False)
+	
+	postfix = "_p"+str(p)+"_posttipremoval"
+	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
+	debruijn_part.get_csv_output(filename = output_dir+"/"+casename+postfix+".csv")
