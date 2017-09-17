@@ -429,6 +429,15 @@ class GraphData:
 											print ("Add to bfs")
 										bfs_queue.append(adj_seq_id)
 			self.is_unified = True
+	
+	def remove_single_sequence_components(self, verbose=False):
+		# removes all components that consist only of a single sequence,
+		# i.e. all sequences without adjacencies
+		# only if there is at least one larger component
+		if len(self.overlaps) > 0:
+			for seq_id in range(len(self.sequences)):
+				if self.sequences[seq_id].is_relevant and len(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
+					self.sequences[seq_id].is_relevant = False
 
 	def get_asqg_output(self, filename="asqg_file"):
 		print ("Writing asqg-file ...")
@@ -537,7 +546,8 @@ class GraphData:
 			print label_div
 			print part_size
 		
-		parts = []
+		#parts = []
+		parts_seq = []
 		for i in range(number_of_parts):
 			current_start = self.min_label+i*(part_size)
 			if i == number_of_parts-1:
@@ -545,6 +555,9 @@ class GraphData:
 			else:
 				current_end = self.min_label+(i+2)*(part_size)
 			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
+			parts_seq.append(this_part_sequences)
+		return parts
+		'''
 			this_part_kmers = []
 			for seq in this_part_sequences:
 				this_part_kmers += seq.kmers
@@ -556,6 +569,17 @@ class GraphData:
 			if verbose:
 				print str(i)+": "+str(current_start)+" - "+str(current_end)+" : "+str(len(parts[-1]))+" sequences"
 		return parts
+		'''
+	
+	def get_read_of_sequences(self, sequences, verbose=False):
+		kmers = []
+		for seq in sequences:
+			kmers += seq.kmers
+		reads = []
+		for kmer_id in kmers:
+			reads += self.kmers[kmer_id].evidence_reads
+		reads = list(set(reads))
+		return reads
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
