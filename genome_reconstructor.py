@@ -3,9 +3,12 @@
 
 import re
 import gc
+import os
 
 import fast_debruijn_graph_builder as fdgb
 import data_io as dio
+import manjasDefinitionen as md
+import sampleReads
 
 class Node:
 	def __init__(self, id, name, sequence):
@@ -158,9 +161,10 @@ def test_with_read_from_asqg():
 
 def test_from_scratch():
 	path = "Output/test/"
-	set_of_viruses = md.cv
+	set_of_viruses = [md.cv]
 	readlength = 6000
 	num_reads = 100
+	num_different_viruses = 1
 	epr = 0
 	epi = 15
 	
@@ -171,7 +175,7 @@ def test_from_scratch():
 	
 	readfilename = "test_read.txt"
 	if not os.path.isfile(readfilename):
-		sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
+		sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = [num_reads], replace_error_percentage = epr, indel_error_percentage = epi)
 	
 	reads = dio.get_reads_from_file(filename = readfilename)
 	
@@ -219,3 +223,5 @@ def test_from_scratch():
 	postfix = "_p"+str(p)+"_posttipremoval"
 	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
 	debruijn_part.get_csv_output(filename = output_dir+"/"+casename+postfix+".csv")
+
+test_from_scratch()
