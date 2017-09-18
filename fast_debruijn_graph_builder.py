@@ -556,7 +556,7 @@ class GraphData:
 				current_end = self.min_label+(i+2)*(part_size)
 			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
 			parts_seq.append(this_part_sequences)
-		return parts
+		return part_seq
 		'''
 			this_part_kmers = []
 			for seq in this_part_sequences:

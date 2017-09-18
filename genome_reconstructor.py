@@ -161,6 +161,7 @@ def test_with_read_from_asqg():
 
 def test_from_scratch():
 	path = "Output/test/"
+	output_dir = path
 	set_of_viruses = [md.cv]
 	readlength = 6000
 	num_reads = 100
