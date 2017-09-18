@@ -196,7 +196,7 @@ def test_from_scratch():
 	parts = debruijn.get_partition_of_sequences(100, verbose=False)
 	p = 1
 	
-	part_seqs = parts[p]
+	part_seqs = [s.sequence for s in parts[p]]
 	#part_reads = [reads[i] for i in parts[p]]
 	debruijn_part = fdgb.GraphData(part_seqs, k2)
 	
