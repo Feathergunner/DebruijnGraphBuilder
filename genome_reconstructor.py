@@ -162,15 +162,17 @@ def test_with_read_from_asqg():
 def test_from_scratch():
 	path = "Output/test/"
 	output_dir = path
-	set_of_viruses = [md.cv]
-	readlength = 6000
-	num_reads = 100
+	set_of_viruses = [md.v1]
+	readlength = 4000
+	num_reads = 50
 	num_different_viruses = 1
 	epr = 0
 	epi = 15
 	
 	k1 = 30
 	k2 = 17
+	
+	number_of_parts = 30
 	
 	casename = "l"+str(readlength)+"_n"+str(num_reads)+"_e"+str(epi)
 	
@@ -193,7 +195,12 @@ def test_from_scratch():
 	debruijn.get_asqg_output(filename = output_dir+"/"+casename+"_base.asqg")
 	debruijn.get_csv_output(filename = output_dir+"/"+casename+"_base.csv")
 	
-	parts = debruijn.get_partition_of_sequences(100, verbose=False)
+	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose=False)
+	
+	debruijn = []
+	gc.collect()
+	
+	#for p in range(number_of_parts):
 	p = 1
 	
 	part_seqs = [s.sequence for s in parts[p]]
@@ -224,5 +231,7 @@ def test_from_scratch():
 	postfix = "_p"+str(p)+"_posttipremoval"
 	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
 	debruijn_part.get_csv_output(filename = output_dir+"/"+casename+postfix+".csv")
+	
+	debruijn_part.write_sequences_to_file(filename = output_dir+"/"+casename+"reads_p"+str(p)+".txt")
 
 test_from_scratch()
