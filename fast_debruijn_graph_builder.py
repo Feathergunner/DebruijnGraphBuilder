@@ -33,7 +33,7 @@ class Kmer:
 		return len(self.evidence_reads)
 
 class ContigSequence:
-	def __init__(self, seq_id, inv_id, sequence, kmers, weight, is_relevant = True):
+	def __init__(self, seq_id, inv_id, sequence, kmers, weight = 1, is_relevant = True):
 		self.id = seq_id
 		self.id_of_inverse_seq = inv_id
 		self.sequence = sequence
@@ -588,6 +588,77 @@ class GraphData:
 			reads += self.kmers[kmer_id].evidence_reads
 		reads = list(set(reads))
 		return reads
+		
+	'''
+	def merge_with_other_graph(self, other_graph, verbose=False):
+		# store sequences and overlaps that were added in dictionaries that translate other_id -> this_id
+		merged_sequencs = {}
+		added_sequences = {}
+		added_overlaps = {}
+		for seq_other in other_graph.sequences:
+			sequence_already_exists = False
+			for seq_own in self.sequences:
+				if seq_own.sequence == seq_other.sequence:
+					sequence_already_exists = True
+					if len(seq_other.overlaps_out) > 0 or len(seq_other.overlaps_in) > 0:
+						merged_sequences[seq_other.id] = seq_own.id
+						for ov_other_id in seq_other.overlaps_out:
+							if other_graph.overlaps[ov_other_id].contig_sequence_2 in merged_sequences:
+								new_ov_target_id = merged_sequencs[other_graph.overlaps[ov_other_id].contig_sequence_2]
+							elif other_graph.overlaps[ov_other_id].contig_sequence_2 in added_sequences:
+								new_ov_target_id = added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_2]
+							else:
+								new_ov_target_id = len(self.sequences)
+								new_ov_target_id_inv = new_ov_target_id+1
+								self.sequences.append(ContigSequence(new_ov_target_id, new_ov_target_id_inv, other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_2], [], 1))
+								self.sequences.append(ContigSequence(new_ov_target_id_inv, new_ov_target_id, get_inverse_sequence(other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_2], self.alphabet), [], 1))
+								added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_2] = new_ov_target_id
+								added_sequences[other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_2].id_of_inverse_seq] = new_ov_target_id_inv
+							self.increase_overlap(seq_own, new_ov_target_id, -1)
+							
+						for ov_other_id in seq_other.overlaps_in:
+							if other_graph.overlaps[ov_other_id].contig_sequence_1 in merged_sequences:
+								new_ov_target_id = merged_sequencs[other_graph.overlaps[ov_other_id].contig_sequence_1]
+							elif other_graph.overlaps[ov_other_id].contig_sequence_1 in added_sequences:
+								new_ov_target_id = added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_1]
+							else:
+								new_ov_target_id = len(self.sequences)
+								new_ov_target_id_inv = new_ov_target_id+1
+								self.sequences.append(ContigSequence(new_ov_target_id, new_ov_target_id_inv, other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_1], [], 1))
+								self.sequences.append(ContigSequence(new_ov_target_id_inv, new_ov_target_id, get_inverse_sequence(other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_1], self.alphabet), [], 1))
+								added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_1] = new_ov_target_id
+								added_sequences[other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_1].id_of_inverse_seq] = new_ov_target_id_inv	
+							self.increase_overlap(new_ov_target_id, seq_own, -1)
+			if not sequence_already_exists:
+				# TO DO: add sequence and overlaps
+	'''
+		
+	def reduce_to_single_path_max_weight(self, verbose=False):
+		# method assumes that graph has only one component and no cycles
+		# and sequences have weight-labels
+		start_seq = -1
+		min_label = False
+		for seq in self.sequences:
+			if min_label == Falae or seq.label < min_label:
+				start_seq = seq.id
+				min_label = seq.label
+			
+		current_seq = start_seq
+		while len(self.sequences[current_seq].overlaps_out) > 0:
+			next_sequences = []
+			for ov_id in self.sequences[current_seq].overlaps_out:
+				next_sequences.append(self.overlaps[ov_id].contig_sequence_2)
+			max_seq_id = -1
+			max_seq_weight = -1
+			for seq_id in next_sequences:
+				if self.sequences[seq_id].max_weight > max_seq_weight:
+					max_seq_weight = self.sequences[seq_id].max_weight
+					max_seq_id = seq_id
+			for seq_id in next_sequences:
+				if seq_id == max_seq_id:
+					current_seq = seq_id
+				else:
+					self.delete_sequence(seq_id)
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
