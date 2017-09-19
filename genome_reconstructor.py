@@ -164,7 +164,7 @@ def test_from_scratch():
 	output_dir = path
 	set_of_viruses = [md.v1]
 	readlength = 4000
-	num_reads = 50
+	num_reads = 100
 	num_different_viruses = 1
 	epr = 0
 	epi = 15
@@ -172,7 +172,7 @@ def test_from_scratch():
 	k1 = 30
 	k2 = 17
 	
-	number_of_parts = 30
+	number_of_parts = 10
 	
 	casename = "l"+str(readlength)+"_n"+str(num_reads)+"_e"+str(epi)
 	
