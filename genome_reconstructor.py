@@ -238,7 +238,7 @@ def test_from_scratch():
 	
 	#debruijn_part.write_sequences_to_file(filename = output_dir+"/"+casename+"reads_p"+str(p)+".txt")
 	
-	debruijn.part.reduce_to_single_path_max_weight()
+	debruijn_part.reduce_to_single_path_max_weight()
 	
 	postfix = "_p"+str(p)+"_postsimplify"
 	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
