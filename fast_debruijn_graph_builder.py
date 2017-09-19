@@ -475,6 +475,15 @@ class GraphData:
 		outputfile.write(headline)
 		outputfile.write(data)
 		
+	def write_sequences_to_file(self, filename):
+		data = ""
+		for seq in self.sequences:
+			if seq.is_relevant:
+				data += seq.sequence + "\n"
+		outputfile = file(filename, 'w')
+		outputfile.write(headline)
+		outputfile.write(data)
+		
 	def load_from_asqg(self, filename="asqg_file", verbose=False):
 		print ("Loading from asqg-file ...")
 		self.is_unified = True
