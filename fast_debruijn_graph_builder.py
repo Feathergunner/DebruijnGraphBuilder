@@ -651,7 +651,7 @@ class GraphData:
 			max_seq_id = -1
 			max_seq_weight = -1
 			for seq_id in next_sequences:
-				if self.sequences[seq_id].max_weight > max_seq_weight:
+				if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
 					max_seq_weight = self.sequences[seq_id].max_weight
 					max_seq_id = seq_id
 			for seq_id in next_sequences:
