@@ -197,9 +197,11 @@ def test_from_scratch():
 	debruijn.get_csv_output(filename = output_dir+"/"+casename+"_base.csv")
 	'''
 	debruijn = fdgb.GraphData()
-	debruijn.load_from_asqg(filename = path+"corona-largereads-asbk-1-i_10000_1_[200]_15-0_30.asqg")
-		
+	debruijn.load_from_asqg(filename = path+"corona-largereads-asbk-1-i_10000_1_[200]_15-0_40.asqg")
+	#debruijn.load_from_asqg(filename = path+"bvdv_sample_50_1_[5000]_2-0_20.asqg")
+	
 	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose=False)
+	#print [[seq.id for seq in p] for p in parts]
 	
 	debruijn = []
 	gc.collect()
@@ -207,9 +209,11 @@ def test_from_scratch():
 	#for p in range(number_of_parts):
 	p = 1
 	
-	part_seqs = [s.sequence for s in parts[p]]
+	part_seqs = parts[p]#[s.sequence for s in parts[p]]
+	#print [seq.id for seq in part_seqs]
 	#part_reads = [reads[i] for i in parts[p]]
-	debruijn_part = fdgb.GraphData(part_seqs, k2)
+	debruijn_part = fdgb.GraphData([[seq.sequence for seq in part_seqs]], k2)
+	debruijn_part.remove_parallel_sequences()
 	
 	postfix = "_p"+str(p)+"_preremove"
 	

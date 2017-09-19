@@ -639,7 +639,7 @@ class GraphData:
 		start_seq_id = -1
 		min_label = False
 		for seq in self.sequences:
-			if seq.is_relevant and (min_label == Falae or seq.label < min_label):
+			if seq.is_relevant and (min_label == False or seq.label < min_label):
 				start_seq = seq.id
 				min_label = seq.label
 			
