@@ -176,12 +176,13 @@ def test_from_scratch():
 	
 	casename = "l"+str(readlength)+"_n"+str(num_reads)+"_e"+str(epi)
 	
-	readfilename = "test_read.txt"
-	if not os.path.isfile(readfilename):
-		sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = [num_reads], replace_error_percentage = epr, indel_error_percentage = epi)
+	#readfilename = "test_read.txt"
+	#if not os.path.isfile(readfilename):
+	#	sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = [num_reads], replace_error_percentage = epr, indel_error_percentage = epi)
 	
-	reads = dio.get_reads_from_file(filename = readfilename)
+	#reads = dio.get_reads_from_file(filename = readfilename)
 	
+	'''
 	debruijn = fdgb.GraphData(reads, k1)
 	# delete reads and kmers to save ram:
 	debruijn.reads = []
@@ -194,7 +195,10 @@ def test_from_scratch():
 	
 	debruijn.get_asqg_output(filename = output_dir+"/"+casename+"_base.asqg")
 	debruijn.get_csv_output(filename = output_dir+"/"+casename+"_base.csv")
-	
+	'''
+	debruijn = fdgb.GraphData()
+	debruijn.load_from_asqg(filename = path+"corona-largereads-asbk-1-i_10000_1_[200]_15-0_30.asqg")
+		
 	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose=False)
 	
 	debruijn = []
