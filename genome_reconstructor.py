@@ -198,8 +198,7 @@ def test_from_scratch():
 	'''
 	debruijn = fdgb.GraphData()
 	debruijn.load_from_asqg(filename = path+"corona-largereads-asbk-1-i_10000_1_[200]_15-0_40.asqg")
-	#debruijn.load_from_asqg(filename = path+"bvdv_sample_50_1_[5000]_2-0_20.asqg")
-	
+		
 	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose=False)
 	#print [[seq.id for seq in p] for p in parts]
 	
@@ -243,6 +242,7 @@ def test_from_scratch():
 	#debruijn_part.write_sequences_to_file(filename = output_dir+"/"+casename+"reads_p"+str(p)+".txt")
 	
 	debruijn_part.reduce_to_single_path_max_weight()
+	debruijn_part.contract_unique_overlaps(verbose=False)
 	
 	postfix = "_p"+str(p)+"_postsimplify"
 	debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+postfix+".asqg")
