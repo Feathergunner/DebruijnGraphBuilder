@@ -636,17 +636,17 @@ class GraphData:
 	def reduce_to_single_path_max_weight(self, verbose=False):
 		# method assumes that graph has only one component and no cycles
 		# and sequences have weight-labels
-		start_seq = -1
+		start_seq_id = -1
 		min_label = False
 		for seq in self.sequences:
-			if min_label == Falae or seq.label < min_label:
+			if seq.is_relevant and (min_label == Falae or seq.label < min_label):
 				start_seq = seq.id
 				min_label = seq.label
 			
-		current_seq = start_seq
-		while len(self.sequences[current_seq].overlaps_out) > 0:
+		current_seq_id = start_seq_id
+		while len(self.sequences[current_seq_id].overlaps_out) > 0:
 			next_sequences = []
-			for ov_id in self.sequences[current_seq].overlaps_out:
+			for ov_id in self.sequences[current_seq_id].overlaps_out:
 				next_sequences.append(self.overlaps[ov_id].contig_sequence_2)
 			max_seq_id = -1
 			max_seq_weight = -1
@@ -656,7 +656,7 @@ class GraphData:
 					max_seq_id = seq_id
 			for seq_id in next_sequences:
 				if seq_id == max_seq_id:
-					current_seq = seq_id
+					current_seq_id = seq_id
 				else:
 					self.delete_sequence(seq_id)
 		
