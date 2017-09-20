@@ -84,7 +84,7 @@ def gendata(setting, reconstruct=False):
 							if reconstruct:
 								debruijn.remove_insignificant_sequences()
 								debruijn.remove_single_sequence_components()
-								debruijn.construct_assembly_ordering_labels()
+								debruijn.construct_assembly_ordering_labels(verbose = True)
 								debruijn.reduce_to_single_path_max_weight()
 								debruijn.contract_unique_overlaps(verbose = False)
 								casename+="_reconstructed"

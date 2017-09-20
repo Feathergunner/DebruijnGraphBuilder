@@ -521,7 +521,7 @@ class GraphData:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
 						
-	def construct_assembly_ordering_labels(self):
+	def construct_assembly_ordering_labels(self, verbose=False):
 		# algorithm assumes that graph
 		# 	is not empty and
 		#	has only one component and
@@ -529,16 +529,12 @@ class GraphData:
 		print "Construct assembly ordering labels..."
 		
 		for start_seq_id in range(len(self.sequences)):
-			if not self.sequences[start_seq_id].label:
+			if self.sequences[start_seq_id].is_relevant and not self.sequences[start_seq_id].label:
 				queue = [[self.sequences[0].id, 0]]
 				while (len(queue) > 0):
 					current_data = queue[0]
 					queue.pop(0)
 					current_node_id = current_data[0]
-					#print self.sequences[current_node_id].label
-					#print current_node_id
-					#print self.sequences[current_node_id].overlaps_out
-					#print self.sequences[current_node_id].overlaps_in
 					for seq_id in self.sequences[current_node_id].overlaps_out:
 						if self.sequences[seq_id].label == False:
 							start_label = current_data[1] + self.sequences[current_node_id].get_length()
@@ -553,6 +549,10 @@ class GraphData:
 								self.min_label = start_label
 							self.sequences[seq_id].label = start_label
 							queue.append([seq_id, start_label])
+		if verbose:
+			for seq in self.sequences:
+				if seq.is_relevant:
+					print str(seq.id) + ": " + str(seq.label)
 					
 	def get_partition_of_sequences(self, number_of_parts, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
