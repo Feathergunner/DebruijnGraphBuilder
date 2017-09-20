@@ -158,3 +158,14 @@ bvdv_large_absk_4 = {
 	"num_different_viruses" : 4,
 	"set_of_viruses" : set_bvdv_4,
 	"name" : "bvdv-largereads-absk-4"}
+
+bvdv_absk_1_test_recons = {
+	"k_absolute_settings" : [20,25],
+    "readlength_settings" : [50, 100],
+    "number_of_reads_settings" : [2500, 1250],
+    "coverage_factors" : [2],
+	"error_type" : "replace",
+    "error_percentages" : [0.1, 0.5, 1.0, 5.0],
+    "num_different_viruses" : 1,
+    "set_of_viruses" : set_bvdv_2,
+	"name" : "bvdv-absk-1-test-recons",}

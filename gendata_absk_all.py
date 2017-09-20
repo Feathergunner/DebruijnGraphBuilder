@@ -98,4 +98,4 @@ def gendata(setting, reconstruct=False):
 #gendata(ds.bvdv_absk_2)
 #gendata(ds.bvdv_absk_4)
 
-gendata(ds.bvdv_absk_1, reconstruct=True)
+gendata(ds.bvdv_absk_1_test_recons, reconstruct=True)
