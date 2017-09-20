@@ -78,16 +78,19 @@ def gendata(setting, reconstruct=False):
 							debruijn.contract_unique_overlaps(verbose=False)
 							debruijn.remove_parallel_sequences()
 							
+							debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
+							debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
+							
 							if reconstruct:
-								debruijn.construct_assembly_ordering_labels()
 								debruijn.remove_insignificant_sequences()
 								debruijn.remove_single_sequence_components()
+								debruijn.construct_assembly_ordering_labels()
 								debruijn.reduce_to_single_path_max_weight()
 								debruijn.contract_unique_overlaps(verbose = False)
 								casename+="_reconstructed"
+								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
+								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
 						
-							debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
-							debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
 						except:
 							pass
 						
