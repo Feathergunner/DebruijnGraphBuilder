@@ -208,6 +208,8 @@ class GraphData:
 					kmer_already_existing = True
 					this_kmer_id = self.kmer_dict[new_kmer_sequence]
 					self.kmers[this_kmer_id].add_evidence(read_index)
+					inv_kmer_id = self.kmers[this_kmer_id].id_of_inverse_kmer
+					self.kmers[inv_kmer_id].add_evidence(read_index)
 					if verbose:
 						print ("Kmer already exists")
 						print ("Add read ("+str(read_index)+") evidence to kmer "+str(this_kmer_id))
