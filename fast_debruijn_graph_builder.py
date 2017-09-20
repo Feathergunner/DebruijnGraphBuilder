@@ -174,6 +174,14 @@ class GraphData:
 						kmer_string += str(read_id)+" "
 					print kmer_string
 				print("")
+	
+	def get_relevant_sequences(self):
+		sequences = []
+		for s in self.sequences:
+			if s.is_relevant:
+				sequences.append(s.sequence)
+		return sequences
+		
 
 	def get_kmerdata_from_reads(self, verbose = False):
 		print ("Get kmer-data from reads ...")
@@ -466,11 +474,11 @@ class GraphData:
 
 	def get_csv_output(self, filename="csv_file.csv"):
 		print ("writing csv-file ...")
-		headline = "Node_Label, Sequence, maxweight\n"
+		headline = "Node_Label, Sequence, maxweight, label\n"
 		data = ""
 		for seq in self.sequences:
 			if seq.is_relevant:
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+"\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
 		outputfile.write(data)
@@ -634,31 +642,60 @@ class GraphData:
 	'''
 		
 	def reduce_to_single_path_max_weight(self, verbose=False):
+		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
 		# method assumes that graph has only one component and no cycles
 		# and sequences have weight-labels
+		
 		start_seq_id = -1
 		min_label = False
+		max_weight = 0
 		for seq in self.sequences:
-			if seq.is_relevant and (min_label == False or seq.label < min_label):
-				start_seq = seq.id
-				min_label = seq.label
+			if seq.is_relevant:
+				#print str(seq.id) + " - " +str(seq.label) + " - " + str(seq.max_weight)
+				#print "current min_label: "+str(min_label)
+				if (not min_label) or (seq.label < min_label-self.k_value) or (seq.label < min_label+self.k_value and seq.max_weight > max_weight):
+					#if ((not min_label) or (seq.label < min_label)) or ((seq.label == min_label) and (seq.max_weight > max_weight)):
+					#print "set start_seq_id to " + str(seq.id)
+					start_seq_id = seq.id
+					min_label = seq.label
+					max_weight = seq.max_weight
 			
 		current_seq_id = start_seq_id
+		last_seq_id = -1
+		print "start_id: " +str(current_seq_id)
 		while len(self.sequences[current_seq_id].overlaps_out) > 0:
 			next_sequences = []
-			for ov_id in self.sequences[current_seq_id].overlaps_out:
-				next_sequences.append(self.overlaps[ov_id].contig_sequence_2)
+			#print self.sequences[current_seq_id].overlaps_out
+			for target_id in self.sequences[current_seq_id].overlaps_out:
+				#print ov_id
+				#print self.overlaps[ov_id].contig_sequence_2
+				next_sequences.append(target_id)
 			max_seq_id = -1
 			max_seq_weight = -1
 			for seq_id in next_sequences:
 				if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
 					max_seq_weight = self.sequences[seq_id].max_weight
 					max_seq_id = seq_id
+			# delete all incoming sequences except path:
+			if not last_seq_id == -1:
+				incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
+				for seq_id in incoming_sequences:
+					if not seq_id == last_seq_id:
+						self.delete_sequence(seq_id)
+			# set next sequence and delete other outgoing sequences:
 			for seq_id in next_sequences:
 				if seq_id == max_seq_id:
+					last_seq_id = current_seq_id
 					current_seq_id = seq_id
 				else:
 					self.delete_sequence(seq_id)
+		# delete incoming sequences at final sequence, if there are any:
+		if not last_seq_id == -1:
+			incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
+			for seq_id in incoming_sequences:
+				if not seq_id == last_seq_id:
+					self.delete_sequence(seq_id)
+		
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)

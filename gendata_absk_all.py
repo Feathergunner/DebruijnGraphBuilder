@@ -12,7 +12,7 @@ import dataset_settings as ds
 
 sampleReads.read_genomes()
 
-def gendata(setting):
+def gendata(setting, reconstruct=False):
 	k_absolute_settings = setting["k_absolute_settings"]
 	coverage_factors = setting["coverage_factors"]
 	readlength_settings = setting["readlength_settings"]
@@ -77,6 +77,14 @@ def gendata(setting):
 							gc.collect()
 							debruijn.contract_unique_overlaps(verbose=False)
 							debruijn.remove_parallel_sequences()
+							
+							if reconstruct:
+								debruijn.construct_assembly_ordering_labels()
+								debruijn.remove_insignificant_sequences()
+								debruijn.remove_single_sequence_components()
+								debruijn.reduce_to_single_path_max_weight()
+								debruijn.contract_unique_overlaps(verbose = False)
+								casename+="_reconstructed"
 						
 							debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 							debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
@@ -86,9 +94,8 @@ def gendata(setting):
 					else:
 						print ("Data already exists!")
 
-gendata(ds.bvdv_absk_1)
-gendata(ds.bvdv_absk_2)
-gendata(ds.bvdv_absk_4)
-#gendata(setting_absk_large_1)
-#gendata(ds.setting_corona_vs_bvdv)
+#gendata(ds.bvdv_absk_1)
+#gendata(ds.bvdv_absk_2)
+#gendata(ds.bvdv_absk_4)
 
+gendata(ds.bvdv_absk_1, reconstruct=True)
