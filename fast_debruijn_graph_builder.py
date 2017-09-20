@@ -530,7 +530,7 @@ class GraphData:
 		
 		for start_seq_id in range(len(self.sequences)):
 			if self.sequences[start_seq_id].is_relevant and not self.sequences[start_seq_id].label:
-				queue = [[self.sequences[0].id, 0]]
+				queue = [[self.sequences[start_seq_id].id, 0]]
 				while (len(queue) > 0):
 					current_data = queue[0]
 					queue.pop(0)
