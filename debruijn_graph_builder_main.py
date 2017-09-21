@@ -1,6 +1,9 @@
 #!usr/bin/python
 
 import timeit
+import os
+import gc
+import re
 
 import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
@@ -162,7 +165,7 @@ def test_reconstruction_3():
 	
 def test_reconstruction_4():
 	import dataset_settings as ds
-	setting = ds.corona_large_test_recons
+	setting = ds.largereads_test_recons
 	
 	k_absolute_settings = setting["k_absolute_settings"]
 	coverage_factors = setting["coverage_factors"]
@@ -181,17 +184,17 @@ def test_reconstruction_4():
 	
 	cf = coverage_factors[0]
 	readlength = readlength_settings[0]
-	num_reads = cf*number_of_reads_settings[0]]
+	num_reads = cf*number_of_reads_settings[0]
 	error_percentage = error_percentages[0]
 	k = k_absolute_settings[0]
 	epr = 0
 	epi = error_percentage
 	
 	ep_string = "-".join(re.split(r'\.',str(error_percentage)))
-	casename_gen = name+"_"+str(readlength)+"_"+str(num_different_viruses)+"_["+str(num_reads[0])+"]_"+ep_string
+	casename_gen = name+"_"+str(readlength)+"_"+str(num_different_viruses)+"_["+str(num_reads)+"]_"+ep_string
 	readfilename = output_dir + "/reads/" + casename_gen + ".txt"
 	
-	sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
+	sr.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = [num_reads], replace_error_percentage = epr, indel_error_percentage = epi)
 	gc.collect()
 					
 	casename = casename_gen + "_"+str(k)
@@ -211,7 +214,7 @@ def test_reconstruction_4():
 	number_of_parts = 100
 	k2 = 20
 	debruijn.construct_assembly_ordering_labels(verbose = False)
-	parts = get_partition_of_sequences(number_of_parts, verbose = False)
+	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose = False)
 	
 	reconstructed_sequences = []
 	
@@ -221,7 +224,7 @@ def test_reconstruction_4():
 		print len(part_sequences)
 		print part_sequences
 		
-		debruijn_part = fdgb.GraphData([[s.seq for s in part_sequences]], k2)
+		debruijn_part = fdgb.GraphData([[seq.sequence for seq in part_sequences]], k2)
 		# delete reads and kmers to save ram:
 		debruijn_part.reads = []
 		debruijn_part.kmers = []
@@ -240,5 +243,14 @@ def test_reconstruction_4():
 		
 		debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".asqg")
 		debruijn_part.get_csv_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".csv")
+	
+	debruijn = []
+	debruijn_part = []
+	gc.collect()
+	
+	debruijn_recons = fdgb.GraphData([reconstructed_sequences], k2)
+	debruijn_recons = contract_unique_overlaps()
+	debruijn_recons.get_asqg_output(filename = output_dir+"/"+casename+"_recons.asqg")
+	debruijn_recons.get_csv_output(filename = output_dir+"/"+casename+"_recons.csv")
 		
 test_reconstruction_4()
