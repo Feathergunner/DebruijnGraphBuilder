@@ -8,10 +8,11 @@ import data_io as dio
 import sampleReads as sr
 import manjasDefinitionen as md
 
+'''
 dna = dio.genereate_dna(length=500)
 dio.write_dna_to_file("Output/test/genome_dna_test.txt", dna)
 
-#reads, alignment = dio.genereate_reads(dna, coverage=500, avg_read_length=50, remove_pct=0, mutation_pct=0.0, mutation_alphabet=["A","C","G","T"], both_directions=False, verbose=False)
+reads, alignment = dio.genereate_reads(dna, coverage=500, avg_read_length=50, remove_pct=0, mutation_pct=0.0, mutation_alphabet=["A","C","G","T"], both_directions=False, verbose=False)
 #reads = dio.get_reads_from_file(filename = "Data/reads_bvdv_sample_50_2_[5000,5000]_0.txt")
 
 sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=50, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[500], replace_error_percentage=0.0, indel_error_percentage=0.2, inverted_reads=False)
@@ -21,6 +22,7 @@ reads = dio.get_reads_from_file("Output/test/testreads.txt")
 #print reads
 
 k = 20
+'''
 
 def measure_runtime():
 	start_fdgb = timeit.default_timer()
@@ -126,3 +128,116 @@ def test_reconstruction_2():
 	
 	debruijn.get_asqg_output(filename="Output/test/recon_part"+str(p)+"_k-"+str(k)+"-"+str(k2))
 	
+def test_reconstruction_3():
+	dna = dio.genereate_dna(length=500)
+	reads, alignment = dio.genereate_reads(dna, coverage=100, avg_read_length=50, remove_pct=0, mutation_pct=0.5, mutation_alphabet=["A","C","G","T"], both_directions=False, verbose=False)
+	k = 20
+	#print reads
+	debruijn = fdgb.GraphData(reads, k, verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.remove_single_sequence_components()
+	#debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.construct_assembly_ordering_labels()
+	debruijn.get_asqg_output(filename="Output/test/test_partition_1.asqg")
+	debruijn.get_csv_output(filename="Output/test/test_partition_1.csv")
+	
+	debruijn.remove_insignificant_sequences()
+	debruijn.remove_single_sequence_components()
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.get_asqg_output(filename="Output/test/test_partition_2.asqg")
+	debruijn.get_csv_output(filename="Output/test/test_partition_2.csv")
+	
+	debruijn.reduce_to_single_path_max_weight()
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.get_asqg_output(filename="Output/test/test_partition_3.asqg")
+	debruijn.get_csv_output(filename="Output/test/test_partition_3.csv")
+	
+	reconstructed = debruijn.get_relevant_sequences()[0]
+	min_len = min(len(reconstructed), len(dna))
+	print ("the shorter squence is "+str(min_len)+" symbols long")
+	for i in range(min_len):
+		if not dna[i] == reconstructed[i]:
+			print "error at position "+str(i)
+	
+def test_reconstruction_4():
+	import dataset_settings as ds
+	setting = ds.corona_large_test_recons
+	
+	k_absolute_settings = setting["k_absolute_settings"]
+	coverage_factors = setting["coverage_factors"]
+	readlength_settings = setting["readlength_settings"]
+	number_of_reads_settings = setting["number_of_reads_settings"]
+	error_percentages = setting["error_percentages"]
+	num_different_viruses = setting["num_different_viruses"]
+	set_of_viruses = setting["set_of_viruses"]
+	output_dir = "Output/"+setting["name"]+"-i"
+	name = setting["name"]
+	
+	if not os.path.exists(output_dir):
+		os.makedirs(output_dir)
+	if not os.path.exists(output_dir+"/reads"):
+		os.makedirs(output_dir+"/reads")
+	
+	cf = coverage_factors[0]
+	readlength = readlength_settings[0]
+	num_reads = cf*number_of_reads_settings[0]]
+	error_percentage = error_percentages[0]
+	k = k_absolute_settings[0]
+	epr = 0
+	epi = error_percentage
+	
+	ep_string = "-".join(re.split(r'\.',str(error_percentage)))
+	casename_gen = name+"_"+str(readlength)+"_"+str(num_different_viruses)+"_["+str(num_reads[0])+"]_"+ep_string
+	readfilename = output_dir + "/reads/" + casename_gen + ".txt"
+	
+	sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
+	gc.collect()
+					
+	casename = casename_gen + "_"+str(k)
+	reads = dio.get_reads_from_file(filename = readfilename)
+	debruijn = fdgb.GraphData(reads, k)
+	# delete reads and kmers to save ram:
+	debruijn.reads = []
+	debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+	debruijn.contract_unique_overlaps(verbose=False)
+	debruijn.remove_parallel_sequences()
+	
+	debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
+	debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
+	
+	number_of_parts = 100
+	k2 = 20
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	parts = get_partition_of_sequences(number_of_parts, verbose = False)
+	
+	reconstructed_sequences = []
+	
+	#for part_id in range(number_of_parts):
+	for part_id in range(1):
+		part_sequences = parts[part_id]
+		print len(part_sequences)
+		print part_sequences
+		
+		debruijn_part = fdgb.GraphData([[s.seq for s in part_sequences]], k2)
+		# delete reads and kmers to save ram:
+		debruijn_part.reads = []
+		debruijn_part.kmers = []
+		# run garbage collector:
+		gc.collect()
+		debruijn_part.contract_unique_overlaps(verbose = False)
+		debruijn_part.remove_parallel_sequences(verbose = False)
+		
+		debruijn_part.remove_single_sequence_components()
+		debruijn_part.construct_assembly_ordering_labels()
+		debruijn_part.remove_insignificant_sequences()
+		debruijn_part.reduce_to_single_path_max_weight()
+		debruijn_part.contract_unique_overlaps(verbose = False)
+		
+		reconstructed_sequences.append(debruijn_part.get_relevant_sequences()[0])
+		
+		debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".asqg")
+		debruijn_part.get_csv_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".csv")
+		

@@ -169,3 +169,14 @@ bvdv_absk_1_test_recons = {
     "num_different_viruses" : 1,
     "set_of_viruses" : set_bvdv_2,
 	"name" : "bvdv-absk-1-test-recons",}
+	
+corona_large_test_recons = {
+	"k_absolute_settings" : [30],
+	"readlength_settings" : [8000],
+	"number_of_reads_settings" : [250],
+	"coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [15.0],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : set_corona_1,
+	"name" : "corona-largereads-recons",}
