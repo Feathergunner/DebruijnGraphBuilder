@@ -241,3 +241,4 @@ def test_reconstruction_4():
 		debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".asqg")
 		debruijn_part.get_csv_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".csv")
 		
+test_reconstruction_4()
