@@ -179,7 +179,7 @@ bvdv_absk_1_test_recons = {
     "error_percentages" : [0.1, 0.5, 1.0, 5.0],
     "num_different_viruses" : 1,
     "set_of_viruses" : set_bvdv_2,
-	"name" : "bvdv-absk-1-test-recons",}
+	"name" : "bvdv-absk-1-test-recons"}
 	
 largereads_test_recons = {
 	"k_absolute_settings" : [30],
@@ -190,26 +190,26 @@ largereads_test_recons = {
 	"error_percentages" : [15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_bvdv_2,
-	"name" : "largereads-recons-test",}
+	"name" : "largereads-recons-test"}
 
 reads_for_sebastian_corona = {
+	"k_absolute_settings" : [30],
 	"readlength_settings" : [2000, 8000],
 	"number_of_reads_settings" : [20000, 20000],
 	"coverage_factors" : [1, 10],
 	"error_type" : "indel",
-	"error_percentages" : [5.0 15.0],
+	"error_percentages" : [5.0, 15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_corona_1,
-	"name" : "largereads-recons-test",}
-}
+	"name" : "largereads-recons-test"}
 
 reads_for_sebastian_bvdv = {
+	"k_absolute_settings" : [30],
 	"readlength_settings" : [2000, 8000],
 	"number_of_reads_settings" : [20000, 20000],
 	"coverage_factors" : [1, 10],
 	"error_type" : "indel",
-	"error_percentages" : [5.0 15.0],
+	"error_percentages" : [5.0, 15.0],
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
-	"name" : "largereads-recons-test",}
-}
+	"name" : "largereads-recons-test"}
