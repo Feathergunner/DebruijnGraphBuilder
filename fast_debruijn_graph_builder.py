@@ -6,24 +6,24 @@ import re
 import gc
 
 class Read:
-	def __init__(self, r_id, sequence):
-		self.id = r_id
+	def __init__(self, read_id, sequence):
+		self.id = read_id
 		self.sequence = sequence
 		self.length = len(sequence)
 		self.kmers = []
-		self.paired_end_partner = -1
+		#self.paired_end_partner = -1
 		
-	def add_paired_end_partner(self, partner_id):
-		self.paired_end_partner = partner_id
+	#def add_paired_end_partner(self, partner_id):
+	#	self.paired_end_partner = partner_id
 		
 	def add_kmer(self, kmer_id):
 		self.kmers.append(kmer_id)
 
 class Kmer:
-	def __init__(self, k_id, inv_id , sequence, evidence_reads):
-		self.id = k_id
+	def __init__(self, kmer_id, inverse_id , sequence, evidence_reads):
+		self.id = kmer_id
 		self.sequence = sequence
-		self.id_of_inverse_kmer = inv_id
+		self.id_of_inverse_kmer = inverse_id
 		self.evidence_reads = evidence_reads
 		
 	def add_evidence(self, evidence_read_id):
@@ -33,6 +33,7 @@ class Kmer:
 		return len(self.evidence_reads)
 
 class ContigSequence:
+	# Nodes in the Debruijn-Graph
 	def __init__(self, seq_id, inv_id, sequence, kmers, weight = 1, is_relevant = True):
 		self.id = seq_id
 		self.id_of_inverse_seq = inv_id
@@ -40,17 +41,20 @@ class ContigSequence:
 		self.kmers = kmers
 		# the maximal read eavidence this sequence has for any subsequence
 		self.max_weight = weight
-		# overlaps (aka edges) are stored in dictionaries
+		# overlaps (i.e. edges) are stored in dictionaries
 		# self.overlap[other_sequence_id] = overlap_id
 		self.overlaps_out = {}
 		self.overlaps_in = {}
+		# deleted sequences will have the following flag set to False
 		self.is_relevant = is_relevant
+		# used for estimation of position within assembly
 		self.label = False
 
 	def get_length(self):
 		return len(self.sequence)
 		
 	def check_if_overlap_exists(self, other_sequence_id):
+		# checks whether this sequence has a common instance of SequenceOverlap with another sequence
 		if other_sequence_id in self.overlaps_out:
 			return self.overlaps_out[other_sequence_id]
 		elif other_sequence_id in self.overlaps_in:
@@ -72,9 +76,11 @@ class ContigSequence:
 			print ("is not relevant")
 
 class SequenceOverlap:
+	# Edges in the Debruijn-Graph
 	def __init__(self, ov_id, length, seq_1, seq_2, evidence_reads):
 		self.id = ov_id
 		self.length = length
+		# the incident sequences of this overlap. sequence_1 is the source, sequence_2 is the target.
 		self.contig_sequence_1 = seq_1
 		self.contig_sequence_2 = seq_2
 		self.evidence_reads = evidence_reads
