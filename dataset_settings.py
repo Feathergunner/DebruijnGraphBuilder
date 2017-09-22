@@ -100,6 +100,17 @@ corona_large_absk_1 = {
 	"set_of_viruses" : set_corona_1,
 	"name" : "corona-largereads-asbk-1",
 	"output_dir" : "Output/general_corona_absk_large_1"}
+
+corona_large_manyreads = {
+	"k_absolute_settings" : [130,40],
+	"readlength_settings" : [8000, 10000],
+	"number_of_reads_settings" : [250,200],
+	"coverage_factors" : [4, 5, 10],
+	"error_type" : "indel",
+	"error_percentages" : [5.0, 10.0, 15.0],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : set_corona_1,
+	"name" : "corona-largereads-manyreads"}
 	
 bvdv_absk_1 = {
 	"k_absolute_settings" : [10,12,14,16,18,20,25,30],
