@@ -12,7 +12,7 @@ import dataset_settings as ds
 
 sampleReads.read_genomes()
 
-def gendata(setting, reconstruct=False):
+def gendata(setting, onlyreads=False, reconstruct=False):
 	k_absolute_settings = setting["k_absolute_settings"]
 	coverage_factors = setting["coverage_factors"]
 	readlength_settings = setting["readlength_settings"]
@@ -58,44 +58,45 @@ def gendata(setting, reconstruct=False):
 					sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
 				else:
 					print ("Reads already exist!")
-										
-				for k in k_absolute_settings:
-					# run garbage collector:
-					gc.collect()
-					
-					casename = casename_gen + "_"+str(k)
-					
-					if not os.path.isfile(output_dir+"/"+casename+".asqg"):
-						print ("Working on case "+casename)
-						try:
-							reads = dio.get_reads_from_file(filename = readfilename)
-							debruijn = fdgb.GraphData(reads, k)
-							# delete reads and kmers to save ram:
-							debruijn.reads = []
-							debruijn.kmers = []
-							# run garbage collector:
-							gc.collect()
-							debruijn.contract_unique_overlaps(verbose=False)
-							debruijn.remove_parallel_sequences()
-							
-							debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
-							debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
-							
-							if reconstruct:
-								debruijn.remove_insignificant_sequences()
-								debruijn.remove_single_sequence_components()
-								debruijn.construct_assembly_ordering_labels(verbose = True)
-								debruijn.reduce_to_single_path_max_weight()
-								debruijn.contract_unique_overlaps(verbose = False)
-								casename+="_reconstructed"
+
+				if not onlyreads:
+					for k in k_absolute_settings:
+						# run garbage collector:
+						gc.collect()
+						
+						casename = casename_gen + "_"+str(k)
+						
+						if not os.path.isfile(output_dir+"/"+casename+".asqg"):
+							print ("Working on case "+casename)
+							try:
+								reads = dio.get_reads_from_file(filename = readfilename)
+								debruijn = fdgb.GraphData(reads, k)
+								# delete reads and kmers to save ram:
+								debruijn.reads = []
+								debruijn.kmers = []
+								# run garbage collector:
+								gc.collect()
+								debruijn.contract_unique_overlaps(verbose=False)
+								debruijn.remove_parallel_sequences()
+								
 								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
-						
-						except:
-							pass
-						
-					else:
-						print ("Data already exists!")
+								
+								if reconstruct:
+									debruijn.remove_insignificant_sequences()
+									debruijn.remove_single_sequence_components()
+									debruijn.construct_assembly_ordering_labels(verbose = True)
+									debruijn.reduce_to_single_path_max_weight()
+									debruijn.contract_unique_overlaps(verbose = False)
+									casename+="_reconstructed"
+									debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
+									debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
+							
+							except:
+								pass
+							
+						else:
+							print ("Data already exists!")
 
 #gendata(ds.bvdv_absk_1)
 #gendata(ds.bvdv_absk_2)
