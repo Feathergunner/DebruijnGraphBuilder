@@ -201,7 +201,7 @@ reads_for_sebastian_corona = {
 	"error_percentages" : [5.0, 15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_corona_1,
-	"name" : "largereads-recons-test"}
+	"name" : "largereads-largenamount"}
 
 reads_for_sebastian_bvdv = {
 	"k_absolute_settings" : [30],
@@ -212,4 +212,4 @@ reads_for_sebastian_bvdv = {
 	"error_percentages" : [5.0, 15.0],
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
-	"name" : "largereads-recons-test"}
+	"name" : "largereads-largeamount"}
