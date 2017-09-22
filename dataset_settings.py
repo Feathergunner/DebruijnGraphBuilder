@@ -191,3 +191,25 @@ largereads_test_recons = {
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_bvdv_2,
 	"name" : "largereads-recons-test",}
+
+reads_for_sebastian_corona = {
+	"readlength_settings" : [2000, 8000],
+	"number_of_reads_settings" : [20000, 20000],
+	"coverage_factors" : [1, 10],
+	"error_type" : "indel",
+	"error_percentages" : [5.0 15.0],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : set_corona_1,
+	"name" : "largereads-recons-test",}
+}
+
+reads_for_sebastian_bvdv = {
+	"readlength_settings" : [2000, 8000],
+	"number_of_reads_settings" : [20000, 20000],
+	"coverage_factors" : [1, 10],
+	"error_type" : "indel",
+	"error_percentages" : [5.0 15.0],
+	"num_different_viruses" : 2,
+	"set_of_viruses" : set_bvdv_2,
+	"name" : "largereads-recons-test",}
+}
