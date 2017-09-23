@@ -84,6 +84,7 @@ class SequenceOverlap:
 		self.contig_sequence_1 = seq_1
 		self.contig_sequence_2 = seq_2
 		self.evidence_reads = evidence_reads
+		# Flag that checks whether a sequence is relevant for the graph or if it has been deleted
 		self.is_relevant = True
 	
 	def add_evidence(self, read_id):
@@ -110,11 +111,11 @@ class GraphData:
 		self.kmer_dict = {}
 		self.sequences = []
 		self.overlaps = {}
-		self.is_unified = False
-		
 		self.alphabet = alphabet
 		
-		# min and max label of sequences
+		# Flag that marks if inverse sequences have been removed
+		self.is_unified = False
+		# min and max label of all sequences
 		self.max_label = 0
 		self.min_label = 0
 		
@@ -132,6 +133,7 @@ class GraphData:
 			
 		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
+		
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
@@ -140,11 +142,10 @@ class GraphData:
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = len(kmer.evidence_reads)
-			
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 
-		print ("Construct overlaps ...")			
 		# construct overlaps between adjacent sequences with read-evidence:
+		print ("Construct overlaps ...")			
 		for read in self.reads:
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
@@ -182,14 +183,15 @@ class GraphData:
 				print("")
 	
 	def get_relevant_sequences(self):
+		# returns list of all sequences with set relevance flag
 		sequences = []
 		for s in self.sequences:
 			if s.is_relevant:
 				sequences.append(s.sequence)
 		return sequences
 		
-
 	def get_kmerdata_from_reads(self, verbose = False):
+		# checks all reads and constructs kmers and inverse kmers
 		print ("Get kmer-data from reads ...")
 
 		read_index = 0
@@ -241,6 +243,7 @@ class GraphData:
 			read_index += 1
 			
 	def increment_overlap(self, source_seq_id, target_seq_id, read_evidence, consider_inverse = True, verbose = False):
+		# This method adds an overlap to the database. If overlap already exists, only read-evidence is added.
 		if target_seq_id not in self.sequences[source_seq_id].overlaps_out:
 			if verbose:
 				print ("Add overlap of tuple " + str(source_seq_id) + " - " + str(target_seq_id))
@@ -270,15 +273,14 @@ class GraphData:
 		self.overlaps[ov_id].add_evidence(read_evidence)
 
 	def contract_unique_overlaps(self, verbose = False):
+		# This method contracts all overlaps between adjacent sequences that form an unique path
+		# (i.e., there are no other outgoing or incoming overlaps between the sequences)
 		print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
 				print (str(ov_index)+"/"+str(len(self.overlaps)))
-			if (ov_index%100000 == 0):
-				# run garbage collector:
-				gc.collect()
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
@@ -292,7 +294,6 @@ class GraphData:
 					# if source node has exactly one outgoing edge
 					# and the target node has exactly one incoming edge, 
 					# then contract edge:
-				
 					ov = self.overlaps[ov_index]
 					self.contract_overlap(ov_index, verbose)
 		            
@@ -309,6 +310,7 @@ class GraphData:
 						self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
+		# removes an overlap from the database and from both incident sequences
 		if verbose:
 			print ("Delete overlap "+str(overlap_id))
 			self.overlaps[overlap_id].print_data()
@@ -322,6 +324,7 @@ class GraphData:
 			self.overlaps.pop(overlap_id)
 		
 	def delete_sequence(self, sequence_id, verbose=False):
+		# flags sequence as not relevant and deletes all existing overlaps with this sequence
 		if verbose:
 			print ("Removing Sequence "+str(sequence_id))
 		adj_seq_out = self.sequences[sequence_id].overlaps_out.keys()
@@ -333,6 +336,7 @@ class GraphData:
 		self.sequences[sequence_id].is_relevant = False
 			
 	def contract_overlap(self, overlap_id, verbose=False):
+		# contracts a specific overlap
 		source_id = self.overlaps[overlap_id].contig_sequence_1
 		target_id = self.overlaps[overlap_id].contig_sequence_2
 		if verbose:
@@ -400,6 +404,7 @@ class GraphData:
 				self.delete_sequence(seq.id, verbose)
 	
 	def remove_parallel_sequences(self, verbose=False):
+		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
 		if not self.is_unified:
 			print ("Remove parallel sequences ...")
 			checked_sequences = [False for seq in self.sequences]
@@ -492,6 +497,7 @@ class GraphData:
 		outputfile.write(data)
 		
 	def write_sequences_to_file(self, filename):
+		# writes only the sequence-string of relevant sequences to a file
 		data = ""
 		for seq in self.sequences:
 			if seq.is_relevant:
@@ -500,6 +506,7 @@ class GraphData:
 		outputfile.write(data)
 		
 	def load_from_asqg(self, filename="asqg_file", verbose=False):
+		# reconstructs a graph from a asqg-file
 		print ("Loading from asqg-file ...")
 		self.is_unified = True
 		with open(filename) as asqg_source:
@@ -528,6 +535,7 @@ class GraphData:
 						self.k_value = int(overlap_data[6])					
 						
 	def construct_assembly_ordering_labels(self, verbose=False):
+		# constructs a fuzzy partial ordering of all relevant sequences:
 		# algorithm assumes that graph
 		# 	is not empty and
 		#	has only one component and
@@ -596,6 +604,7 @@ class GraphData:
 		'''
 	
 	def get_read_of_sequences(self, sequences, verbose=False):
+		# returns all reads that contain a specific sequence
 		kmers = []
 		for seq in sequences:
 			kmers += seq.kmers
