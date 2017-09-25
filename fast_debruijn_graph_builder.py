@@ -578,7 +578,6 @@ class GraphData:
 			print label_div
 			print part_size
 		
-		#parts = []
 		parts_seq = []
 		for i in range(number_of_parts):
 			current_start = self.min_label+i*(part_size)
@@ -589,19 +588,6 @@ class GraphData:
 			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
 			parts_seq.append(this_part_sequences)
 		return parts_seq
-		'''
-			this_part_kmers = []
-			for seq in this_part_sequences:
-				this_part_kmers += seq.kmers
-			this_part_reads = []
-			for kmer_id in this_part_kmers:
-				this_part_reads += self.kmers[kmer_id].evidence_reads
-			this_part_reads = list(set(this_part_reads))#[self.kmers[kmer_id].evidence_reads for kmer_id in this_part_kmers]))
-			parts.append(this_part_reads)
-			if verbose:
-				print str(i)+": "+str(current_start)+" - "+str(current_end)+" : "+str(len(parts[-1]))+" sequences"
-		return parts
-		'''
 	
 	def get_read_of_sequences(self, sequences, verbose=False):
 		# returns all reads that contain a specific sequence
@@ -614,50 +600,6 @@ class GraphData:
 		reads = list(set(reads))
 		return reads
 		
-	'''
-	def merge_with_other_graph(self, other_graph, verbose=False):
-		# store sequences and overlaps that were added in dictionaries that translate other_id -> this_id
-		merged_sequencs = {}
-		added_sequences = {}
-		added_overlaps = {}
-		for seq_other in other_graph.sequences:
-			sequence_already_exists = False
-			for seq_own in self.sequences:
-				if seq_own.sequence == seq_other.sequence:
-					sequence_already_exists = True
-					if len(seq_other.overlaps_out) > 0 or len(seq_other.overlaps_in) > 0:
-						merged_sequences[seq_other.id] = seq_own.id
-						for ov_other_id in seq_other.overlaps_out:
-							if other_graph.overlaps[ov_other_id].contig_sequence_2 in merged_sequences:
-								new_ov_target_id = merged_sequencs[other_graph.overlaps[ov_other_id].contig_sequence_2]
-							elif other_graph.overlaps[ov_other_id].contig_sequence_2 in added_sequences:
-								new_ov_target_id = added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_2]
-							else:
-								new_ov_target_id = len(self.sequences)
-								new_ov_target_id_inv = new_ov_target_id+1
-								self.sequences.append(ContigSequence(new_ov_target_id, new_ov_target_id_inv, other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_2], [], 1))
-								self.sequences.append(ContigSequence(new_ov_target_id_inv, new_ov_target_id, get_inverse_sequence(other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_2], self.alphabet), [], 1))
-								added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_2] = new_ov_target_id
-								added_sequences[other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_2].id_of_inverse_seq] = new_ov_target_id_inv
-							self.increase_overlap(seq_own, new_ov_target_id, -1)
-							
-						for ov_other_id in seq_other.overlaps_in:
-							if other_graph.overlaps[ov_other_id].contig_sequence_1 in merged_sequences:
-								new_ov_target_id = merged_sequencs[other_graph.overlaps[ov_other_id].contig_sequence_1]
-							elif other_graph.overlaps[ov_other_id].contig_sequence_1 in added_sequences:
-								new_ov_target_id = added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_1]
-							else:
-								new_ov_target_id = len(self.sequences)
-								new_ov_target_id_inv = new_ov_target_id+1
-								self.sequences.append(ContigSequence(new_ov_target_id, new_ov_target_id_inv, other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_1], [], 1))
-								self.sequences.append(ContigSequence(new_ov_target_id_inv, new_ov_target_id, get_inverse_sequence(other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_1], self.alphabet), [], 1))
-								added_sequences[other_graph.overlaps[ov_other_id].contig_sequence_1] = new_ov_target_id
-								added_sequences[other_graph.sequences[other_graph.overlaps[ov_other_id].contig_sequence_1].id_of_inverse_seq] = new_ov_target_id_inv	
-							self.increase_overlap(new_ov_target_id, seq_own, -1)
-			if not sequence_already_exists:
-				# TO DO: add sequence and overlaps
-	'''
-		
 	def reduce_to_single_path_max_weight(self, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
 		# method assumes that graph has only one component and no cycles
@@ -668,24 +610,18 @@ class GraphData:
 		max_weight = 0
 		for seq in self.sequences:
 			if seq.is_relevant:
-				#print str(seq.id) + " - " +str(seq.label) + " - " + str(seq.max_weight)
-				#print "current min_label: "+str(min_label)
 				if (not min_label) or (seq.label < min_label-self.k_value) or (seq.label < min_label+self.k_value and seq.max_weight > max_weight):
-					#if ((not min_label) or (seq.label < min_label)) or ((seq.label == min_label) and (seq.max_weight > max_weight)):
-					#print "set start_seq_id to " + str(seq.id)
 					start_seq_id = seq.id
 					min_label = seq.label
 					max_weight = seq.max_weight
 			
 		current_seq_id = start_seq_id
 		last_seq_id = -1
-		print "start_id: " +str(current_seq_id)
+		if verbose:
+			print "start_id: " +str(current_seq_id)
 		while len(self.sequences[current_seq_id].overlaps_out) > 0:
 			next_sequences = []
-			#print self.sequences[current_seq_id].overlaps_out
 			for target_id in self.sequences[current_seq_id].overlaps_out:
-				#print ov_id
-				#print self.overlaps[ov_id].contig_sequence_2
 				next_sequences.append(target_id)
 			max_seq_id = -1
 			max_seq_weight = -1
