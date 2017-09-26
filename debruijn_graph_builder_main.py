@@ -253,4 +253,76 @@ def test_reconstruction_4():
 	debruijn_recons.get_asqg_output(filename = output_dir+"/"+casename+"_recons.asqg")
 	debruijn_recons.get_csv_output(filename = output_dir+"/"+casename+"_recons.csv")
 		
-test_reconstruction_4()
+def test_recons_from_sequences():
+	read_dir = "Output/largereads-recons-test2-i"
+	read_basename = "largereads-recons-test2_5000_1_[250]_5-0_30_"
+	k = 18
+	num_of_sets = 30
+	
+	for i in range(num_of_sets):
+		seqfilename = read_dir+"/"+read_basename+"p"+str(i)+"_reads.txt"
+		reads = dio.get_reads_from_file(filename = seqfilename)
+		debruijn = fdgb.GraphData(reads, k)
+		# delete reads and kmers to save ram:
+		debruijn.reads = []
+		debruijn.kmers = []
+		# run garbage collector:
+		gc.collect()
+		
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.remove_parallel_sequences(verbose = False)
+		
+		debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step1.asqg")
+		debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step1.csv")
+		
+		debruijn.remove_insignificant_sequences()
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.remove_single_sequence_components()
+		debruijn.construct_assembly_ordering_labels()
+		
+		debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step2.asqg")
+		debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step2.csv")
+		
+		debruijn.reduce_to_single_path_max_weight()
+		debruijn.contract_unique_overlaps(verbose = False)
+		
+		debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step3.asqg")
+		debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step3.csv")
+		
+		debruijn.remove_short_sequences()
+		
+		debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step4.asqg")
+		debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step4.csv")
+		debruijn.write_sequences_to_file(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step4.txt")
+		
+def test_recons_merge():
+	read_dir = "Output/largereads-recons-test2-i"
+	read_basename = "largereads-recons-test2_5000_1_[250]_5-0_30_"
+	num_of_sets = 30
+	k = 20
+	
+	reads = []
+	for i in range(num_of_sets):
+		seqfilename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step4.txt"
+		reads += dio.get_reads_from_file(filename = seqfilename)
+		
+	debruijn = fdgb.GraphData(reads, k)
+	# delete reads and kmers to save ram:
+	debruijn.reads = []
+	debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+	
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.remove_parallel_sequences(verbose = False)
+	#debruijn.remove_tips()
+	debruijn.construct_assembly_ordering_labels()
+	debruijn.reduce_to_single_path_max_weight()
+	debruijn.contract_unique_overlaps(verbose = False)
+	
+	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged.asqg")
+	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged.csv")
+	
+#test_reconstruction_4()
+#test_recons_from_sequences()
+test_recons_merge()
