@@ -383,25 +383,6 @@ class GraphData:
 		self.sequences[target_id].is_relevant = False
 		# Don't use delete_overlap, because incident sequences have been handled manually:
 		self.overlaps.pop(overlap_id)
-		
-	def remove_tips(self, verbose=False):
-		print ("Removing tips ...")
-		for seq in self.sequences:
-			if seq.is_relevant:
-				if verbose:
-					print ("Consider sequence:")
-					seq.print_data()
-				# check if sequence is a tip and if sequence is shorter than 2k:
-				if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
-					if verbose:
-						print ("Sequence is a tip, needs to be removed")
-					self.delete_sequence(seq.id, verbose)
-
-	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
-		# removes all sequences with weight less than minimal_weight
-		for seq in self.sequences:
-			if seq.max_weight < minimal_weight:
-				self.delete_sequence(seq.id, verbose)
 	
 	def remove_parallel_sequences(self, verbose=False):
 		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
@@ -450,6 +431,52 @@ class GraphData:
 											print ("Add to bfs")
 										bfs_queue.append(adj_seq_id)
 			self.is_unified = True
+			
+	def get_components(self, verbose=False):
+		# returns a partition of the relevant sequences from self.sequences, as defined by the graph-components
+		components = []
+		
+		visited_sequences = {seq.id: False for seq in self.sequences if seq.is_relevant}
+		for seq in self.sequences:
+			if seq.is_relevant:
+				if not visited_sequences[seq.id]:
+					current_comp = []
+					seq_stack = [seq.id]
+					visited_sequences[seq.id] = True
+					while len(seq_stack) > 0:
+						current_seq_id = seq_stack[0]
+						seq_stack.pop(0)
+						current_comp.append(current_seq_id)
+						for adj_seq in self.sequences[current_seq_id].overlaps_out:
+							if not visited_sequences[adj_seq]:
+								seq_stack.append(adj_seq)
+								visited_sequences[adj_seq] = True
+						for adj_seq in self.sequences[current_seq_id].overlaps_in:
+							if not visited_sequences[adj_seq]:
+								seq_stack.append(adj_seq)
+								visited_sequences[adj_seq] = True					
+					components.append(current_comp)
+		return components				
+		
+	def remove_tips(self, verbose=False):
+		# removes tips (single-sequence-dead-ends) from the graph
+		print ("Removing tips ...")
+		for seq in self.sequences:
+			if seq.is_relevant:
+				if verbose:
+					print ("Consider sequence:")
+					seq.print_data()
+				# check if sequence is a tip and if sequence is shorter than 2k:
+				if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
+					if verbose:
+						print ("Sequence is a tip, remove this sequence.")
+					self.delete_sequence(seq.id, verbose)
+
+	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
+		# removes all sequences with weight less than minimal_weight
+		for seq in self.sequences:
+			if seq.max_weight < minimal_weight:
+				self.delete_sequence(seq.id, verbose)
 	
 	def remove_single_sequence_components(self, verbose=False):
 		# removes all components that consist only of a single sequence,
@@ -605,9 +632,52 @@ class GraphData:
 		# method assumes that graph has only one component and no cycles
 		# and sequences have weight-labels
 		
-		start_seq_id = -1
-		min_label = False
-		max_weight = 0
+		components = self.get_components()
+		for c in components:
+			start_seq_id = -1
+			min_label = False
+			max_weight = 0
+			for seq_id in c:
+				if (not min_label) or (self.sequences[seq_id].label < min_label-self.k_value) or (self.sequences[seq_id].label < min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
+					start_seq_id = seq_id
+					min_label = self.sequences[seq_id].label
+					max_weight = self.sequences[seq_id].max_weight
+			
+			current_seq_id = start_seq_id
+			last_seq_id = -1
+			if verbose:
+				print "start_id: " +str(current_seq_id)
+			while len(self.sequences[current_seq_id].overlaps_out) > 0:
+				next_sequences = []
+				for target_id in self.sequences[current_seq_id].overlaps_out:
+					next_sequences.append(target_id)
+				max_seq_id = -1
+				max_seq_weight = -1
+				for seq_id in next_sequences:
+					if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
+						max_seq_weight = self.sequences[seq_id].max_weight
+						max_seq_id = seq_id
+				# delete all incoming sequences except path:
+				if not last_seq_id == -1:
+					incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
+					for seq_id in incoming_sequences:
+						if not seq_id == last_seq_id:
+							self.delete_sequence(seq_id)
+				# set next sequence and delete other outgoing sequences:
+				for seq_id in next_sequences:
+					if seq_id == max_seq_id:
+						last_seq_id = current_seq_id
+						current_seq_id = seq_id
+					else:
+						self.delete_sequence(seq_id)
+			# delete incoming sequences at final sequence, if there are any:
+			if not last_seq_id == -1:
+				incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
+				for seq_id in incoming_sequences:
+					if not seq_id == last_seq_id:
+						self.delete_sequence(seq_id)
+		
+		'''			
 		for seq in self.sequences:
 			if seq.is_relevant:
 				if (not min_label) or (seq.label < min_label-self.k_value) or (seq.label < min_label+self.k_value and seq.max_weight > max_weight):
@@ -648,6 +718,15 @@ class GraphData:
 			for seq_id in incoming_sequences:
 				if not seq_id == last_seq_id:
 					self.delete_sequence(seq_id)
+		'''
+					
+	def remove_short_sequences(self, length_bound_by_multiple_of_k=5):
+		# brutally removes all sequences with length less than 5 times k_value (if not specified otherwise)
+		
+		for seq in self.sequences:
+			if seq.is_relevant:
+				if seq.get_length() < 5*self.k_value:
+					self.delete_sequence(seq.id)
 		
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
