@@ -595,11 +595,12 @@ class GraphData:
 				if seq.is_relevant:
 					print str(seq.id) + ": " + str(seq.label)
 					
-	def get_partition_of_sequences(self, number_of_parts, verbose=False):
+	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
 		sorted_nodes = sorted(self.sequences, key=lambda x: x.label)
 		label_div = self.max_label-self.min_label
-		part_size = label_div/(number_of_parts+1)
+		part_start_difference = label_div/(number_of_parts+overlap-1)
+		part_size = part_start_difference*overlap
 		
 		if verbose:
 			print label_div
@@ -607,11 +608,11 @@ class GraphData:
 		
 		parts_seq = []
 		for i in range(number_of_parts):
-			current_start = self.min_label+i*(part_size)
+			current_start = self.min_label+(i*part_start_difference)
 			if i == number_of_parts-1:
 				current_end = self.max_label
 			else:
-				current_end = self.min_label+(i+2)*(part_size)
+				current_end = current_start + part_size #self.min_label+(i+2)*(part_size)
 			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
 			parts_seq.append(this_part_sequences)
 		return parts_seq
