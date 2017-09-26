@@ -562,7 +562,7 @@ class GraphData:
 					
 	def get_partition_of_sequences(self, number_of_parts, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
-		sorted_nodes = sorted(self.sequences, key=lambda x: x.label)
+		sorted_nodes = sorted([seq for seq in self.sequences if seq.label], key=lambda x: x.label)
 		label_div = self.max_label-self.min_label
 		part_size = label_div/(number_of_parts+1)
 		
