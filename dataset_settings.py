@@ -184,13 +184,24 @@ bvdv_absk_1_test_recons = {
 largereads_test_recons = {
 	"k_absolute_settings" : [30],
 	"readlength_settings" : [5000],
-	"number_of_reads_settings" : [150],
+	"number_of_reads_settings" : [250],
 	"coverage_factors" : [1],
 	"error_type" : "indel",
 	"error_percentages" : [15.0],
 	"num_different_viruses" : 1,
 	"set_of_viruses" : set_bvdv_2,
 	"name" : "largereads-recons-test"}
+
+largereads_test_recons_2 = {
+	"k_absolute_settings" : [30],
+	"readlength_settings" : [5000],
+	"number_of_reads_settings" : [500],
+	"coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [5.0],
+	"num_different_viruses" : 1,
+	"set_of_viruses" : set_bvdv_2,
+	"name" : "largereads-recons-test2"}
 
 reads_for_sebastian_corona = {
 	"k_absolute_settings" : [30],

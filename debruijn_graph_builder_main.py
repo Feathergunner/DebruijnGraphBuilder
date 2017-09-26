@@ -165,7 +165,7 @@ def test_reconstruction_3():
 	
 def test_reconstruction_4():
 	import dataset_settings as ds
-	setting = ds.largereads_test_recons
+	setting = ds.largereads_test_recons_2
 	
 	k_absolute_settings = setting["k_absolute_settings"]
 	coverage_factors = setting["coverage_factors"]
@@ -211,19 +211,23 @@ def test_reconstruction_4():
 	debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 	debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
 	
-	number_of_parts = 100
+	number_of_parts = 30
 	k2 = 20
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose = False)
 	
 	reconstructed_sequences = []
 	
-	#for part_id in range(number_of_parts):
-	for part_id in range(1):
+	for part_id in range(number_of_parts):
+		#for part_id in range(3,4):
 		part_sequences = parts[part_id]
 		print len(part_sequences)
-		print part_sequences
+		#print part_sequences
+		sequences_as_reads_string = "\n".join([seq.sequence for seq in part_sequences])
+		outfile = file(output_dir+"/"+casename+"_p"+str(part_id)+"_reads.txt", 'w')
+		outfile.write(sequences_as_reads_string)
 		
+		'''	
 		debruijn_part = fdgb.GraphData([[seq.sequence for seq in part_sequences]], k2)
 		# delete reads and kmers to save ram:
 		debruijn_part.reads = []
@@ -235,21 +239,22 @@ def test_reconstruction_4():
 		
 		debruijn_part.remove_single_sequence_components()
 		debruijn_part.construct_assembly_ordering_labels()
-		debruijn_part.remove_insignificant_sequences()
-		debruijn_part.reduce_to_single_path_max_weight()
+		# debruijn_part.remove_insignificant_sequences()
+		# debruijn_part.reduce_to_single_path_max_weight()
 		debruijn_part.contract_unique_overlaps(verbose = False)
 		
 		reconstructed_sequences.append(debruijn_part.get_relevant_sequences()[0])
 		
 		debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".asqg")
 		debruijn_part.get_csv_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".csv")
+		'''
 	
 	debruijn = []
 	debruijn_part = []
 	gc.collect()
 	
 	debruijn_recons = fdgb.GraphData([reconstructed_sequences], k2)
-	debruijn_recons = contract_unique_overlaps()
+	debruijn_recons.contract_unique_overlaps()
 	debruijn_recons.get_asqg_output(filename = output_dir+"/"+casename+"_recons.asqg")
 	debruijn_recons.get_csv_output(filename = output_dir+"/"+casename+"_recons.csv")
 		
