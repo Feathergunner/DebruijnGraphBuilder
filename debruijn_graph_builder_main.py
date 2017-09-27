@@ -214,7 +214,7 @@ def test_reconstruction_4():
 	number_of_parts = 30
 	k2 = 20
 	debruijn.construct_assembly_ordering_labels(verbose = False)
-	parts = debruijn.get_partition_of_sequences(number_of_parts, verbose = False)
+	parts = debruijn.get_partition_of_sequences(number_of_parts, overlap=4 verbose = False)
 	
 	reconstructed_sequences = []
 	
@@ -227,28 +227,6 @@ def test_reconstruction_4():
 		outfile = file(output_dir+"/"+casename+"_p"+str(part_id)+"_reads.txt", 'w')
 		outfile.write(sequences_as_reads_string)
 		
-		'''	
-		debruijn_part = fdgb.GraphData([[seq.sequence for seq in part_sequences]], k2)
-		# delete reads and kmers to save ram:
-		debruijn_part.reads = []
-		debruijn_part.kmers = []
-		# run garbage collector:
-		gc.collect()
-		debruijn_part.contract_unique_overlaps(verbose = False)
-		debruijn_part.remove_parallel_sequences(verbose = False)
-		
-		debruijn_part.remove_single_sequence_components()
-		debruijn_part.construct_assembly_ordering_labels()
-		# debruijn_part.remove_insignificant_sequences()
-		# debruijn_part.reduce_to_single_path_max_weight()
-		debruijn_part.contract_unique_overlaps(verbose = False)
-		
-		reconstructed_sequences.append(debruijn_part.get_relevant_sequences()[0])
-		
-		debruijn_part.get_asqg_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".asqg")
-		debruijn_part.get_csv_output(filename = output_dir+"/"+casename+"_p"+str(part_id)+".csv")
-		'''
-	
 	debruijn = []
 	debruijn_part = []
 	gc.collect()
@@ -259,8 +237,8 @@ def test_reconstruction_4():
 	debruijn_recons.get_csv_output(filename = output_dir+"/"+casename+"_recons.csv")
 		
 def test_recons_from_sequences():
-	read_dir = "Output/largereads-recons-test2-i"
-	read_basename = "largereads-recons-test2_5000_1_[250]_5-0_30_"
+	read_dir = "largereads_recons2\Output\largereads-recons-test2-i"
+	read_basename = "largereads-recons-test2_5000_1_[500]_5-0_30_"
 	k = 18
 	num_of_sets = 30
 	
@@ -301,10 +279,10 @@ def test_recons_from_sequences():
 		debruijn.write_sequences_to_file(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_p"+str(i)+"_step4.txt")
 		
 def test_recons_merge():
-	read_dir = "Output/largereads-recons-test2-i"
-	read_basename = "largereads-recons-test2_5000_1_[250]_5-0_30_"
+	read_dir = "largereads_recons2\Output\largereads-recons-test2-i"
+	read_basename = "largereads-recons-test2_5000_1_[500]_5-0_30_"
 	num_of_sets = 30
-	k = 20
+	k = 18
 	
 	reads = []
 	for i in range(num_of_sets):
@@ -320,13 +298,15 @@ def test_recons_merge():
 	
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step1.asqg")
+	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step1.csv")
 	#debruijn.remove_tips()
 	debruijn.construct_assembly_ordering_labels()
 	debruijn.reduce_to_single_path_max_weight()
 	debruijn.contract_unique_overlaps(verbose = False)
 	
-	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged.asqg")
-	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged.csv")
+	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.asqg")
+	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.csv")
 	
 #test_reconstruction_4()
 #test_recons_from_sequences()
