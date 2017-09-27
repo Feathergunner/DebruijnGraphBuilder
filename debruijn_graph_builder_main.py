@@ -214,7 +214,7 @@ def test_reconstruction_4():
 	number_of_parts = 30
 	k2 = 20
 	debruijn.construct_assembly_ordering_labels(verbose = False)
-	parts = debruijn.get_partition_of_sequences(number_of_parts, overlap=4 verbose = False)
+	parts = debruijn.get_partition_of_sequences(number_of_parts, overlap=4, verbose = False)
 	
 	reconstructed_sequences = []
 	
@@ -309,5 +309,5 @@ def test_recons_merge():
 	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.csv")
 	
 #test_reconstruction_4()
-#test_recons_from_sequences()
+test_recons_from_sequences()
 test_recons_merge()
