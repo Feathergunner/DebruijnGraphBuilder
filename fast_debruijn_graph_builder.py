@@ -633,13 +633,30 @@ class GraphData:
 		# method assumes that graph has only one component and no cycles
 		# and sequences have weight-labels
 		
+		print ("Greedy reduction to single path with local max weight")
+		
 		components = self.get_components()
-		for c in components:
+		component_id = 0
+		while component_id < len(components):
+			#for c in components:
+			c = components[component_id]
+			component_id += 1
+			if verbose:
+				print "next component"
 			start_seq_id = -1
 			min_label = False
 			max_weight = 0
+			if verbose:
+				print ("Searching for start sequence...")
 			for seq_id in c:
-				if (not min_label) or (self.sequences[seq_id].label < min_label-self.k_value) or (self.sequences[seq_id].label < min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
+				if verbose:
+					print ("Current min_label is: "+str(max_weight))
+					print ("Current weight of min_sequence is: "+str(min_label))
+					print ("Consider sequence "+str(seq_id)+" with label "+str(self.sequences[seq_id].label))
+				new_min_found = False
+				if (start_seq_id < 0) or (self.sequences[seq_id].label < min_label-self.k_value) or (self.sequences[seq_id].label < min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
+					if verbose:
+						print ("Set sequence "+str(seq_id)+" as new minimal sequence")
 					start_seq_id = seq_id
 					min_label = self.sequences[seq_id].label
 					max_weight = self.sequences[seq_id].max_weight
@@ -649,6 +666,9 @@ class GraphData:
 			if verbose:
 				print "start_id: " +str(current_seq_id)
 			while len(self.sequences[current_seq_id].overlaps_out) > 0:
+				if verbose:
+					print ("Current seq: "+str(current_seq_id))
+				branching = False
 				next_sequences = []
 				for target_id in self.sequences[current_seq_id].overlaps_out:
 					next_sequences.append(target_id)
@@ -658,25 +678,29 @@ class GraphData:
 					if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
 						max_seq_weight = self.sequences[seq_id].max_weight
 						max_seq_id = seq_id
+				if len(next_sequences) > 1 and max_seq_weight == 1:
+					# no unique continuation, keep all sequences:
+					components += [[sid] for sid in next_sequences if not sid == max_seq_id]
+					branching = True
 				# delete all incoming sequences except path:
 				if not last_seq_id == -1:
 					incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
 					for seq_id in incoming_sequences:
 						if not seq_id == last_seq_id:
-							self.delete_sequence(seq_id)
+							self.delete_sequence(seq_id, verbose=False)
 				# set next sequence and delete other outgoing sequences:
 				for seq_id in next_sequences:
 					if seq_id == max_seq_id:
 						last_seq_id = current_seq_id
 						current_seq_id = seq_id
-					else:
-						self.delete_sequence(seq_id)
+					elif not branching:
+						self.delete_sequence(seq_id, verbose=False)
 			# delete incoming sequences at final sequence, if there are any:
 			if not last_seq_id == -1:
 				incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
 				for seq_id in incoming_sequences:
 					if not seq_id == last_seq_id:
-						self.delete_sequence(seq_id)
+						self.delete_sequence(seq_id, verbose=False)
 		
 		'''			
 		for seq in self.sequences:
