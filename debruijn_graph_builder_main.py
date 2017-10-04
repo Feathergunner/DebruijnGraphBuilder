@@ -308,6 +308,7 @@ def test_recons_merge():
 	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.asqg")
 	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.csv")
 	
+
 test_reconstruction_4()
 test_recons_from_sequences()
 test_recons_merge()
