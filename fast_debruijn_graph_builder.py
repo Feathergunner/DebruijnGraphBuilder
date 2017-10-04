@@ -675,9 +675,10 @@ class GraphData:
 				max_seq_id = -1
 				max_seq_weight = -1
 				for seq_id in next_sequences:
-					if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
-						max_seq_weight = self.sequences[seq_id].max_weight
-						max_seq_id = seq_id
+					if not seq_id == current_seq_id:
+						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
+							max_seq_weight = self.sequences[seq_id].max_weight
+							max_seq_id = seq_id
 				if len(next_sequences) > 1 and max_seq_weight == 1:
 					# no unique continuation, keep all sequences:
 					components += [[sid] for sid in next_sequences if not sid == max_seq_id]
