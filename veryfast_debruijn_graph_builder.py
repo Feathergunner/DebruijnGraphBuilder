@@ -5,16 +5,15 @@ import re
 
 import gc
 
+def print_progress(part, total):
+	print ("Progress: "+str("%.2f" % ((float(part)/(float(len(self.total))/100)))) + "%")
+
 class Read:
 	def __init__(self, read_id, sequence):
 		self.id = read_id
 		self.sequence = sequence
 		self.length = len(sequence)
 		self.kmers = []
-		#self.paired_end_partner = -1
-		
-	#def add_paired_end_partner(self, partner_id):
-	#	self.paired_end_partner = partner_id
 		
 	def add_kmer(self, kmer_id):
 		self.kmers.append(kmer_id)
@@ -84,8 +83,6 @@ class SequenceOverlap:
 		self.contig_sequence_1 = seq_1
 		self.contig_sequence_2 = seq_2
 		self.evidence_reads = evidence_reads
-		# Flag that checks whether a sequence is relevant for the graph or if it has been deleted
-		self.is_relevant = True
 	
 	def add_evidence(self, read_id):
 		self.evidence_reads.append(read_id)
@@ -294,8 +291,8 @@ class GraphData:
 		ov_index_list = [ov_id for ov_id in self.overlaps]
 		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
-			if (num_deleted_overlaps > 0 and num_deleted_overlaps%100000 == 0):
-				gc.collect()
+			#if (num_deleted_overlaps > 0 and num_deleted_overlaps%100000 == 0):
+			#	gc.collect()
 			if (ov_index%1000 == 0):
 				print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
 				#print (str(ov_index-num_deleted_overlaps)+"/"+str(len(self.overlaps)))

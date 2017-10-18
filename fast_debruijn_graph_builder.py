@@ -5,6 +5,9 @@ import re
 
 import gc
 
+def print_progress(part, total):
+	print ("Progress: "+str("%.2f" % ((float(part)/(float(len(self.total))/100)))) + "%")
+
 class Read:
 	def __init__(self, read_id, sequence):
 		self.id = read_id
@@ -128,6 +131,8 @@ class GraphData:
 		read_id = 0
 		for r in reads:
 			for read in r:
+				if (read_id%1000 == 0):
+					print_progress(read_id, len(reads)):
 				self.reads.append(Read(read_id, read))
 				read_id += 1
 			
@@ -137,6 +142,8 @@ class GraphData:
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
+			if (kmer.id % 10000 == 0):
+				print_progress(kmer.id, len(self.kmers)):
 			if verbose:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
@@ -147,6 +154,8 @@ class GraphData:
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
+			if (read.id%1000 == 0):
+				print_progress(read.id, len(reads)):
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
@@ -198,7 +207,8 @@ class GraphData:
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
+				print_progress(read_index self.reads)
+				#print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
 				#print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
@@ -282,8 +292,9 @@ class GraphData:
 		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
+				print_progress(ov_index-num_deleted_overlaps, self.overlaps)
+				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
 				#print (str(ov_index)+"/"+str(len(self.overlaps)))
-				print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2

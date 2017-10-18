@@ -33,7 +33,7 @@ def measure_runtime():
 	dna = dio.genereate_dna(length=10000)
 	dio.write_dna_to_file("Output/test/genome_dna_test.txt", dna)
 	if not os.path.isfile("Output/test/testreads.txt"):
-		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=1000, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[3000], replace_error_percentage=0.0, indel_error_percentage=5.0, inverted_reads=False)
+		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=1000, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[1000], replace_error_percentage=0.0, indel_error_percentage=3.0, inverted_reads=False)
 	
 	reads = dio.get_reads_from_file("Output/test/testreads.txt")
 	
@@ -44,24 +44,12 @@ def measure_runtime():
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
 	stop_fdgb = timeit.default_timer()
-
-	start_fdgb_remfirst = timeit.default_timer()
-	debruijn = fdgb.GraphData(reads, k, verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.remove_parallel_sequences(verbose = False)
-	stop_fdgb_remfirst = timeit.default_timer()
 	
 	start_vfdgb = timeit.default_timer()
 	debruijn = vfdgb.GraphData(reads, k, verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
 	stop_vfdgb = timeit.default_timer()
-
-	start_vfdgb_remfirst = timeit.default_timer()
-	debruijn = vfdgb.GraphData(reads, k, verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.remove_parallel_sequences(verbose = False)
-	stop_vfdgb_remfirst = timeit.default_timer()
 	
 	print ("fdgb: " + str(stop_fdgb - start_fdgb))
 	print ("fdgb_remfirst : " + str(stop_fdgb_remfirst  - start_fdgb_remfirst ))
