@@ -7,6 +7,7 @@ import re
 
 import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
+import veryfast_debruijn_graph_builder as vfdgb
 import data_io as dio
 import sampleReads as sr
 import manjasDefinitionen as md
@@ -28,6 +29,16 @@ k = 20
 '''
 
 def measure_runtime():
+	
+	dna = dio.genereate_dna(length=10000)
+	dio.write_dna_to_file("Output/test/genome_dna_test.txt", dna)
+	if not os.path.isfile("Output/test/testreads.txt"):
+		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=100, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[3000], replace_error_percentage=3.0, indel_error_percentage=0.0, inverted_reads=False)
+	
+	reads = dio.get_reads_from_file("Output/test/testreads.txt")
+	
+	k = 30
+
 	start_fdgb = timeit.default_timer()
 	
 	debruijn = fdgb.GraphData(reads, k, verbose = False)
@@ -36,16 +47,16 @@ def measure_runtime():
 	
 	stop_fdgb = timeit.default_timer()
 	
-	start_dgb = timeit.default_timer()
+	start_vfdgb = timeit.default_timer()
 	
-	debruijn = dgb.GraphData(reads, k, verbose = False)
+	debruijn = vfdgb.GraphData(reads, k, verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
 	
-	stop_dgb = timeit.default_timer()
+	stop_vfdgb = timeit.default_timer()
 	
-	print ("dgb: " + str(stop_dgb - start_dgb))
 	print ("fdgb: " + str(stop_fdgb - start_fdgb))
+	print ("vfdgb: " + str(stop_vfdgb - start_vfdgb))
 
 def test_tip_removal():
 	debruijn = fdgb.GraphData(reads, k, verbose = False)
@@ -308,7 +319,8 @@ def test_recons_merge():
 	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.asqg")
 	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.csv")
 	
+measure_runtime()
 
-test_reconstruction_4()
-test_recons_from_sequences()
-test_recons_merge()
+#test_reconstruction_4()
+#test_recons_from_sequences()
+#test_recons_merge()
