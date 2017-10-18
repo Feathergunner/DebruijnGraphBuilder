@@ -212,7 +212,7 @@ class GraphData:
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
+				print ("Progress %.2f %", round(float(read_index)/float(len(self.reads))),2)
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -295,7 +295,8 @@ class GraphData:
 		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
-				print (str(ov_index-num_deleted_overlaps)+"/"+str(len(self.overlaps)))
+				print ("Progress %.2f %", round(float(ov_index-num_deleted_overlaps)/float(len(self.overlaps))),2)
+				#print (str(ov_index-num_deleted_overlaps)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2

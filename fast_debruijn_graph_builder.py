@@ -198,7 +198,8 @@ class GraphData:
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
+				print ("Progress %.2f %", round(float(read_index)/float(len(self.reads))),2)
+				#print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -278,9 +279,11 @@ class GraphData:
 		print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
+		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
 				print (str(ov_index)+"/"+str(len(self.overlaps)))
+				print ("Progress %.2f %", round(float(ov_index-num_deleted_overlaps)/float(len(self.overlaps))),2)
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
@@ -296,6 +299,7 @@ class GraphData:
 					# then contract edge:
 					ov = self.overlaps[ov_index]
 					self.contract_overlap(ov_index, verbose)
+					num_deleted_overlaps += 1
 		            
 					# contract reverse overlap if not sequence is its own inverse:
 					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
@@ -305,6 +309,7 @@ class GraphData:
 						if not self.is_unified:
 							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
 							self.contract_overlap(rev_ov_id, verbose)
+							num_deleted_overlaps += 1
 						
 						self.sequences[source_id].id_of_inverse_seq = source_rev_id
 						self.sequences[source_rev_id].id_of_inverse_seq = source_id
