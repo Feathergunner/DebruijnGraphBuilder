@@ -6,7 +6,7 @@ import re
 import gc
 
 def print_progress(part, total):
-	print ("Progress: "+str("%.2f" % ((float(part)/(float(len(self.total))/100)))) + "%")
+	print ("Progress: "+str("%.2f" % ((float(part)/(float(len(total))/100)))) + "%")
 
 class Read:
 	def __init__(self, read_id, sequence):

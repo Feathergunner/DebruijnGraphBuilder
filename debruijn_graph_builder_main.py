@@ -44,6 +44,9 @@ def measure_runtime():
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
 	stop_fdgb = timeit.default_timer()
+
+	debruijn = 0
+	gc.collect()
 	
 	start_vfdgb = timeit.default_timer()
 	debruijn = vfdgb.GraphData(reads, k, verbose = False)
@@ -52,10 +55,7 @@ def measure_runtime():
 	stop_vfdgb = timeit.default_timer()
 	
 	print ("fdgb: " + str(stop_fdgb - start_fdgb))
-	print ("fdgb_remfirst : " + str(stop_fdgb_remfirst  - start_fdgb_remfirst ))
 	print ("vfdgb: " + str(stop_vfdgb - start_vfdgb))
-	print ("vfdgb_remfirst : " + str(stop_vfdgb_remfirst  - start_vfdgb_remfirst ))
-
 
 def test_tip_removal():
 	debruijn = fdgb.GraphData(reads, k, verbose = False)
