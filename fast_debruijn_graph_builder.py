@@ -6,7 +6,7 @@ import re
 import gc
 
 def print_progress(part, total):
-	print ("Progress: "+str("%.2f" % ((float(part)/(float(len(self.total))/100)))) + "%")
+	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
 
 class Read:
 	def __init__(self, read_id, sequence):
@@ -132,7 +132,7 @@ class GraphData:
 		for r in reads:
 			for read in r:
 				if (read_id%1000 == 0):
-					print_progress(read_id, len(reads)):
+					print_progress(read_id, len(reads))
 				self.reads.append(Read(read_id, read))
 				read_id += 1
 			
@@ -143,7 +143,7 @@ class GraphData:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
 			if (kmer.id % 10000 == 0):
-				print_progress(kmer.id, len(self.kmers)):
+				print_progress(kmer.id, len(self.kmers))
 			if verbose:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
@@ -155,7 +155,7 @@ class GraphData:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
 			if (read.id%1000 == 0):
-				print_progress(read.id, len(reads)):
+				print_progress(read.id, len(reads))
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
@@ -207,7 +207,7 @@ class GraphData:
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print_progress(read_index self.reads)
+				print_progress(read_index, len(self.reads))
 				#print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
 				#print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
 			elif verbose:
