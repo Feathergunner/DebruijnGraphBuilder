@@ -294,7 +294,8 @@ class GraphData:
 			#if (num_deleted_overlaps > 0 and num_deleted_overlaps%100000 == 0):
 			#	gc.collect()
 			if (ov_index%1000 == 0):
-				print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
+				print_progress(ov_index, len(ov_index_list))
+				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
 				#print (str(ov_index-num_deleted_overlaps)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
