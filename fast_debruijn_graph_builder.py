@@ -292,7 +292,7 @@ class GraphData:
 		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
-				print_progress(ov_index-num_deleted_overlaps, self.overlaps)
+				print_progress(ov_index-num_deleted_overlaps, len(self.overlaps))
 				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
 				#print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
