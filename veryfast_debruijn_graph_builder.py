@@ -401,7 +401,8 @@ class GraphData:
 			
 		self.sequences[target_id].overlaps_in = {}
 		self.sequences[target_id].overlaps_out = {}
-		self.sequences[target_id].is_relevant = False
+		self.delete_sequence(target_id)
+		#self.sequences[target_id].is_relevant = False
 		# Don't use delete_overlap, because incident sequences have been handled manually:
 		self.overlaps.pop(overlap_id)
 	
