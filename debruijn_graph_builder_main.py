@@ -33,7 +33,7 @@ def measure_runtime():
 	dna = dio.genereate_dna(length=10000)
 	dio.write_dna_to_file("Output/test/genome_dna_test.txt", dna)
 	if not os.path.isfile("Output/test/testreads.txt"):
-		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=100, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[3000], replace_error_percentage=3.0, indel_error_percentage=0.0, inverted_reads=False)
+		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=1000, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[3000], replace_error_percentage=0.0, indel_error_percentage=5.0, inverted_reads=False)
 	
 	reads = dio.get_reads_from_file("Output/test/testreads.txt")
 	

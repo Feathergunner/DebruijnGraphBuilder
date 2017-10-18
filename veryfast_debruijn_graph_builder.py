@@ -294,7 +294,7 @@ class GraphData:
 		ov_index_list = [ov_id for ov_id in self.overlaps]
 		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
-			if (num_deleted_overlaps > 0 and num_deleted_overlaps%10000 == 0):
+			if (num_deleted_overlaps > 0 and num_deleted_overlaps%100000 == 0):
 				gc.collect()
 			if (ov_index%1000 == 0):
 				print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
@@ -302,6 +302,10 @@ class GraphData:
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
+				if not self.is_unified:
+					source_rev_id = self.sequences[target_id].id_of_inverse_seq
+					target_rev_id = self.sequences[source_id].id_of_inverse_seq
+
 				if verbose:
 					print ("consider overlap: ")
 					print (self.overlaps[ov_index].print_data())
@@ -317,18 +321,14 @@ class GraphData:
 					num_deleted_overlaps += 1
 		            
 					# contract reverse overlap if not sequence is its own inverse:
-					if not self.is_unified:
-						if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
-							source_rev_id = self.sequences[target_id].id_of_inverse_seq
-							target_rev_id = self.sequences[source_id].id_of_inverse_seq
-							
-							if not self.is_unified:
-								rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
-								self.contract_overlap(rev_ov_id, verbose)
-								num_deleted_overlaps += 1
-							
-							self.sequences[source_id].id_of_inverse_seq = source_rev_id
-							self.sequences[source_rev_id].id_of_inverse_seq = source_id
+					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
+						if not self.is_unified:
+							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
+							self.contract_overlap(rev_ov_id, verbose)
+							num_deleted_overlaps += 1
+						
+						self.sequences[source_id].id_of_inverse_seq = source_rev_id
+						self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
 		# removes an overlap from the database and from both incident sequences
