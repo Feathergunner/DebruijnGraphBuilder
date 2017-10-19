@@ -16,15 +16,13 @@ for k in [30, 40]:
 		reads = dio.get_reads_from_fastq_file(readfilename, num_reads)
 		
 		debruijn = fdgb.GraphData([reads], k, alphabet={"A":"U", "U":"A", "G":"C", "C":"G"}, verbose=False)
-		#print reads
-		#print len(reads)
 		# delete reads and kmers to save ram:
 		reads = []
 		debruijn.reads = []
 		debruijn.kmers = []
 		# run garbage collector:
 		gc.collect()
-		debruijn.contract_unique_overlaps(verbose=True)
+		debruijn.contract_unique_overlaps(verbose=False)
 		debruijn.remove_parallel_sequences()
 		
 		debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
