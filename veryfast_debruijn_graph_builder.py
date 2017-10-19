@@ -31,7 +31,6 @@ class GraphData:
 				self.init_graph_database(verbose=verbose)
 	
 	def init_read_database(self, reads, verbose=False):
-		# updated for new structure
 		if verbose:
 			print ("Construct read database")
 		read_id = 0
@@ -49,16 +48,12 @@ class GraphData:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
 			if verbose:
-				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
+				print ("now consider kmer with id " + str(kmer.id))# + ": " + kmer.sequence)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = len(kmer.evidence_reads)
-			self.sequences[seq_id] = ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight)
+			self.sequences[seq_id] = ContigSequence(seq_id, seq_inv_id, self.kmers.source[0], self.kmers.source[1], self.kmers.source[2], self.k_value, [kmer.id], weight)
 			
-		# delete kmers:
-		self.kmers = []
-		gc.collect()
-
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
@@ -66,45 +61,8 @@ class GraphData:
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
-				
-		# delete reads:
-		self.reads = []
-		gc.collect()
-
-	#def print_all_reads(self):
-	#	print ("Reads:")
-	#	for read in self.reads:
-	#		print (str(read.id) + ": "+read.sequence)
-	#		kmer_string = "kmers: "
-	#		for kmer_id in read.kmers:
-	#			kmer_string += str(kmer_id) + " "
-	#		print kmer_string
-
-	#def print_all_kmers(self):
-	#	print ("Kmers:")
-	#	for kmer in self.kmers:
-	#		kmer_info_string = "("+str(kmer.id) + ") " + kmer.sequence + ": "
-	#		for read in kmer.evidence_reads:
-	#			kmer_info_string += str(read) + " "
-	#		print kmer_info_string
-	
-	#def print_all_sequences(self):
-	#	print ("Sequences:")
-	#	for s_key in self.sequences:
-	#		s = self.sequences[s_key]
-	#		if s.is_relevant:
-	#			print ("("+str(s.id)+") "+s.sequence) + ": "
-	#			s.print_data()
-	#			for kmer_id in s.kmers:
-	#				kmer_string = self.kmers[kmer_id].sequence + "\t"
-	#				for read_id in self.kmers[kmer_id].evidence_reads:
-	#					kmer_string += str(read_id)+" "
-	#				print kmer_string
-	#			print("")
 
 	def get_sequence_string_of_kmer(self, kmer_id):
-		# updated for new structure
-
 		read_id = self.kmers[kmer_id].source[0]
 		kmer_start = self.kmers[kmer_id].source[1]
 		kmer_string_origin = self.reads[read_id].sequence[kmer_start:kmer_start+self.k_value]
@@ -114,8 +72,6 @@ class GraphData:
 			return get_inverse_sequence(kmer_string_origin, self.alphabet)
 
 	def get_sequence_string_of_sequence(self, seq_id):
-		# updated for new structure
-
 		seq_string = ""
 		for seq_part in self.sequences[seq_id].read_sources:
 			seq_part_string_origin = self.reads[seq_part[0]].sequence[seq_part[1]:(seq_part[1]+seq_part[3])]
@@ -126,8 +82,6 @@ class GraphData:
 		return seq_string
 
 	def get_relevant_sequences(self):
-		# updated for new structure
-
 		# returns list of all sequences with set relevance flag
 		sequences = []
 		for s_key in self.sequences:
@@ -135,8 +89,6 @@ class GraphData:
 		return sequences
 		
 	def get_kmerdata_from_reads(self, verbose = False):
-		# updated for new structure
-
 		# checks all reads and constructs kmers and inverse kmers
 		print ("Get kmer-data from reads ...")
 
@@ -251,7 +203,8 @@ class GraphData:
 					num_deleted_overlaps += 1
 		            
 					# contract reverse overlap if not sequence is its own inverse:
-					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
+					source_sequence_string = self.get_sequence_string_of_sequence(source_id)
+					if not source_sequence_string == get_inverse_sequence(source_sequence_string, self.alphabet):
 						if not self.is_unified:
 							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
 							self.contract_overlap(rev_ov_id, verbose)
@@ -261,7 +214,6 @@ class GraphData:
 						self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
-		# updated for new structure
 		# removes an overlap from the database and from both incident sequences
 		if verbose:
 			print ("Delete overlap "+str(overlap_id))
@@ -276,8 +228,6 @@ class GraphData:
 			self.overlaps.pop(overlap_id)
 		
 	def delete_sequence(self, sequence_id, verbose=False):
-		# updated for new structure
-
 		# deletes sequence and deletes all existing overlaps with this sequence
 		if verbose:
 			print ("Removing Sequence "+str(sequence_id))
@@ -291,8 +241,6 @@ class GraphData:
 		self.sequences.pop(sequence_id, None)
 			
 	def contract_overlap(self, overlap_id, verbose=False):
-		# updated for new structure
-
 		# contracts a specific overlap
 		source_id = self.overlaps[overlap_id].contig_sequence_1
 		target_id = self.overlaps[overlap_id].contig_sequence_2
@@ -348,8 +296,6 @@ class GraphData:
 		self.overlaps.pop(overlap_id)
 	
 	def remove_parallel_sequences(self, verbose=False):
-		# updated for new structure
-
 		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
 		if not self.is_unified:
 			print ("Remove parallel sequences ...")
@@ -406,39 +352,37 @@ class GraphData:
 		
 		visited_sequences = {seq.id: False for seq in self.sequences if seq.is_relevant}
 		for seq in self.sequences:
-			if seq.is_relevant:
-				if not visited_sequences[seq.id]:
-					current_comp = []
-					seq_stack = [seq.id]
-					visited_sequences[seq.id] = True
-					while len(seq_stack) > 0:
-						current_seq_id = seq_stack[0]
-						seq_stack.pop(0)
-						current_comp.append(current_seq_id)
-						for adj_seq in self.sequences[current_seq_id].overlaps_out:
-							if not visited_sequences[adj_seq]:
-								seq_stack.append(adj_seq)
-								visited_sequences[adj_seq] = True
-						for adj_seq in self.sequences[current_seq_id].overlaps_in:
-							if not visited_sequences[adj_seq]:
-								seq_stack.append(adj_seq)
-								visited_sequences[adj_seq] = True					
-					components.append(current_comp)
+			if not visited_sequences[seq.id]:
+				current_comp = []
+				seq_stack = [seq.id]
+				visited_sequences[seq.id] = True
+				while len(seq_stack) > 0:
+					current_seq_id = seq_stack[0]
+					seq_stack.pop(0)
+					current_comp.append(current_seq_id)
+					for adj_seq in self.sequences[current_seq_id].overlaps_out:
+						if not visited_sequences[adj_seq]:
+							seq_stack.append(adj_seq)
+							visited_sequences[adj_seq] = True
+					for adj_seq in self.sequences[current_seq_id].overlaps_in:
+						if not visited_sequences[adj_seq]:
+							seq_stack.append(adj_seq)
+							visited_sequences[adj_seq] = True					
+				components.append(current_comp)
 		return components				
 		
 	def remove_tips(self, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		print ("Removing tips ...")
 		for seq in self.sequences:
-			if seq.is_relevant:
+			if verbose:
+				print ("Consider sequence:")
+				seq.print_data()
+			# check if sequence is a tip and if sequence is shorter than 2k:
+			if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (seq.get_length() < 2*self.k_value):
 				if verbose:
-					print ("Consider sequence:")
-					seq.print_data()
-				# check if sequence is a tip and if sequence is shorter than 2k:
-				if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
-					if verbose:
-						print ("Sequence is a tip, remove this sequence.")
-					self.delete_sequence(seq.id, verbose)
+					print ("Sequence is a tip, remove this sequence.")
+				self.delete_sequence(seq.id, verbose)
 
 	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
 		# removes all sequences with weight less than minimal_weight
@@ -452,8 +396,8 @@ class GraphData:
 		# only if there is at least one larger component
 		if len(self.overlaps) > 0:
 			for seq_id in range(len(self.sequences)):
-				if self.sequences[seq_id].is_relevant and len(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
-					self.sequences[seq_id].is_relevant = False
+				if en(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
+				self.delete_sequence(seq_id, verbose)
 
 	def get_asqg_output(self, filename="asqg_file"):
 		print ("Writing asqg-file ...")
@@ -462,9 +406,8 @@ class GraphData:
 		asqg_vertices = ""
 		vertex_count = 0
 		for seq in self.sequences:
-			if seq.is_relevant:
-				asqg_vertices += "VT\tk_"+str(seq.id)+"\t"+seq.sequence+"\n"
-				vertex_count += 1
+			asqg_vertices += "VT\tk_"+str(seq.id)+"\t"+self.get_sequence_string_of_sequence(seq.id)+"\n"
+			vertex_count += 1
 		
 		asqg_edges = ""
 		for ov_id in self.overlaps:
@@ -472,7 +415,7 @@ class GraphData:
 			if ov.is_relevant:
 				seq_1_length = self.sequences[ov.contig_sequence_1].get_length()
 				seq_2_length = self.sequences[ov.contig_sequence_2].get_length()
-				asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0 "+str(len(ov.evidence_reads))+"\n"
+				asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0 1\n"
 
 		print filename
 		outputfile = file(filename, 'w')
@@ -485,8 +428,7 @@ class GraphData:
 		headline = "Node_Label, Sequence, maxweight, label\n"
 		data = ""
 		for seq in self.sequences:
-			if seq.is_relevant:
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+"\n"
+			data += "k_"+str(seq.id)+","+self.get_sequence_string_of_sequence(seq.id)+","+str(seq.max_weight)+","+str(seq.label)+"\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
 		outputfile.write(data)
@@ -495,41 +437,13 @@ class GraphData:
 		# writes only the sequence-string of relevant sequences to a file
 		data = ""
 		for seq in self.sequences:
-			if seq.is_relevant:
-				data += seq.sequence + "\n"
+			data += self.get_sequence_string_of_sequence(seq.id) + "\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(data)
-		
-	def load_from_asqg(self, filename="asqg_file", verbose=False):
-		# reconstructs a graph from a asqg-file
-		print ("Loading from asqg-file ...")
-		self.is_unified = True
-		with open(filename) as asqg_source:
-			for line in asqg_source:
-				linedata = re.split(r'\t', line)
-					
-				if linedata[0] == "VT":
-					# case sequence data:
-					sequence_id = int(re.split(r'_',linedata[1])[1])
-					while len(self.sequences) < sequence_id:
-						# add dummy sequences:
-						self.sequences.append(ContigSequence(len(self.sequences), -1, "", [-1], is_relevant=False))
-					# add actual sequence (id of inverse and evidence_kmers are unknown)
-					self.sequences.append(ContigSequence(sequence_id, -1, linedata[2].strip(), [-1]))
-					
-				elif linedata[0] == "ED":
-					# case overlap data:
-					overlap_data = re.split(r'\s',linedata[1])
-					source_seq_id = int(re.split(r'_',overlap_data[0])[1])
-					target_seq_id = int(re.split(r'_',overlap_data[1])[1])
-					if source_seq_id > 0 and target_seq_id > 0:
-						# increase overlap (read_evidence is unknown)
-						self.increment_overlap(source_seq_id, target_seq_id, [-1], verbose=verbose,consider_inverse = False)
-					# if k is still unknown at this point, recover k from overlap_data:
-					if self.k_value < 1:
-						self.k_value = int(overlap_data[6])					
-						
+
 	def construct_assembly_ordering_labels(self, verbose=False):
+		# updated for new structure
+
 		# constructs a fuzzy partial ordering of all relevant sequences:
 		# algorithm assumes that graph
 		# 	is not empty and
@@ -537,9 +451,9 @@ class GraphData:
 		# 	has no cycles, i.e. implies a partial order
 		print "Construct assembly ordering labels..."
 		
-		for start_seq_id in range(len(self.sequences)):
-			if self.sequences[start_seq_id].is_relevant and not self.sequences[start_seq_id].label:
-				queue = [[self.sequences[start_seq_id].id, 0]]
+		for start_seq_id in self.sequences:
+			if not self.sequences[start_seq_id].label:
+				queue = [[start_seq_id, 0]]
 				while (len(queue) > 0):
 					current_data = queue[0]
 					queue.pop(0)
@@ -560,8 +474,7 @@ class GraphData:
 							queue.append([seq_id, start_label])
 		if verbose:
 			for seq in self.sequences:
-				if seq.is_relevant:
-					print str(seq.id) + ": " + str(seq.label)
+				print str(seq.id) + ": " + str(seq.label)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
@@ -644,7 +557,7 @@ class GraphData:
 				max_seq_weight = -1
 				for seq_id in next_sequences:
 					if not seq_id == current_seq_id:
-						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
+						if self.sequences[seq_id].max_weight > max_seq_weight:
 							max_seq_weight = self.sequences[seq_id].max_weight
 							max_seq_id = seq_id
 				if len(next_sequences) > 1 and max_seq_weight == 1:
@@ -670,57 +583,13 @@ class GraphData:
 				for seq_id in incoming_sequences:
 					if not seq_id == last_seq_id:
 						self.delete_sequence(seq_id, verbose=False)
-		
-		'''			
-		for seq in self.sequences:
-			if seq.is_relevant:
-				if (not min_label) or (seq.label < min_label-self.k_value) or (seq.label < min_label+self.k_value and seq.max_weight > max_weight):
-					start_seq_id = seq.id
-					min_label = seq.label
-					max_weight = seq.max_weight
-			
-		current_seq_id = start_seq_id
-		last_seq_id = -1
-		if verbose:
-			print "start_id: " +str(current_seq_id)
-		while len(self.sequences[current_seq_id].overlaps_out) > 0:
-			next_sequences = []
-			for target_id in self.sequences[current_seq_id].overlaps_out:
-				next_sequences.append(target_id)
-			max_seq_id = -1
-			max_seq_weight = -1
-			for seq_id in next_sequences:
-				if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
-					max_seq_weight = self.sequences[seq_id].max_weight
-					max_seq_id = seq_id
-			# delete all incoming sequences except path:
-			if not last_seq_id == -1:
-				incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
-				for seq_id in incoming_sequences:
-					if not seq_id == last_seq_id:
-						self.delete_sequence(seq_id)
-			# set next sequence and delete other outgoing sequences:
-			for seq_id in next_sequences:
-				if seq_id == max_seq_id:
-					last_seq_id = current_seq_id
-					current_seq_id = seq_id
-				else:
-					self.delete_sequence(seq_id)
-		# delete incoming sequences at final sequence, if there are any:
-		if not last_seq_id == -1:
-			incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
-			for seq_id in incoming_sequences:
-				if not seq_id == last_seq_id:
-					self.delete_sequence(seq_id)
-		'''
 					
 	def remove_short_sequences(self, length_bound_by_multiple_of_k=5):
 		# brutally removes all sequences with length less than 5 times k_value (if not specified otherwise)
 		
 		for seq in self.sequences:
-			if seq.is_relevant:
-				if seq.get_length() < 5*self.k_value:
-					self.delete_sequence(seq.id)
+			if seq.get_length() < 5*self.k_value:
+				self.delete_sequence(seq.id)
 		
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
