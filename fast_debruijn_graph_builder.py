@@ -5,6 +5,9 @@ import re
 
 import gc
 
+def print_progress(part, total):
+	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
+
 class Read:
 	def __init__(self, read_id, sequence):
 		self.id = read_id
@@ -128,6 +131,8 @@ class GraphData:
 		read_id = 0
 		for r in reads:
 			for read in r:
+				if (read_id%1000 == 0):
+					print_progress(read_id, len(reads))
 				self.reads.append(Read(read_id, read))
 				read_id += 1
 			
@@ -137,6 +142,8 @@ class GraphData:
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
+			if (kmer.id % 10000 == 0):
+				print_progress(kmer.id, len(self.kmers))
 			if verbose:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
@@ -147,6 +154,8 @@ class GraphData:
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
+			if (read.id%1000 == 0):
+				print_progress(read.id, len(reads))
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
@@ -198,7 +207,9 @@ class GraphData:
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
+				print_progress(read_index, len(self.reads))
+				#print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
+				#print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -278,12 +289,20 @@ class GraphData:
 		print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
+		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
 			if (ov_index%1000 == 0):
-				print (str(ov_index)+"/"+str(len(self.overlaps)))
+				#print_progress(ov_index-num_deleted_overlaps, len(self.overlaps))
+				print_progress(ov_index, len(ov_index_list))
+				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
+				#print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
+				if not self.is_unified:
+					source_rev_id = self.sequences[target_id].id_of_inverse_seq
+					target_rev_id = self.sequences[source_id].id_of_inverse_seq
+
 				if verbose:
 					print ("consider overlap: ")
 					print (self.overlaps[ov_index].print_data())
@@ -296,15 +315,14 @@ class GraphData:
 					# then contract edge:
 					ov = self.overlaps[ov_index]
 					self.contract_overlap(ov_index, verbose)
+					num_deleted_overlaps += 1
 		            
 					# contract reverse overlap if not sequence is its own inverse:
 					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
-						source_rev_id = self.sequences[target_id].id_of_inverse_seq
-						target_rev_id = self.sequences[source_id].id_of_inverse_seq
-						
 						if not self.is_unified:
 							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
 							self.contract_overlap(rev_ov_id, verbose)
+							num_deleted_overlaps += 1
 						
 						self.sequences[source_id].id_of_inverse_seq = source_rev_id
 						self.sequences[source_rev_id].id_of_inverse_seq = source_id

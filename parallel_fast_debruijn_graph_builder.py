@@ -2,8 +2,9 @@
 
 import random
 import re
-
 import gc
+
+import threading
 
 def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
@@ -14,6 +15,10 @@ class Read:
 		self.sequence = sequence
 		self.length = len(sequence)
 		self.kmers = []
+		#self.paired_end_partner = -1
+		
+	#def add_paired_end_partner(self, partner_id):
+	#	self.paired_end_partner = partner_id
 		
 	def add_kmer(self, kmer_id):
 		self.kmers.append(kmer_id)
@@ -83,6 +88,8 @@ class SequenceOverlap:
 		self.contig_sequence_1 = seq_1
 		self.contig_sequence_2 = seq_2
 		self.evidence_reads = evidence_reads
+		# Flag that checks whether a sequence is relevant for the graph or if it has been deleted
+		self.is_relevant = True
 	
 	def add_evidence(self, read_id):
 		self.evidence_reads.append(read_id)
@@ -98,15 +105,15 @@ class SequenceOverlap:
 		else:
 			print ("is not relevant")
 	
-class GraphData:
-	def __init__(self, reads=0, k=0, verbose=False, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}, init=True):
+class GraphData():
+	def __init__(self, reads=0, k=0, verbose=False, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 		print ("Creating empty graph ...")
 		
 		self.k_value = k
 		self.reads = []
 		self.kmers = []
 		self.kmer_dict = {}
-		self.sequences = {}
+		self.sequences = []
 		self.overlaps = {}
 		self.alphabet = alphabet
 		
@@ -117,49 +124,44 @@ class GraphData:
 		self.min_label = 0
 		
 		if not reads == 0:
-			self.init_read_database(reads, verbose=verbose)
-			if init:
-				self.init_graph_database(verbose=verbose)
-	
-	def init_read_database(self, reads, verbose=False):
+			self.init_graph_database(reads, verbose=verbose)
+
+	def init_graph_database(self, reads, verbose=False):
 		if verbose:
 			print ("Construct read database")
 		read_id = 0
 		for r in reads:
 			for read in r:
+				if (read_id%1000 == 0):
+					print_progress(read_id, len(reads))
 				self.reads.append(Read(read_id, read))
 				read_id += 1
-	
-
-	def init_graph_database(self, verbose=False):
+			
 		# construct k-mer database:
+		#self.get_kmerdata_from_reads_parallel_master(2)
 		self.get_kmerdata_from_reads(verbose)
 		
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
+			if (kmer.id % 10000 == 0):
+				print_progress(kmer.id, len(self.kmers))
 			if verbose:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = len(kmer.evidence_reads)
-			self.sequences[seq_id] = ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight)
-			
-		# delete kmers:
-		self.kmers = []
-		gc.collect()
+			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
+			if (read.id%1000 == 0):
+				print_progress(read.id, len(reads))
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
-				
-		# delete reads:
-		self.reads = []
-		gc.collect()
 
 	def print_all_reads(self):
 		print ("Reads:")
@@ -180,8 +182,7 @@ class GraphData:
 	
 	def print_all_sequences(self):
 		print ("Sequences:")
-		for s_key in self.sequences:
-			s = self.sequences[s_key]
+		for s in self.sequences:
 			if s.is_relevant:
 				print ("("+str(s.id)+") "+s.sequence) + ": "
 				s.print_data()
@@ -195,21 +196,117 @@ class GraphData:
 	def get_relevant_sequences(self):
 		# returns list of all sequences with set relevance flag
 		sequences = []
-		for s_key in self.sequences:
-			s = self.sequences[s_key]
+		for s in self.sequences:
 			if s.is_relevant:
 				sequences.append(s.sequence)
 		return sequences
+
+	def get_kmerdata_from_reads_parallel_thread(self, start_read, end_read, write_lock):
+		new_kmers = []
+		new_kmer_dict = {}
+		kmer_counter = 0
+		for read_index in range(start_read, end_read):
+			#if read_index%100 == 0:
+			#	print_progress(read_index, len(self.reads))
+			current_read_sequence = self.reads[read_index].sequence
+			kmer_start = 0
+			while kmer_start <= (len(current_read_sequence) - self.k_value):
+				# construct new kmer from read sequence:
+				new_kmer_sequence = current_read_sequence[kmer_start:kmer_start + self.k_value]
+				kmer_already_existing = False
+				this_kmer_id = -1
+				
+				# check if kmer already exists in database:
+				if new_kmer_sequence in new_kmer_dict:
+					kmer_already_existing = True
+					this_kmer_id = new_kmer_dict[new_kmer_sequence]
+					new_kmers[this_kmer_id].add_evidence(read_index)
+					inv_kmer_id = new_kmers[this_kmer_id].id_of_inverse_kmer
+					new_kmers[inv_kmer_id].add_evidence(read_index)
+				if not kmer_already_existing:					
+					# add kmer:
+					new_kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index]))
+					new_kmer_dict[new_kmer_sequence] = kmer_counter
+					this_kmer_id = kmer_counter
+					kmer_counter += 1
+					# add inverse kmer:
+					new_kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence, self.alphabet), [read_index]))
+					new_kmer_dict[get_inverse_sequence(new_kmer_sequence, self.alphabet)] = kmer_counter
+					kmer_counter += 1
+					
+				# add kmer to read:
+				self.reads[read_index].add_kmer(this_kmer_id)
+				kmer_start += 1
+
+		#print len(new_kmers)
+		data_write_back = False
+		while not data_write_back:
+			time.sleep(0.1)
+			logging.debug('Trying to acquire')
+			have_it = write_lock.acquire()
+			try:
+				if have_it:
+					data_write_back = True
+					for kmer_id_local in range(len(new_kmers)):
+						#print kmer_id_local
+						kmer_seq = new_kmers[kmer_id_local].sequence
+						#print kmer_seq
+						if kmer_seq in self.kmer_dict:
+							#print "found in global_kmer_dict"
+							kmer_id_global = self.kmer_dict[kmer_seq]
+							#print "kmer_id_global: "+str(kmer_id_global)
+							#print "size of evidence: "+str(len(new_kmers[kmer_id_local].evidence_reads))
+							for ev_read_id in range(len(new_kmers[kmer_id_local].evidence_reads)):
+								#new_kmers[kmer_id_local].evidence_reads:
+								#print "add evidence "+str(new_kmers[kmer_id_local].evidence_reads[ev_read_id])
+								#print ev_read
+								self.kmers[kmer_id_global].add_evidence(new_kmers[kmer_id_local].evidence_reads[ev_read_id])
+							#self.kmers[kmer_id_global].evidence_reads += new_kmers[kmer_id_local].evidence_reads
+						else:
+							#print "add new kmer"
+							new_kmer_id = len(self.kmers)
+							kmer_id_inv_local = new_kmers[kmer_id_local].id_of_inverse_kmer
+							self.kmers.append(new_kmers[kmer_id_local])
+							self.kmers.append(new_kmers[kmer_id_inv_local])
+							self.kmer_dict[kmer_seq] = new_kmer_id
+							self.kmer_dict[new_kmers[kmer_id_inv_local].sequence] = new_kmer_id+1
+			finally:
+				if have_it:
+					write_lock.release()
+
+
+
+	def get_kmerdata_from_reads_parallel_master(self, number_of_threads=1):
+		stepsize = len(self.reads)/number_of_threads
+
+		start_read_id = 0
+		end_read_id = stepsize
+		threads = []
+		write_back_lock = threading.Lock()
+		for thread_id in range(number_of_threads):
+			print ("start new thread "+str(thread_id))
+			t = threading.Thread(target=self.get_kmerdata_from_reads_parallel_thread, args=(start_read_id, end_read_id, write_back_lock))
+			threads.append(t)
+			t.start()
+
+			start_read_id = end_read_id
+			end_read_id += stepsize
+
+		for t in threads:
+			t.join()
+		print len(self.kmers)
 		
 	def get_kmerdata_from_reads(self, verbose = False):
 		# checks all reads and constructs kmers and inverse kmers
 		print ("Get kmer-data from reads ...")
 
-		read_index = 0
+		#read_index = 0
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
+				print_progress(read_index, len(self.reads))
+				#print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
+				#print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -251,7 +348,6 @@ class GraphData:
 				# add kmer to read:
 				self.reads[read_index].add_kmer(this_kmer_id)
 				kmer_start += 1
-			read_index += 1
 			
 	def increment_overlap(self, source_seq_id, target_seq_id, read_evidence, consider_inverse = True, verbose = False):
 		# This method adds an overlap to the database. If overlap already exists, only read-evidence is added.
@@ -283,20 +379,59 @@ class GraphData:
 			ov_id = self.sequences[source_seq_id].overlaps_out[target_seq_id]
 		self.overlaps[ov_id].add_evidence(read_evidence)
 
+	def contract_unique_overlaps_parallel_thread(self, start_ov_id, end_ov_id, verbose=False):
+		ov_index_list = range(start_ov_id, end_ov_id)
+		for ov_index in ov_index_list:
+			if ov_index in self.overlaps:
+				source_id = self.overlaps[ov_index].contig_sequence_1
+				target_id = self.overlaps[ov_index].contig_sequence_2
+				if not self.is_unified:
+					source_rev_id = self.sequences[target_id].id_of_inverse_seq
+					target_rev_id = self.sequences[source_id].id_of_inverse_seq
+				if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
+					self.contract_overlap(ov_index)
+
+					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
+						if not self.is_unified:
+							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
+							self.contract_overlap(rev_ov_id)
+							self.sequences[source_id].id_of_inverse_seq = source_rev_id
+							self.sequences[source_rev_id].id_of_inverse_seq = source_id
+
+	def contract_unique_overlaps_parallel_master(self, number_of_threads=1, verbose=False):
+		total_number_of_overlaps = len([ov_id for ov_id in self.overlaps])
+		stepsize = total_number_of_overlaps/number_of_threads
+
+		start_ov_id = 0
+		end_ov_id = stepsize
+		threads = []
+		for thread_id in range(number_of_threads):
+			t = threading.Thread(target=self.contract_unique_overlaps_parallel_thread, args=(start_ov_id, end_ov_id))
+			threads.append(t)
+			t.start()
+
+			start_ov_id = end_ov_id
+			end_ov_id += stepsize
+
+		for t in threads:
+			t.join()
+
+		self.contract_unique_overlaps()
+
 	def contract_unique_overlaps(self, verbose = False):
 		# This method contracts all overlaps between adjacent sequences that form an unique path
 		# (i.e., there are no other outgoing or incoming overlaps between the sequences)
 		print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
-		num_deleted_overlaps = 0 
+		ov_counter = 0
 		for ov_index in ov_index_list:
-			#if (num_deleted_overlaps > 0 and num_deleted_overlaps%100000 == 0):
-			#	gc.collect()
-			if (ov_index%1000 == 0):
-				print_progress(ov_index, len(ov_index_list))
+			ov_counter += 1
+			if (ov_counter%1000 == 0):
+				#print_progress(ov_index-num_deleted_overlaps, len(self.overlaps))
+				print_progress(ov_counter, len(ov_index_list))
 				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
-				#print (str(ov_index-num_deleted_overlaps)+"/"+str(len(self.overlaps)))
+				#print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
@@ -316,17 +451,17 @@ class GraphData:
 					# then contract edge:
 					ov = self.overlaps[ov_index]
 					self.contract_overlap(ov_index, verbose)
-					num_deleted_overlaps += 1
+					#num_deleted_overlaps += 1
 		            
 					# contract reverse overlap if not sequence is its own inverse:
 					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
 						if not self.is_unified:
 							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
 							self.contract_overlap(rev_ov_id, verbose)
-							num_deleted_overlaps += 1
+							#num_deleted_overlaps += 1
 						
-						self.sequences[source_id].id_of_inverse_seq = source_rev_id
-						self.sequences[source_rev_id].id_of_inverse_seq = source_id
+							self.sequences[source_id].id_of_inverse_seq = source_rev_id
+							self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
 		# removes an overlap from the database and from both incident sequences
@@ -352,8 +487,7 @@ class GraphData:
 		adj_seq_in = self.sequences[sequence_id].overlaps_in.keys()
 		for adj_seq in adj_seq_in:
 			self.delete_overlap(self.sequences[sequence_id].overlaps_in[adj_seq], verbose)
-		#self.sequences[sequence_id].is_relevant = False
-		self.sequences.pop(sequence_id, None)
+		self.sequences[sequence_id].is_relevant = False
 			
 	def contract_overlap(self, overlap_id, verbose=False):
 		# contracts a specific overlap
@@ -400,8 +534,7 @@ class GraphData:
 			
 		self.sequences[target_id].overlaps_in = {}
 		self.sequences[target_id].overlaps_out = {}
-		self.delete_sequence(target_id)
-		#self.sequences[target_id].is_relevant = False
+		self.sequences[target_id].is_relevant = False
 		# Don't use delete_overlap, because incident sequences have been handled manually:
 		self.overlaps.pop(overlap_id)
 	
@@ -409,50 +542,48 @@ class GraphData:
 		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
 		if not self.is_unified:
 			print ("Remove parallel sequences ...")
-			checked_sequences = {seq_id : False for seq_id in self.sequences}
-			seq_id_list = [seq_id for seq_id in self.sequences]
-			for seq_id in seq_id_list:
-				if seq_id in self.sequences:
-					seq = self.sequences[seq_id]
-					if not seq.is_relevant:
-						checked_sequences[seq_id] = True
-					elif not checked_sequences[seq_id]:
-						all_adjacent_sequences = set([ov for ov in seq.overlaps_out] + [ov for ov in seq.overlaps_in])
-						if len(all_adjacent_sequences) == 0:
-							# case no adjacent sequences:
-							checked_sequences[self.sequences[seq_id].id_of_inverse_seq] = True
-							if self.sequences[seq_id].is_relevant:
-								self.sequences[self.sequences[seq_id].id_of_inverse_seq].is_relevant = False
-						else:
-							# start bfs
-							bfs_queue = [seq_id]
-							while (len (bfs_queue) > 0):
-								if verbose:
-									print bfs_queue
-								current_seq_id = bfs_queue.pop(0)
-								current_inv_seq_id = self.sequences[current_seq_id].id_of_inverse_seq
-								# mark this sequence and its inverse as checked:
-								checked_sequences[current_seq_id] = True
-								checked_sequences[current_inv_seq_id] = True
-								if self.sequences[current_seq_id].is_relevant:
-									# inverse sequense is not relevant:
-									self.delete_sequence(current_inv_seq_id, verbose)
-		
-									# add all adjacent sequences to queue:
-									for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
+			checked_sequences = [False for seq in self.sequences]
+			for seq_id in range(len(self.sequences)):
+				seq = self.sequences[seq_id]
+				if not seq.is_relevant:
+					checked_sequences[seq_id] = True
+				elif not checked_sequences[seq_id]:
+					all_adjacent_sequences = set([ov for ov in seq.overlaps_out] + [ov for ov in seq.overlaps_in])
+					if len(all_adjacent_sequences) == 0:
+						# case no adjacent sequences:
+						checked_sequences[self.sequences[seq_id].id_of_inverse_seq] = True
+						if self.sequences[seq_id].is_relevant:
+							self.sequences[self.sequences[seq_id].id_of_inverse_seq].is_relevant = False
+					else:
+						# start bfs
+						bfs_queue = [seq_id]
+						while (len (bfs_queue) > 0):
+							if verbose:
+								print bfs_queue
+							current_seq_id = bfs_queue.pop(0)
+							current_inv_seq_id = self.sequences[current_seq_id].id_of_inverse_seq
+							# mark this sequence and its inverse as checked:
+							checked_sequences[current_seq_id] = True
+							checked_sequences[current_inv_seq_id] = True
+							if self.sequences[current_seq_id].is_relevant:
+								# inverse sequense is not relevant:
+								self.delete_sequence(current_inv_seq_id, verbose)
+	
+								# add all adjacent sequences to queue:
+								for adj_seq_id in self.sequences[current_seq_id].overlaps_out:
+									if verbose:
+										print ("consider adj_seq "+str(adj_seq_id))
+									if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
 										if verbose:
-											print ("consider adj_seq "+str(adj_seq_id))
-										if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
-											if verbose:
-												print ("Add to bfs")
-											bfs_queue.append(adj_seq_id)
-									for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
+											print ("Add to bfs")
+										bfs_queue.append(adj_seq_id)
+								for adj_seq_id in self.sequences[current_seq_id].overlaps_in:
+									if verbose:
+										print ("consider adj_seq "+str(adj_seq_id))
+									if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
 										if verbose:
-											print ("consider adj_seq "+str(adj_seq_id))
-										if (not checked_sequences[adj_seq_id]) and (adj_seq_id not in bfs_queue) and (self.sequences[adj_seq_id].is_relevant):
-											if verbose:
-												print ("Add to bfs")
-											bfs_queue.append(adj_seq_id)
+											print ("Add to bfs")
+										bfs_queue.append(adj_seq_id)
 			self.is_unified = True
 			
 	def get_components(self, verbose=False):
