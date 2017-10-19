@@ -5,6 +5,7 @@ import re
 import gc
 
 import threading
+from multiprocessing import Process
 
 def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
@@ -138,7 +139,7 @@ class GraphData():
 				read_id += 1
 			
 		# construct k-mer database:
-		#self.get_kmerdata_from_reads_parallel_master(2)
+		#self.get_kmerdata_from_reads_parallel_master(4)
 		self.get_kmerdata_from_reads(verbose)
 		
 		# construct sequences from kmers:
@@ -415,6 +416,26 @@ class GraphData():
 
 		for t in threads:
 			t.join()
+
+		self.contract_unique_overlaps()
+		
+	def contract_unique_overlaps_parallel_master_process(self, number_of_processes=1, verbose=False):
+		total_number_of_overlaps = len([ov_id for ov_id in self.overlaps])
+		stepsize = total_number_of_overlaps/number_of_processes
+
+		start_ov_id = 0
+		end_ov_id = stepsize
+		processes = []
+		for process_id in range(number_of_processes):
+			p = Process(target=self.contract_unique_overlaps_parallel_thread, args=(start_ov_id, end_ov_id))
+			processes.append(p)
+			p.start()
+
+			start_ov_id = end_ov_id
+			end_ov_id += stepsize
+
+		for p in processes:
+			p.join()
 
 		self.contract_unique_overlaps()
 

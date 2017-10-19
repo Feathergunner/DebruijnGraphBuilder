@@ -38,13 +38,18 @@ def measure_runtime():
 	reads = dio.get_reads_from_file("Output/test/testreads.txt")
 	
 	k = 30
-
-	start_fdgb = timeit.default_timer()
-	debruijn = fdgb.GraphData(reads, k, verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.remove_parallel_sequences(verbose = False)
-	stop_fdgb = timeit.default_timer()
-	debruijn.get_asqg_output(filename="Output/test/fdgb_test.asqg")
+	
+	start_fdgb = 0
+	stop_fdgb = 0
+	start_pfdgb = 0
+	stop_pfdgb = 0
+	
+	#start_fdgb = timeit.default_timer()
+	#debruijn = fdgb.GraphData(reads, k, verbose = False)
+	#debruijn.contract_unique_overlaps(verbose = False)
+	#debruijn.remove_parallel_sequences(verbose = False)
+	#stop_fdgb = timeit.default_timer()
+	#debruijn.get_asqg_output(filename="Output/test/fdgb_test.asqg")
 
 	debruijn = 0
 	gc.collect()
@@ -52,11 +57,12 @@ def measure_runtime():
 	start_pfdgb = timeit.default_timer()
 	debruijn = pfdgb.GraphData(reads, k, verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps_parallel_master(number_of_threads=4, verbose = False)
+	#debruijn.contract_unique_overlaps_parallel_master(number_of_threads=4, verbose = False)
+	debruijn.contract_unique_overlaps_parallel_master_process(number_of_processes=4, verbose = False)
 	stop_pfdgb = timeit.default_timer()
 	debruijn.get_asqg_output(filename="Output/test/pfdgb_test.asqg")
 	
-	#print ("fdgb: " + str(stop_fdgb - start_fdgb))
+	print ("fdgb: " + str(stop_fdgb - start_fdgb))
 	print ("pfdgb: " + str(stop_pfdgb - start_pfdgb))
 
 def test_tip_removal():
@@ -320,7 +326,8 @@ def test_recons_merge():
 	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.asqg")
 	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.csv")
 	
-measure_runtime()
+if __name__ == '__main__':
+	measure_runtime()
 
 #test_reconstruction_4()
 #test_recons_from_sequences()
