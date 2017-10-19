@@ -19,7 +19,7 @@ class Kmer:
 		self.id = kmer_id
 		self.id_of_inverse_kmer = inverse_id
 		self.evidence_reads = evidence_reads
-		self.source = [reference_read, read_start_pos, is_inversed]
+		self.source = [reference_read, read_start_pos, seq_is_inversed]
 		
 	def add_evidence(self, evidence_read_id):
 		self.evidence_reads.append(evidence_read_id)

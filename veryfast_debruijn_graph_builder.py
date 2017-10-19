@@ -36,7 +36,7 @@ class GraphData:
 		read_id = 0
 		for r in reads:
 			for read in r:
-				self.reads.append(Read(read_id, read))
+				self.reads.append(ds.Read(read_id, read))
 				read_id += 1
 	
 
@@ -52,7 +52,7 @@ class GraphData:
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = len(kmer.evidence_reads)
-			self.sequences[seq_id] = ContigSequence(seq_id, seq_inv_id, self.kmers.source[0], self.kmers.source[1], self.kmers.source[2], self.k_value, [kmer.id], weight)
+			self.sequences[seq_id] = ds.ContigSequence(seq_id, seq_inv_id, self.kmers[kmer.id].source[0], self.kmers[kmer.id].source[1], self.kmers[kmer.id].source[2], self.k_value, [kmer.id], weight)
 			
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
@@ -96,7 +96,8 @@ class GraphData:
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
-				print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
+				ds.print_progress(read_index, len(self.reads))
+				#print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -124,12 +125,12 @@ class GraphData:
 						print ("Kmer does not exist in database. Add new kmer ...")
 					
 					# add kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter+1, [read_index], read_index, kmer_start, False))
+					self.kmers.append(ds.Kmer(kmer_counter, kmer_counter+1, [read_index], read_index, kmer_start, False))
 					self.kmer_dict[new_kmer_sequence] = kmer_counter
 					this_kmer_id = kmer_counter
 					kmer_counter += 1
 					# add inverse kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, [read_index], read_index, kmer_start, True))
+					self.kmers.append(ds.Kmer(kmer_counter, kmer_counter-1, [read_index], read_index, kmer_start, True))
 					self.kmer_dict[get_inverse_sequence(new_kmer_sequence, self.alphabet)] = kmer_counter
 					kmer_counter += 1
 					
@@ -147,7 +148,7 @@ class GraphData:
 				print ("seq_2: "+self.sequences[target_seq_id].sequence)
 			# add new overlap:
 			ov_id = len(self.overlaps)
-			self.overlaps[ov_id] = (SequenceOverlap(ov_id, self.k_value-1, source_seq_id, target_seq_id, []))
+			self.overlaps[ov_id] = (ds.SequenceOverlap(ov_id, source_seq_id, target_seq_id))
 			self.sequences[source_seq_id].overlaps_out[target_seq_id] = ov_id
 			self.sequences[target_seq_id].overlaps_in[source_seq_id] = ov_id
 			
@@ -160,7 +161,7 @@ class GraphData:
 					print ("Add inverse overlap: "+str(source_rev_seq_id) + " - " + str(target_rev_seq_id))
 					print ("seq_1: "+self.sequences[source_rev_seq_id].sequence)
 					print ("seq_2: "+self.sequences[target_rev_seq_id].sequence)
-				self.overlaps[rev_ov_id] = SequenceOverlap(rev_ov_id, self.k_value-1, source_rev_seq_id, target_rev_seq_id, [])
+				self.overlaps[rev_ov_id] = ds.SequenceOverlap(rev_ov_id, source_rev_seq_id, target_rev_seq_id)
 				self.sequences[source_rev_seq_id].overlaps_out[target_rev_seq_id] = rev_ov_id
 				self.sequences[target_rev_seq_id].overlaps_in[source_rev_seq_id] = rev_ov_id
 			
@@ -178,7 +179,7 @@ class GraphData:
 			#if (num_deleted_overlaps > 0 and num_deleted_overlaps%100000 == 0):
 			#	gc.collect()
 			if (ov_index%1000 == 0):
-				print_progress(ov_index, len(ov_index_list))
+				ds.print_progress(ov_index, len(ov_index_list))
 				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
 				#print (str(ov_index-num_deleted_overlaps)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
@@ -254,7 +255,7 @@ class GraphData:
 		# combine nucleotide sequences:
 		#self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
 		target_sources = self.sequences[target_id].read_sources
-		self.sequences[source_id].read_sources.append([target_sources[0][0], target_sources[0][1]+k-1, target_sources[0][2], target_sources[0][3]-k+1])
+		self.sequences[source_id].read_sources.append([target_sources[0][0], target_sources[0][1]+self.k_value-1, target_sources[0][2], target_sources[0][3]-self.k_value+1])
 		for further_target in target_sources[1:]:
 			self.sequences[source_id].read_sources.append(further_target)
 		
@@ -266,9 +267,8 @@ class GraphData:
 		if self.sequences[target_id].max_weight > self.sequences[source_id].max_weight:
 			self.sequences[source_id].max_weight = self.sequences[target_id].max_weight
 		
-		# not sure if this is necessary (see below)????
 		# update outgoing overlaps: 
-		#self.sequences[source_id].overlaps_out = self.sequences[target_id].overlaps_out
+		self.sequences[source_id].overlaps_out = self.sequences[target_id].overlaps_out
 		
 		# move outgoing overlaps from target_seq to source_seq:
 		for ov_target_out in self.sequences[target_id].overlaps_out:
@@ -396,8 +396,8 @@ class GraphData:
 		# only if there is at least one larger component
 		if len(self.overlaps) > 0:
 			for seq_id in range(len(self.sequences)):
-				if en(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
-				self.delete_sequence(seq_id, verbose)
+				if len(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
+					self.delete_sequence(seq_id, verbose)
 
 	def get_asqg_output(self, filename="asqg_file"):
 		print ("Writing asqg-file ...")
@@ -406,16 +406,15 @@ class GraphData:
 		asqg_vertices = ""
 		vertex_count = 0
 		for seq in self.sequences:
-			asqg_vertices += "VT\tk_"+str(seq.id)+"\t"+self.get_sequence_string_of_sequence(seq.id)+"\n"
+			asqg_vertices += "VT\tk_"+str(seq)+"\t"+self.get_sequence_string_of_sequence(seq)+"\n"
 			vertex_count += 1
 		
 		asqg_edges = ""
 		for ov_id in self.overlaps:
 			ov = self.overlaps[ov_id]
-			if ov.is_relevant:
-				seq_1_length = self.sequences[ov.contig_sequence_1].get_length()
-				seq_2_length = self.sequences[ov.contig_sequence_2].get_length()
-				asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0 1\n"
+			seq_1_length = self.sequences[ov.contig_sequence_1].get_length()
+			seq_2_length = self.sequences[ov.contig_sequence_2].get_length()
+			asqg_edges += "ED\tk_"+str(ov.contig_sequence_1)+" k_"+str(ov.contig_sequence_2)+" "+str(seq_1_length-self.k_value+1)+" "+str(seq_1_length-1)+" "+str(seq_1_length)+" 0 "+str(self.k_value-2)+" "+str(seq_2_length)+" 0 0 "+str(self.k_value-1)+"\n"
 
 		print filename
 		outputfile = file(filename, 'w')
@@ -428,7 +427,7 @@ class GraphData:
 		headline = "Node_Label, Sequence, maxweight, label\n"
 		data = ""
 		for seq in self.sequences:
-			data += "k_"+str(seq.id)+","+self.get_sequence_string_of_sequence(seq.id)+","+str(seq.max_weight)+","+str(seq.label)+"\n"
+			data += "k_"+str(seq)+","+self.get_sequence_string_of_sequence(seq)+","+str(self.sequences[seq].max_weight)+","+str(self.sequences[seq].label)+"\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
 		outputfile.write(data)
