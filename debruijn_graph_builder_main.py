@@ -7,7 +7,7 @@ import re
 
 import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
-import veryfast_debruijn_graph_builder as vfdgb
+import parallel_fast_debruijn_graph_builder as pfdgb
 import data_io as dio
 import sampleReads as sr
 import manjasDefinitionen as md
@@ -30,32 +30,40 @@ k = 20
 
 def measure_runtime():
 	
-	dna = dio.genereate_dna(length=10000)
+	dna = dio.genereate_dna(length=5000)
 	dio.write_dna_to_file("Output/test/genome_dna_test.txt", dna)
 	if not os.path.isfile("Output/test/testreads.txt"):
-		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=1000, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[1000], replace_error_percentage=0.0, indel_error_percentage=3.0, inverted_reads=False)
+		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=100, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[1000], replace_error_percentage=1.0, indel_error_percentage=0.0, inverted_reads=False)
 	
 	reads = dio.get_reads_from_file("Output/test/testreads.txt")
 	
 	k = 30
-
-	start_fdgb = timeit.default_timer()
-	debruijn = fdgb.GraphData(reads, k, verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.remove_parallel_sequences(verbose = False)
-	stop_fdgb = timeit.default_timer()
+	
+	start_fdgb = 0
+	stop_fdgb = 0
+	start_pfdgb = 0
+	stop_pfdgb = 0
+	
+	#start_fdgb = timeit.default_timer()
+	#debruijn = fdgb.GraphData(reads, k, verbose = False)
+	#debruijn.contract_unique_overlaps(verbose = False)
+	#debruijn.remove_parallel_sequences(verbose = False)
+	#stop_fdgb = timeit.default_timer()
+	#debruijn.get_asqg_output(filename="Output/test/fdgb_test.asqg")
 
 	debruijn = 0
 	gc.collect()
 	
-	start_vfdgb = timeit.default_timer()
-	debruijn = vfdgb.GraphData(reads, k, verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
+	start_pfdgb = timeit.default_timer()
+	debruijn = pfdgb.GraphData(reads, k, verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
-	stop_vfdgb = timeit.default_timer()
+	#debruijn.contract_unique_overlaps_parallel_master(number_of_threads=4, verbose = False)
+	debruijn.contract_unique_overlaps_parallel_master_process(number_of_processes=4, verbose = False)
+	stop_pfdgb = timeit.default_timer()
+	debruijn.get_asqg_output(filename="Output/test/pfdgb_test.asqg")
 	
 	print ("fdgb: " + str(stop_fdgb - start_fdgb))
-	print ("vfdgb: " + str(stop_vfdgb - start_vfdgb))
+	print ("pfdgb: " + str(stop_pfdgb - start_pfdgb))
 
 def test_tip_removal():
 	debruijn = fdgb.GraphData(reads, k, verbose = False)
@@ -318,7 +326,8 @@ def test_recons_merge():
 	debruijn.get_asqg_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.asqg")
 	debruijn.get_csv_output(filename = read_dir+"/"+read_basename+"_k"+str(k)+"_merged_step2.csv")
 	
-measure_runtime()
+if __name__ == '__main__':
+	measure_runtime()
 
 #test_reconstruction_4()
 #test_recons_from_sequences()
