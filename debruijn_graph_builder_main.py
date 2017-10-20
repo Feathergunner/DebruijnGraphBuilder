@@ -4,6 +4,7 @@ import timeit
 import os
 import gc
 import re
+import sys
 
 import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
@@ -31,10 +32,10 @@ k = 20
 
 def measure_runtime():
 	
-	dna = dio.genereate_dna(length=5000)
+	dna = dio.genereate_dna(length=10000)
 	dio.write_dna_to_file("Output/test/genome_dna_test.txt", dna)
 	if not os.path.isfile("Output/test/testreads.txt"):
-		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=500, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[1000], replace_error_percentage=1.0, indel_error_percentage=0.0, inverted_reads=False)
+		sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads.txt", read_length=500, length_stddev=0, set_of_viruses=["dna_test"], number_of_reads=[3000], replace_error_percentage=0.0, indel_error_percentage=1.0, inverted_reads=False)
 	
 	reads = dio.get_reads_from_file("Output/test/testreads.txt")
 	
@@ -49,8 +50,18 @@ def measure_runtime():
 	
 	start_fdgb = timeit.default_timer()
 	debruijn = fdgb.GraphData(reads, k, verbose = False)
+	print ("delete uneccesary data ...")
+	debruijn.reads = []
+	debruijn.kmers = []
+	debruijn.kmer_dict = {}
+	gc.collect()
+	print ("total graph size: " +str(sys.getsizeof(debruijn)))
+	debruijn.print_memory_usage()
 	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.print_memory_usage()
 	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.print_memory_usage()
+	print ("total graph size: " +str(sys.getsizeof(debruijn)))
 	stop_fdgb = timeit.default_timer()
 	debruijn.get_asqg_output(filename="Output/test/fdgb_test.asqg")
 
@@ -67,12 +78,23 @@ def measure_runtime():
 	debruijn = 0
 	gc.collect()
 
+	print ("")
 	start_vfdgb = timeit.default_timer()
 	debruijn = vfdgb.GraphData(reads, k, verbose = False)
+	print ("delete uneccesary data ...")
+	debruijn.kmers = []
+	debruijn.kmer_dict = {}
+	gc.collect()
+	print ("total graph size: " +str(sys.getsizeof(debruijn)))
+	debruijn.print_memory_usage()
 	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.print_memory_usage()
 	debruijn.remove_parallel_sequences(verbose = False)
+	print ("total graph size: " +str(sys.getsizeof(debruijn)))
+	debruijn.print_memory_usage()
 	stop_vfdgb = timeit.default_timer()
 	debruijn.get_asqg_output(filename="Output/test/vfdgb_test.asqg")
+	debruijn.get_csv_output(filename="Output/test/vfdgb_test.csv")
 
 	print ("fdgb: " + str("%.2f" % (stop_fdgb - start_fdgb)))
 	print ("vfdgb: " + str("%.2f" % (stop_vfdgb - start_vfdgb)))

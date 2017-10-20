@@ -4,6 +4,7 @@
 import random
 import re
 import gc
+import sys
 
 import veryfast_debruijn_graph_builder_datastructures as ds
 	
@@ -29,6 +30,18 @@ class GraphData:
 			self.init_read_database(reads, verbose=verbose)
 			if init:
 				self.init_graph_database(verbose=verbose)
+				
+	def print_memory_usage(self):
+		size_reads = sys.getsizeof(self.reads) #sum([sys.getsizeof(r) for r in self.reads])
+		size_kmers = sys.getsizeof(self.kmers) + sys.getsizeof(self.kmer_dict) #sum([sys.getsizeof(k) for k in self.kmers]) + sum([sys.getsizeof(k) + sys.getsizeof(self.kmer_dict[k]) for k in self.kmer_dict])
+		size_sequences = sys.getsizeof(self.sequences) #sum([sys.getsizeof(seq) + sys.getsizeof(self.sequences[seq]) for seq in self.sequences])
+		size_overlaps = sys.getsizeof(self.overlaps)
+		
+		print ("total memory usage: " + str((size_reads + size_kmers + size_sequences + size_overlaps)/1000000.0))
+		print ("\treads: " + str(size_reads/1000000.0))
+		print ("\tkmers: " + str(size_kmers/1000000.0))
+		print ("\tsequences: " + str(size_sequences/1000000.0))
+		print ("\toverlaps: " + str(size_overlaps/1000000.0))
 	
 	def init_read_database(self, reads, verbose=False):
 		if verbose:
@@ -39,8 +52,9 @@ class GraphData:
 				self.reads.append(ds.Read(read_id, read))
 				read_id += 1
 	
-
 	def init_graph_database(self, verbose=False):
+		self.print_memory_usage()
+		
 		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
 		
@@ -53,7 +67,10 @@ class GraphData:
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = len(kmer.evidence_reads)
 			self.sequences[seq_id] = ds.ContigSequence(seq_id, seq_inv_id, self.kmers[kmer.id].source[0], self.kmers[kmer.id].source[1], self.kmers[kmer.id].source[2], self.k_value, [kmer.id], weight)
-			
+		
+		print ("Number of constructed sequences: "+str(len([seq for seq in self.sequences])))
+		self.print_memory_usage()
+		
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
@@ -61,6 +78,9 @@ class GraphData:
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
+				
+		print ("Number of constructed overlaps: "+str(len([ov for ov in self.overlaps])))
+		self.print_memory_usage()
 
 	def get_sequence_string_of_kmer(self, kmer_id):
 		read_id = self.kmers[kmer_id].source[0]
@@ -238,7 +258,7 @@ class GraphData:
 		adj_seq_in = self.sequences[sequence_id].overlaps_in.keys()
 		for adj_seq in adj_seq_in:
 			self.delete_overlap(self.sequences[sequence_id].overlaps_in[adj_seq], verbose)
-		#self.sequences[sequence_id].is_relevant = False
+		
 		self.sequences.pop(sequence_id, None)
 			
 	def contract_overlap(self, overlap_id, verbose=False):
@@ -255,7 +275,13 @@ class GraphData:
 		# combine nucleotide sequences:
 		#self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
 		target_sources = self.sequences[target_id].read_sources
-		self.sequences[source_id].read_sources.append([target_sources[0][0], target_sources[0][1]+self.k_value-1, target_sources[0][2], target_sources[0][3]-self.k_value+1])
+		sseq_last_sr = self.sequences[source_id].read_sources[-1]
+		tseq_first_sr = target_sources[0]
+		if ((sseq_last_sr[0] == tseq_first_sr[0]) and (sseq_last_sr[2] == tseq_first_sr[2]) and (tseq_first_sr[1] <= sseq_last_sr[0] + sseq_last_sr[3])):
+			# both sequence origin from same read on overlap
+			# simply append last source of sourceseq
+			self.sequences[source_id].read_sources[-1][3] = tseq_first_sr[1]+tseq_first_sr[3] - sseq_last_sr[1]
+		#self.sequences[source_id].read_sources.append([target_sources[0][0], target_sources[0][1]+self.k_value-1, target_sources[0][2], target_sources[0][3]-self.k_value+1])
 		for further_target in target_sources[1:]:
 			self.sequences[source_id].read_sources.append(further_target)
 		

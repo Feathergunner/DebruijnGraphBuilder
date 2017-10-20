@@ -2,6 +2,7 @@
 
 import random
 import re
+import sys
 
 import gc
 
@@ -125,9 +126,24 @@ class GraphData:
 		if not reads == 0:
 			self.init_graph_database(reads, verbose=verbose)
 
+	def print_memory_usage(self):
+		size_reads = sys.getsizeof(self.reads) #sum([sys.getsizeof(r) for r in self.reads])
+		size_kmers = sys.getsizeof(self.kmers) + sys.getsizeof(self.kmer_dict) #sum([sys.getsizeof(k) for k in self.kmers]) + sum([sys.getsizeof(k) + sys.getsizeof(self.kmer_dict[k]) for k in self.kmer_dict])
+		size_sequences = sys.getsizeof(self.sequences) #sum([sys.getsizeof(seq) for seq in self.sequences])
+		size_overlaps = sys.getsizeof(self.overlaps)
+		
+		print ("total memory usage: " + str((size_reads + size_kmers + size_sequences + size_overlaps)/1000000.0))
+		print ("\treads: " + str(size_reads/1000000.0))
+		print ("\tkmers: " + str(size_kmers/1000000.0))
+		print ("\tsequences: " + str(size_sequences/1000000.0))
+		print ("\toverlaps: " + str(size_overlaps/1000000.0))
+		
 	def init_graph_database(self, reads, verbose=False):
 		if verbose:
 			print ("Construct read database")
+		
+		self.print_memory_usage()
+			
 		read_id = 0
 		for r in reads:
 			for read in r:
@@ -135,9 +151,13 @@ class GraphData:
 					print_progress(read_id, len(reads))
 				self.reads.append(Read(read_id, read))
 				read_id += 1
-			
+		
+		self.print_memory_usage()
+		
 		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
+		
+		self.print_memory_usage()
 		
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
@@ -151,6 +171,8 @@ class GraphData:
 			weight = len(kmer.evidence_reads)
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 
+		self.print_memory_usage()
+			
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
 		for read in self.reads:
@@ -160,6 +182,8 @@ class GraphData:
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
+				
+		self.print_memory_usage()
 
 	def print_all_reads(self):
 		print ("Reads:")
