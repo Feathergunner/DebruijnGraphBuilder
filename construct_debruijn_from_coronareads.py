@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import gc
+import os
 
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
