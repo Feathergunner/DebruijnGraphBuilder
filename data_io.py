@@ -75,7 +75,7 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
-def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1):
+def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
@@ -86,10 +86,11 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1):
 			#print line[:10]
 			if status == 1 and not line[0] == "@":
 				#print "- get read "+str(n)
-				reads.append(line.strip())
+				if n >= first_read:
+					reads.append(line.strip())
 				status = 0
 				n += 1
-				if num_of_reads > 0 and n > num_of_reads:
+				if num_of_reads > 0 and n >= first_read+num_of_reads:
 					break
 			if line[0] == "@":
 				status = 1
