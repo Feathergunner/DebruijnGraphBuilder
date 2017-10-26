@@ -145,10 +145,11 @@ class GraphData:
 		self.print_memory_usage()
 			
 		read_id = 0
+		number_of_reads = sum([len(r) for r in reads])
 		for r in reads:
 			for read in r:
 				if (read_id%1000 == 0):
-					print_progress(read_id, len(reads))
+					print_progress(read_id, number_of_reads)
 				# check if read has correct alphabet:
 				is_correct = True
 				for c in read:
