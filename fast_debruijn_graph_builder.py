@@ -132,11 +132,11 @@ class GraphData:
 		size_sequences = sys.getsizeof(self.sequences) #sum([sys.getsizeof(seq) for seq in self.sequences])
 		size_overlaps = sys.getsizeof(self.overlaps)
 		
-		print ("total memory usage: " + str((size_reads + size_kmers + size_sequences + size_overlaps)/1000000.0))
-		print ("\treads: " + str(size_reads/1000000.0))
-		print ("\tkmers: " + str(size_kmers/1000000.0))
-		print ("\tsequences: " + str(size_sequences/1000000.0))
-		print ("\toverlaps: " + str(size_overlaps/1000000.0))
+		print ("total memory usage: " + str((size_reads + size_kmers + size_sequences + size_overlaps)/1000000.0) + "MB")
+		print ("\treads: " + str(size_reads/1000000.0) + "MB")
+		print ("\tkmers: " + str(size_kmers/1000000.0) + "MB")
+		print ("\tsequences: " + str(size_sequences/1000000.0) + "MB")
+		print ("\toverlaps: " + str(size_overlaps/1000000.0) + "MB")
 		
 	def init_graph_database(self, reads, verbose=False):
 		if verbose:
@@ -149,8 +149,14 @@ class GraphData:
 			for read in r:
 				if (read_id%1000 == 0):
 					print_progress(read_id, len(reads))
-				self.reads.append(Read(read_id, read))
-				read_id += 1
+				# check if read has correct alphabet:
+				is_correct = True
+				for c in read:
+					if c not in self.alphabet:
+						is_correct = False
+				if is_correct:
+					self.reads.append(Read(read_id, read))
+					read_id += 1
 		
 		self.print_memory_usage()
 		
@@ -232,8 +238,6 @@ class GraphData:
 		for read_index in range(len(self.reads)):
 			if read_index%100 == 0 and not verbose:
 				print_progress(read_index, len(self.reads))
-				#print ("Progress: "+str("%.2f" % ((float(read_index)/(float(len(self.reads))/100)))) + "%")
-				#print ("Current read: "+str(read_index)+"/"+str(len(self.reads)))
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -266,8 +270,9 @@ class GraphData:
 					this_kmer_id = kmer_counter
 					kmer_counter += 1
 					# add inverse kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, get_inverse_sequence(new_kmer_sequence, self.alphabet), [read_index]))
-					self.kmer_dict[get_inverse_sequence(new_kmer_sequence, self.alphabet)] = kmer_counter
+					inv_kmer_seq = get_inverse_sequence(new_kmer_sequence, self.alphabet)
+					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, inv_kmer_seq, [read_index]))
+					self.kmer_dict[inv_kmer_seq] = kmer_counter
 					kmer_counter += 1
 					
 				if verbose:
