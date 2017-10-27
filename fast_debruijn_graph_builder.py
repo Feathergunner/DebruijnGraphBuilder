@@ -562,11 +562,19 @@ class GraphData:
 
 	def get_csv_output(self, filename="csv_file.csv"):
 		print ("writing csv-file ...")
-		headline = "Node_Label, Sequence, maxweight, label\n"
+		headline = "Node_Label, Sequence, maxweight, label, read_ids\n"
 		data = ""
 		for seq in self.sequences:
 			if seq.is_relevant:
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+"\n"
+				source_reads = []
+				if not self.kmers == []:
+					for k_id in seq.kmers:
+						source_reads += [r for r in self.kmers[k_id].evidence_reads]
+					source_reads = set(source_reads)
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+","#+str(reads)+"\n"
+				for r in source_reads:
+					data += str(r)+" "
+				data += "\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
 		outputfile.write(data)
