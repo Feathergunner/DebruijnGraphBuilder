@@ -4,7 +4,7 @@ import random
 import re
 import sys
 
-import gc
+#import gc
 
 def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
@@ -90,6 +90,7 @@ class SequenceOverlap:
 		self.evidence_reads = evidence_reads
 		# Flag that checks whether a sequence is relevant for the graph or if it has been deleted
 		self.is_relevant = True
+		self.bla = 0
 	
 	def add_evidence(self, read_id):
 		self.evidence_reads.append(read_id)
@@ -145,11 +146,11 @@ class GraphData:
 		self.print_memory_usage()
 			
 		read_id = 0
-		number_of_reads = sum([len(r) for r in reads])
+		number_of_reads = sum((len(r) for r in reads))
 		for r in reads:
 			for read in r:
-				if (read_id%1000 == 0):
-					print_progress(read_id, number_of_reads)
+				#if (read_id%1000 == 0):
+				#	print_progress(read_id, number_of_reads)
 				# check if read has correct alphabet:
 				is_correct = True
 				for c in read:
@@ -158,6 +159,7 @@ class GraphData:
 				if is_correct:
 					self.reads.append(Read(read_id, read))
 					read_id += 1
+		print len(self.reads)
 		
 		self.print_memory_usage()
 		
@@ -354,8 +356,8 @@ class GraphData:
 							self.contract_overlap(rev_ov_id, verbose)
 							num_deleted_overlaps += 1
 						
-						self.sequences[source_id].id_of_inverse_seq = source_rev_id
-						self.sequences[source_rev_id].id_of_inverse_seq = source_id
+							self.sequences[source_id].id_of_inverse_seq = source_rev_id
+							self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
 		# removes an overlap from the database and from both incident sequences
