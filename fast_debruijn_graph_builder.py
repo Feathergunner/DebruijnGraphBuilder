@@ -10,7 +10,7 @@ def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
 
 class Read:
-	def __init__(self, read_id, sequence, weight):
+	def __init__(self, read_id, sequence, weight=1):
 		self.id = read_id
 		self.sequence = sequence
 		self.length = len(sequence)
