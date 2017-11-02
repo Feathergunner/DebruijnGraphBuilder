@@ -3,13 +3,15 @@
 
 import re
 import gc
+import os
 
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
 
-sourcefilename = "Output/corona_realreads/corona_realreads_n-1_k40.csv"
-outputfilename = "Output/corona_realreads/corona_realreads_high_evidence_sequences"
-min_weight = 50
+data_dir = "Output/corona_allreads"
+sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
+outputfilename = data_dir+"/corona_realreads_k40"
+#min_weight = 50
 
 def get_sequences_by_params(filename_input, filename_output, min_weight=1, number_of_parts=1, overlap=1):
 	with open(sourcefilename) as inputfile:
@@ -61,43 +63,45 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 			outputfile.write(seq)
 		
 def reconstruct(filename_input_base, filename_output_base, number_of_parts):
-	k1=20
-	k2=30
+	k1=17
+	k2=20
 	for i in range(number_of_parts):
 		filename_input = filename_input_base+"_p"+str(i)+".txt"
 		filename_output = filename_output_base+"_k"+str(k1)+"_p"+str(i)
 		
 		reads = dio.get_reads_from_file(filename_input)
-		
-		debruijn = fdgb.GraphData(reads, k1, verbose=False)
-		# delete reads and kmers to save ram:
-		reads = []
-		debruijn.reads = []
-		debruijn.kmers = []
-		# run garbage collector:
-		gc.collect()
-		debruijn.contract_unique_overlaps(verbose=False)
-		debruijn.remove_parallel_sequences()
-		
-		#debruijn.remove_single_sequence_components()
-
-		debruijn.remove_insignificant_sequences(minimal_weight=5)
-		debruijn.contract_unique_overlaps(verbose = False)
-		#debruijn.remove_single_sequence_components()
-		#debruijn.construct_assembly_ordering_labels()
-		
-		#debruijn.reduce_to_single_path_max_weight()
-		#debruijn.contract_unique_overlaps(verbose = False)
-		#debruijn.remove_short_sequences()
-		
-		debruijn.get_asqg_output(filename = filename_output+".asqg")
-		debruijn.get_csv_output(filename = filename_output+".csv")
-		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt")
+		if len(reads)>0:
+			
+			debruijn = fdgb.GraphData(reads, k1, verbose=False)
+			# delete reads and kmers to save ram:
+			reads = []
+			debruijn.reads = []
+			debruijn.kmers = []
+			# run garbage collector:
+			gc.collect()
+			debruijn.contract_unique_overlaps(verbose=False)
+			debruijn.remove_parallel_sequences()
+			
+			#debruijn.remove_single_sequence_components()
+	
+			#debruijn.remove_insignificant_sequences(minimal_weight=5)
+			#debruijn.contract_unique_overlaps(verbose = False)
+			#debruijn.remove_single_sequence_components()
+			#debruijn.construct_assembly_ordering_labels()
+			
+			#debruijn.reduce_to_single_path_max_weight()
+			#debruijn.contract_unique_overlaps(verbose = False)
+			#debruijn.remove_short_sequences()
+			
+			debruijn.get_asqg_output(filename = filename_output+".asqg")
+			debruijn.get_csv_output(filename = filename_output+".csv")
+			debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt")
 		
 	reads = []
 	for i in range(number_of_parts):
 		seqfilename = filename_output_base+"_k"+str(k1)+"_p"+str(i)+"_seqsonly.txt"
-		reads += dio.get_reads_from_file(filename = seqfilename)
+		if os.path.isfile(seqfilename):
+			reads += dio.get_reads_from_file(filename = seqfilename)
 		
 	debruijn = fdgb.GraphData(reads, k2)
 	# delete reads and kmers to save ram:
@@ -119,8 +123,10 @@ def reconstruct(filename_input_base, filename_output_base, number_of_parts):
 	debruijn.get_csv_output(filename = filename_output_base+"_k"+str(k1)+"_merged_k"+str(k2)+".csv")
 
 if __name__ == '__main__':
+	if not os.path.exists(data_dir):
+		os.makedirs(data_dir)
 	w = 5
-	p = 100
+	p = 1000
 	o = 3
 	get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o)
 	reconstruct(filename_input_base=outputfilename+"_w"+str(w), filename_output_base=outputfilename+"_w"+str(w), number_of_parts=p)

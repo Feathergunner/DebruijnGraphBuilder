@@ -10,11 +10,12 @@ def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
 
 class Read:
-	def __init__(self, read_id, sequence):
+	def __init__(self, read_id, sequence, weight):
 		self.id = read_id
 		self.sequence = sequence
 		self.length = len(sequence)
 		self.kmers = []
+		self.weight = weight
 		#self.paired_end_partner = -1
 		
 	#def add_paired_end_partner(self, partner_id):
@@ -24,17 +25,18 @@ class Read:
 		self.kmers.append(kmer_id)
 
 class Kmer:
-	def __init__(self, kmer_id, inverse_id , sequence, evidence_reads):
+	def __init__(self, kmer_id, inverse_id , sequence, evidence_reads, baseweight=0):
 		self.id = kmer_id
 		self.sequence = sequence
 		self.id_of_inverse_kmer = inverse_id
 		self.evidence_reads = evidence_reads
+		self.baseweight = baseweight
 		
 	def add_evidence(self, evidence_read_id):
 		self.evidence_reads.append(evidence_read_id)
 		
 	def get_evidence_weight(self):
-		return len(self.evidence_reads)
+		return self.baseweight + len(self.evidence_reads)
 
 class ContigSequence:
 	# Nodes in the Debruijn-Graph
@@ -143,7 +145,7 @@ class GraphData:
 		if verbose:
 			print ("Construct read database")
 		
-		self.print_memory_usage()
+		#self.print_memory_usage()
 			
 		read_id = 0
 		number_of_reads = sum((len(r) for r in reads))
@@ -161,12 +163,12 @@ class GraphData:
 					read_id += 1
 		print len(self.reads)
 		
-		self.print_memory_usage()
+		#self.print_memory_usage()
 		
 		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
 		
-		self.print_memory_usage()
+		#self.print_memory_usage()
 		
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
@@ -180,7 +182,7 @@ class GraphData:
 			weight = len(kmer.evidence_reads)
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 
-		self.print_memory_usage()
+		#self.print_memory_usage()
 			
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
@@ -192,7 +194,7 @@ class GraphData:
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
 				
-		self.print_memory_usage()
+		#self.print_memory_usage()
 
 	def print_all_reads(self):
 		print ("Reads:")
@@ -323,11 +325,8 @@ class GraphData:
 		ov_index_list = [ov_id for ov_id in self.overlaps]
 		num_deleted_overlaps = 0 
 		for ov_index in ov_index_list:
-			if (ov_index%1000 == 0):
-				#print_progress(ov_index-num_deleted_overlaps, len(self.overlaps))
+			if (ov_index%10000 == 0):
 				print_progress(ov_index, len(ov_index_list))
-				#print ("Progress: "+str("%.2f" % ((float(ov_index-num_deleted_overlaps)/(float(len(self.overlaps))/100)))) + "%")
-				#print (str(ov_index)+"/"+str(len(self.overlaps)))
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
