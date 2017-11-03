@@ -161,7 +161,7 @@ class GraphData:
 				readdata = re.split(r',',read)
 				readseq = readdata[0]
 				if len(readdata) > 1:
-					readweight = readdata[1]
+					readweight = int(readdata[1])
 				else:
 					readweight = 1
 				# check if read has correct alphabet:
