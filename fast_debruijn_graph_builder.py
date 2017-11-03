@@ -172,7 +172,6 @@ class GraphData:
 				if is_correct:
 					self.reads.append(Read(read_id, readseq, readweight))
 					read_id += 1
-		print len(self.reads)
 		
 		#self.print_memory_usage()
 		
@@ -230,11 +229,13 @@ class GraphData:
 			if s.is_relevant:
 				print ("("+str(s.id)+") "+s.sequence) + ": "
 				s.print_data()
+				'''
 				for kmer_id in s.kmers:
 					kmer_string = self.kmers[kmer_id].sequence + "\t"
 					for read_id in self.kmers[kmer_id].evidence_reads:
 						kmer_string += str(read_id)+" "
 					print kmer_string
+				'''
 				print("")
 	
 	def get_relevant_sequences(self):
@@ -825,7 +826,7 @@ class GraphData:
 		
 		for seq in self.sequences:
 			if seq.is_relevant:
-				if seq.get_length() < 5*self.k_value:
+				if seq.get_length() < length_bound_by_multiple_of_k*self.k_value:
 					self.delete_sequence(seq.id)
 		
 		
