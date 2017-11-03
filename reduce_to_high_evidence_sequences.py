@@ -32,7 +32,7 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 			data = re.split(r',',l)
 			if int(data[2]) > min_weight:
 				label = int(data[3])
-				sequences.append([data[1], label])
+				sequences.append([data[1], label, data[2]])
 				
 				if not min_label or label < min_label:
 					min_label = label
@@ -50,14 +50,14 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 			part_seqs = []
 			for s in sequences:
 				if s[1] > i*partition_start_diff and s[1] < i*partition_start_diff+partition_size:
-					part_seqs.append(s[0]+"\n")
+					part_seqs.append(s[0]+","+str(s[2])+"\n")
 			outputfile = file(partname, 'w')
 			for seq in part_seqs:
 				outputfile.write(seq)
 	else:
 		part_seqs = []
 		for s in sequences:
-			part_seqs.append(s[0]+"\n")
+			part_seqs.append(s[0]+","+str(s[2])+"\n")
 		outputfile = file(partname, 'w')
 		for seq in part_seqs:
 			outputfile.write(seq)
