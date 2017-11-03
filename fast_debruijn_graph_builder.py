@@ -190,7 +190,7 @@ class GraphData:
 				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
-			weight = len(kmer.evidence_reads)
+			weight = kmer.get_evidence_weight()
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 
 		#self.print_memory_usage()
