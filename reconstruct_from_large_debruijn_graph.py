@@ -8,11 +8,6 @@ import os
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
 
-data_dir = "Output/corona_allreads"
-sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
-outputfilename = data_dir+"/corona_realreads_k40"
-#min_weight = 50
-
 def get_sequences_by_params(filename_input, filename_output, min_weight=1, number_of_parts=1, overlap=1):
 	with open(sourcefilename) as inputfile:
 		lines = inputfile.readlines()
@@ -62,9 +57,7 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 		for seq in part_seqs:
 			outputfile.write(seq)
 		
-def reconstruct(filename_input_base, filename_output_base, number_of_parts):
-	k1=17
-	k2=20
+def reconstruct_parts(filename_input_base, filename_output_base, number_of_parts, k1, minweight, minlengthfactor):
 	for i in range(number_of_parts):
 		filename_input = filename_input_base+"_p"+str(i)+".txt"
 		filename_output = filename_output_base+"_k"+str(k1)+"_p"+str(i)
@@ -81,28 +74,29 @@ def reconstruct(filename_input_base, filename_output_base, number_of_parts):
 			gc.collect()
 			debruijn.contract_unique_overlaps(verbose=False)
 			debruijn.remove_parallel_sequences()
-			
-			#debruijn.remove_single_sequence_components()
 	
-			#debruijn.remove_insignificant_sequences(minimal_weight=5)
-			#debruijn.contract_unique_overlaps(verbose = False)
-			#debruijn.remove_single_sequence_components()
-			#debruijn.construct_assembly_ordering_labels()
+			debruijn.remove_insignificant_sequences(minimal_weight=minweight)
+			debruijn.contract_unique_overlaps(verbose = False)
+			debruijn.remove_short_sequences(length_bound_by_multiple_of_k=minlengthfactor)
+			debruijn.contract_unique_overlaps(verbose = False)
 			
+			debruijn.remove_single_sequence_components()
+			
+			#debruijn.construct_assembly_ordering_labels()
 			#debruijn.reduce_to_single_path_max_weight()
 			#debruijn.contract_unique_overlaps(verbose = False)
-			#debruijn.remove_short_sequences()
 			
 			debruijn.get_asqg_output(filename = filename_output+".asqg")
 			debruijn.get_csv_output(filename = filename_output+".csv")
-			debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt")
-		
+			debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+
+def reconstruct_merge(filename_output_base, number_of_parts, k1, k2):
 	reads = []
 	for i in range(number_of_parts):
 		seqfilename = filename_output_base+"_k"+str(k1)+"_p"+str(i)+"_seqsonly.txt"
 		if os.path.isfile(seqfilename):
 			reads += dio.get_reads_from_file(filename = seqfilename)
-		
+	
 	debruijn = fdgb.GraphData(reads, k2)
 	# delete reads and kmers to save ram:
 	debruijn.reads = []
@@ -119,14 +113,36 @@ def reconstruct(filename_input_base, filename_output_base, number_of_parts):
 	#debruijn.reduce_to_single_path_max_weight()
 	#debruijn.contract_unique_overlaps(verbose = False)
 	
-	debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k1)+"_merged_k"+str(k2)+".asqg")
-	debruijn.get_csv_output(filename = filename_output_base+"_k"+str(k1)+"_merged_k"+str(k2)+".csv")
-
+	debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k1)+"_p"+str(number_of_parts)+"_merged_k"+str(k2)+".asqg")
+	debruijn.get_csv_output(filename = filename_output_base+"_k"+str(k1)+"_p"+str(number_of_parts)+"_merged_k"+str(k2)+".csv")
+	
+	
 if __name__ == '__main__':
+
+	data_dir = "Output/corona_allreads"
+	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
+	outputfilename = data_dir+"/corona_realreads_k40"
+
 	if not os.path.exists(data_dir):
 		os.makedirs(data_dir)
+	# mininum weight of sequences in original graph that are considered:
 	w = 5
+	# number of parts for partitioning:
 	p = 1000
-	o = 3
+	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
+	o = 10
+	# k for debruijn-graphs of parts:
+	k1 = 20
+	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
+	k2 = 17
+	# minimum weight of sequences in partition-graphs:
+	w2 = 50
+	# lower bound to the length of sequences in partition-graphs as multiple of k:
+	f = 2
+	
+	# get partitioning of sequences with minimum weight, as defined by param w, p, o:
 	get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o)
-	reconstruct(filename_input_base=outputfilename+"_w"+str(w), filename_output_base=outputfilename+"_w"+str(w), number_of_parts=p)
+	
+	# build debruijn graphs for each part and merge them together:
+	reconstruct_parts(filename_input_base=outputfilename+"_w"+str(w), filename_output_base=outputfilename+"_w"+str(w), number_of_parts=p, k1=k1, minweight=w2, minlengthfactor=f)
+	reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w), number_of_parts=p, k1=k1, k2=k2)
