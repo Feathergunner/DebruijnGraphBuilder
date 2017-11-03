@@ -25,7 +25,7 @@ class Read:
 		self.kmers.append(kmer_id)
 
 class Kmer:
-	def __init__(self, kmer_id, inverse_id , sequence, evidence_reads, baseweight=0):
+	def __init__(self, kmer_id, inverse_id , sequence, evidence_reads, baseweight=1):
 		self.id = kmer_id
 		self.sequence = sequence
 		self.id_of_inverse_kmer = inverse_id
@@ -36,7 +36,11 @@ class Kmer:
 		self.evidence_reads.append(evidence_read_id)
 		
 	def get_evidence_weight(self):
-		return self.baseweight + len(self.evidence_reads)
+		return self.baseweight + len(self.evidence_reads) - 1
+		
+	def update_baseweight(self, weight):
+		if self.baseweight < weight:
+			self.baseweight = weight
 
 class ContigSequence:
 	# Nodes in the Debruijn-Graph
@@ -153,13 +157,20 @@ class GraphData:
 			for read in r:
 				#if (read_id%1000 == 0):
 				#	print_progress(read_id, number_of_reads)
+				
+				readdata = re.split(r',',read)
+				readseq = readdata[0]
+				if len(readdata) > 1:
+					readweight = readdata[1]
+				else:
+					readweight = 1
 				# check if read has correct alphabet:
 				is_correct = True
-				for c in read:
+				for c in readseq:
 					if c not in self.alphabet:
 						is_correct = False
 				if is_correct:
-					self.reads.append(Read(read_id, read))
+					self.reads.append(Read(read_id, readseq, readweight))
 					read_id += 1
 		print len(self.reads)
 		
@@ -241,11 +252,12 @@ class GraphData:
 		read_index = 0
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
-			if read_index%100 == 0 and not verbose:
+			if read_index%1000 == 0 and not verbose:
 				print_progress(read_index, len(self.reads))
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
+			current_read_weight = self.reads[read_index].weight
 			kmer_start = 0
 			while kmer_start <= (len(current_read_sequence) - self.k_value):
 				if verbose:
@@ -260,8 +272,10 @@ class GraphData:
 					kmer_already_existing = True
 					this_kmer_id = self.kmer_dict[new_kmer_sequence]
 					self.kmers[this_kmer_id].add_evidence(read_index)
+					self.kmers[this_kmer_id].update_baseweight(current_read_weight)
 					inv_kmer_id = self.kmers[this_kmer_id].id_of_inverse_kmer
 					self.kmers[inv_kmer_id].add_evidence(read_index)
+					self.kmers[inv_kmer_id].update_baseweight(current_read_weight)
 					if verbose:
 						print ("Kmer already exists")
 						print ("Add read ("+str(read_index)+") evidence to kmer "+str(this_kmer_id))
@@ -270,13 +284,13 @@ class GraphData:
 						print ("Kmer does not exist in database. Add new kmer ...")
 					
 					# add kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index]))
+					self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index], baseweight=current_read_weight))
 					self.kmer_dict[new_kmer_sequence] = kmer_counter
 					this_kmer_id = kmer_counter
 					kmer_counter += 1
 					# add inverse kmer:
 					inv_kmer_seq = get_inverse_sequence(new_kmer_sequence, self.alphabet)
-					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, inv_kmer_seq, [read_index]))
+					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, inv_kmer_seq, [read_index], baseweight=current_read_weight))
 					self.kmer_dict[inv_kmer_seq] = kmer_counter
 					kmer_counter += 1
 					
@@ -580,12 +594,15 @@ class GraphData:
 		outputfile.write(headline)
 		outputfile.write(data)
 		
-	def write_sequences_to_file(self, filename):
+	def write_sequences_to_file(self, filename, addweights=False):
 		# writes only the sequence-string of relevant sequences to a file
 		data = ""
 		for seq in self.sequences:
 			if seq.is_relevant:
-				data += seq.sequence + "\n"
+				data += seq.sequence
+				if addweights:
+					data += ","+str(seq.max_weight)
+				data += "\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(data)
 		
