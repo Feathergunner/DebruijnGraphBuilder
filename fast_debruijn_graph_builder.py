@@ -820,6 +820,21 @@ class GraphData:
 				if not seq_id == last_seq_id:
 					self.delete_sequence(seq_id)
 		'''
+		
+	def reduce_to_single_largest_component(self):
+		components = self.get_components()
+		if len(components) > 1:
+			max_size = 0#len(components[0])
+			max_comp_id = 0
+			for i in range(len(components)):
+				c = components[i]
+				if len(c) > max_size:
+					max_size = len(c)
+					max_comp_id = i
+			for i in range(len(components)):
+				if not i == max_comp_id:
+					for seq_id in components[i]:
+						self.delete_sequence(seq_id)
 					
 	def remove_short_sequences(self, length_bound_by_multiple_of_k=5):
 		# brutally removes all sequences with length less than 5 times k_value (if not specified otherwise)
@@ -828,6 +843,9 @@ class GraphData:
 			if seq.is_relevant:
 				if seq.get_length() < length_bound_by_multiple_of_k*self.k_value:
 					self.delete_sequence(seq.id)
+	
+	def get_label_span(self):
+		return self.max_label - self.min_label
 		
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
