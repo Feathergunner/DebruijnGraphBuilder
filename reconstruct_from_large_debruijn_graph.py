@@ -67,6 +67,9 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 	
 def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, allow_recursion=False, saveall=False):
 	print ("Reconstruct part "+filename_output+" ...")
+	
+	reduce_to_single_path = True
+	
 	debruijn = fdgb.GraphData(reads, k, verbose=False)
 	# delete reads and kmers to save ram:
 	#reads = []
@@ -86,6 +89,10 @@ def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, 
 		
 	#debruijn.remove_single_sequence_components()
 	debruijn.construct_assembly_ordering_labels()
+	if reduce_to_single_path:
+		debruijn.reduce_to_single_path_max_weight()
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.construct_assembly_ordering_labels()
 		
 	#debruijn.reduce_to_single_path_max_weight()
 	#debruijn.contract_unique_overlaps(verbose = False)
@@ -161,7 +168,8 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 				os.remove(file)
 		else:
 			print "Error! File doesent exist: " + file
-			
+	
+	reduce_to_single_path = True
 	
 	debruijn = fdgb.GraphData(reads, merge_k)
 	# delete reads and kmers to save ram:
@@ -175,11 +183,16 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	
 	debruijn.remove_single_sequence_components()
 	debruijn.reduce_to_single_largest_component()
+	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.construct_assembly_ordering_labels()
-	#debruijn.reduce_to_single_path_max_weight()
-	#debruijn.contract_unique_overlaps(verbose = False)
+	if reduce_to_single_path:
+		debruijn.reduce_to_single_path_max_weight()
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.construct_assembly_ordering_labels()
 	
 	filename_output = filename_output_base+"_p"+str(number_of_parts)+"_merged_k"+str(merge_k)
+	if reduce_to_single_path:
+		filename_output += "_singlepath"
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
