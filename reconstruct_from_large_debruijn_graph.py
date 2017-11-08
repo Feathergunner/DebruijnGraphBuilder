@@ -65,7 +65,8 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 			
 	return part_sequence_filenames
 	
-def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, allow_recursion=False):
+def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, allow_recursion=False, saveall=False):
+	print ("Reconstruct part "+filename_output+" ...")
 	debruijn = fdgb.GraphData(reads, k, verbose=False)
 	# delete reads and kmers to save ram:
 	#reads = []
@@ -73,8 +74,8 @@ def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, 
 	debruijn.kmers = []
 	# run garbage collector:
 	gc.collect()
-	debruijn.contract_unique_overlaps(verbose=False)
 	debruijn.remove_parallel_sequences()
+	debruijn.contract_unique_overlaps(verbose=False)
 	
 	#debruijn.reduce_to_single_largest_component()
 	
@@ -88,36 +89,38 @@ def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, 
 		
 	#debruijn.reduce_to_single_path_max_weight()
 	#debruijn.contract_unique_overlaps(verbose = False)
-		
-	debruijn.get_asqg_output(filename = filename_output+".asqg")
-	debruijn.get_csv_output(filename = filename_output+".csv")
-		
+	
+	if saveall:
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	
 	return debruijn.get_label_span()
 		
-def reconstruct_parts(list_of_inputfiles, filename_output_base, k, minweight, minlengthfactor, allow_recursion=False):
+def reconstruct_parts(list_of_inputfiles, filename_output_base, k, minweight, minlengthfactor, allow_recursion=False, saveall=False, delete_parts=True):
 	files_of_parts = []
 
 	partcounter = 0
 	totalparts = len(list_of_inputfiles)
 	for filename in list_of_inputfiles:
 		reads = dio.get_reads_from_file(filename)
+		if delete_parts:
+			os.remove(filename)
 		if len(reads)>0:
 			filename_output = filename_output_base+"_k"+str(k)+"_p"+str(partcounter)
 			partcounter += 1
-			graph_span = reconstruct_part(reads, filename_output, k, minweight, minlengthfactor, allow_recursion)
+			graph_span = reconstruct_part(reads, filename_output, k, minweight, minlengthfactor, allow_recursion, saveall=saveall)
 			if (allow_recursion):# and graph_span > 100*k):
 				part_sequence_filenames = get_sequences_by_params(filename_input=filename_output+".csv", filename_output=filename_output+"_w"+str(minweight), min_weight=minweight, number_of_parts=100, overlap=10, verbose=True)
 				part_parts = reconstruct_parts_lv2(part_sequence_filenames, filename_output_base=filename_output+"_w"+str(minweight), k=15)
 				
-				merged_parts_seqfilename = reconstruct_merge(filename_output_base=filename_output_base+"_w"+str(minweight)+"_k"+str(17), files_to_merge=part_parts, merge_k=11)
+				merged_parts_seqfilename = reconstruct_merge(filename_output_base=filename_output_base+"_w"+str(minweight)+"_k"+str(17), files_to_merge=part_parts, merge_k=11, saveall=saveall)
 				filename_output = merged_parts_seqfilename
 			files_of_parts.append(filename_output+"_seqsonly.txt")
 			
 	return files_of_parts
 	
-def reconstruct_parts_lv2(list_of_inputfiles, filename_output_base, number_of_parts, k):
+def reconstruct_parts_lv2(list_of_inputfiles, filename_output_base, number_of_parts, k, saveall=False):
 	files_of_parts = []
 	for i in range(number_of_parts):
 		filename_input = filename_input_base+"_p"+str(i)+".txt"
@@ -142,19 +145,23 @@ def reconstruct_parts_lv2(list_of_inputfiles, filename_output_base, number_of_pa
 			debruijn.reduce_to_single_path_max_weight()
 			debruijn.contract_unique_overlaps(verbose = False)
 			
-			debruijn.get_asqg_output(filename = filename_output+".asqg")
-			debruijn.get_csv_output(filename = filename_output+".csv")
+			if saveall:
+				debruijn.get_asqg_output(filename = filename_output+".asqg")
+				debruijn.get_csv_output(filename = filename_output+".csv")
 			debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 			files_of_parts.append(filename_output+"_seqsonly.txt")
 	return files_of_parts
 
-def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_parts):
+def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_parts, delete_parts=True):
 	reads = []
 	for file in files_to_merge:
 		if os.path.isfile(file):
 			reads += dio.get_reads_from_file(filename = file)
+			if delete_parts:
+				os.remove(file)
 		else:
 			print "Error! File doesent exist: " + file
+			
 	
 	debruijn = fdgb.GraphData(reads, merge_k)
 	# delete reads and kmers to save ram:
@@ -163,8 +170,8 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	# run garbage collector:
 	gc.collect()
 	
-	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
 	
 	debruijn.remove_single_sequence_components()
 	debruijn.reduce_to_single_largest_component()
@@ -208,17 +215,17 @@ if __name__ == '__main__':
 	# mininum weight of sequences in original graph that are considered:
 	w = 5#30#10
 	# number of parts for partitioning:
-	p = 2000#500#2000
+	p = 1000#500#2000
 	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
 	o = 2
 	# k for debruijn-graphs of parts:
 	k1 = 15#19#23
 	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
-	k2 = 13#17#21
+	k2 = 15#17#21
 	# minimum weight of sequences in partition-graphs:
-	w2 = 10#50
+	w2 = 50#50
 	# lower bound to the length of sequences in partition-graphs as multiple of k:
-	f = 1.0
+	f = 1.3
 	
 	# get partitioning of sequences with minimum weight, as defined by param w, p, o:
 	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o)
