@@ -134,9 +134,9 @@ class GraphData:
 			self.init_graph_database(reads, verbose=verbose)
 
 	def print_memory_usage(self):
-		size_reads = sys.getsizeof(self.reads) #sum([sys.getsizeof(r) for r in self.reads])
-		size_kmers = sys.getsizeof(self.kmers) + sys.getsizeof(self.kmer_dict) #sum([sys.getsizeof(k) for k in self.kmers]) + sum([sys.getsizeof(k) + sys.getsizeof(self.kmer_dict[k]) for k in self.kmer_dict])
-		size_sequences = sys.getsizeof(self.sequences) #sum([sys.getsizeof(seq) for seq in self.sequences])
+		size_reads = sys.getsizeof(self.reads)
+		size_kmers = sys.getsizeof(self.kmers) + sys.getsizeof(self.kmer_dict)
+		size_sequences = sys.getsizeof(self.sequences)
 		size_overlaps = sys.getsizeof(self.overlaps)
 		
 		print ("total memory usage: " + str((size_reads + size_kmers + size_sequences + size_overlaps)/1000000.0) + "MB")
@@ -148,8 +148,6 @@ class GraphData:
 	def init_graph_database(self, reads, verbose=False):
 		if verbose:
 			print ("Construct read database")
-		
-		#self.print_memory_usage()
 			
 		read_id = 0
 		number_of_reads = sum((len(r) for r in reads))
@@ -173,26 +171,24 @@ class GraphData:
 					self.reads.append(Read(read_id, readseq, readweight))
 					read_id += 1
 		
-		#self.print_memory_usage()
 		
 		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
-		
-		#self.print_memory_usage()
 		
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
 			if (kmer.id % 10000 == 0):
 				print_progress(kmer.id, len(self.kmers))
-			if verbose:
-				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = kmer.get_evidence_weight()
+			if verbose:
+				print ("now consider kmer with id " + str(kmer.id) + ": " + kmer.sequence)
+				print ("\tseq_id = "+str(seq_id))
+				print ("\tseq_inv_id = "+str(seq_inv_id))
+				print ("\tweight = "+str(weight))
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
-
-		#self.print_memory_usage()
 			
 		# construct overlaps between adjacent sequences with read-evidence:
 		print ("Construct overlaps ...")			
@@ -204,7 +200,8 @@ class GraphData:
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
 				
-		#self.print_memory_usage()
+		if verbose:
+			self.print_memory_usage()
 
 	def print_all_reads(self):
 		print ("Reads:")
@@ -229,13 +226,6 @@ class GraphData:
 			if s.is_relevant:
 				print ("("+str(s.id)+") "+s.sequence) + ": "
 				s.print_data()
-				'''
-				for kmer_id in s.kmers:
-					kmer_string = self.kmers[kmer_id].sequence + "\t"
-					for read_id in self.kmers[kmer_id].evidence_reads:
-						kmer_string += str(read_id)+" "
-					print kmer_string
-				'''
 				print("")
 	
 	def get_relevant_sequences(self):
@@ -249,7 +239,6 @@ class GraphData:
 	def get_kmerdata_from_reads(self, verbose = False):
 		# checks all reads and constructs kmers and inverse kmers
 		print ("Get kmer-data from reads ...")
-
 		read_index = 0
 		kmer_counter = 0
 		for read_index in range(len(self.reads)):
@@ -284,16 +273,23 @@ class GraphData:
 					if verbose:
 						print ("Kmer does not exist in database. Add new kmer ...")
 					
-					# add kmer:
-					self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index], baseweight=current_read_weight))
-					self.kmer_dict[new_kmer_sequence] = kmer_counter
-					this_kmer_id = kmer_counter
-					kmer_counter += 1
-					# add inverse kmer:
 					inv_kmer_seq = get_inverse_sequence(new_kmer_sequence, self.alphabet)
-					self.kmers.append(Kmer(kmer_counter, kmer_counter-1, inv_kmer_seq, [read_index], baseweight=current_read_weight))
-					self.kmer_dict[inv_kmer_seq] = kmer_counter
-					kmer_counter += 1
+					if not inv_kmer_seq == new_kmer_sequence:
+						# add kmer:
+						self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index], baseweight=current_read_weight))
+						self.kmer_dict[new_kmer_sequence] = kmer_counter
+						this_kmer_id = kmer_counter
+						kmer_counter += 1
+						# add inverse kmer:
+						self.kmers.append(Kmer(kmer_counter, kmer_counter-1, inv_kmer_seq, [read_index], baseweight=current_read_weight))
+						self.kmer_dict[inv_kmer_seq] = kmer_counter
+						kmer_counter += 1
+					else:
+						# add kmer:
+						self.kmers.append(Kmer(kmer_counter, kmer_counter, new_kmer_sequence, [read_index], baseweight=current_read_weight))
+						self.kmer_dict[new_kmer_sequence] = kmer_counter
+						this_kmer_id = kmer_counter
+						kmer_counter += 1
 					
 				if verbose:
 					print ("Add kmer "+self.kmers[this_kmer_id].sequence+"("+str(this_kmer_id)+") to read "+str(read_index))
@@ -335,6 +331,8 @@ class GraphData:
 	def contract_unique_overlaps(self, verbose = False):
 		# This method contracts all overlaps between adjacent sequences that form an unique path
 		# (i.e., there are no other outgoing or incoming overlaps between the sequences)
+		if not self.is_unified:
+			self.remove_parallel_sequences(verbose)
 		print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
@@ -345,9 +343,6 @@ class GraphData:
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
-				if not self.is_unified:
-					source_rev_id = self.sequences[target_id].id_of_inverse_seq
-					target_rev_id = self.sequences[source_id].id_of_inverse_seq
 
 				if verbose:
 					print ("consider overlap: ")
@@ -362,16 +357,6 @@ class GraphData:
 					ov = self.overlaps[ov_index]
 					self.contract_overlap(ov_index, verbose)
 					num_deleted_overlaps += 1
-		            
-					# contract reverse overlap if not sequence is its own inverse:
-					if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[source_id].sequence, self.alphabet):
-						if not self.is_unified:
-							rev_ov_id = self.sequences[source_rev_id].overlaps_out[target_rev_id]
-							self.contract_overlap(rev_ov_id, verbose)
-							num_deleted_overlaps += 1
-						
-							self.sequences[source_id].id_of_inverse_seq = source_rev_id
-							self.sequences[source_rev_id].id_of_inverse_seq = source_id
 	
 	def delete_overlap(self, overlap_id, verbose=False):
 		# removes an overlap from the database and from both incident sequences
@@ -410,43 +395,52 @@ class GraphData:
 			print (self.sequences[source_id].print_data())
 			print ("Target: ")
 			print (self.sequences[target_id].print_data())
-		# combine nucleotide sequences:
-		self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
-		if verbose:
-			print ("combined sequence: " + self.sequences[source_id].sequence)
-		# update outgoing overlaps:
-		self.sequences[source_id].overlaps_out = self.sequences[target_id].overlaps_out
-		# update list of kmers:
-		for kmer in self.sequences[target_id].kmers:
-			if kmer not in self.sequences[source_id].kmers:
-				self.sequences[source_id].kmers.append(kmer)
-		# update maxweight:
-		if self.sequences[target_id].max_weight > self.sequences[source_id].max_weight:
-			self.sequences[source_id].max_weight = self.sequences[target_id].max_weight
 		
-		# move outgoing overlaps from target_seq to source_seq:
-		for ov_target_out in self.sequences[target_id].overlaps_out:
-			# check if overlap_id exists:
-			if self.sequences[target_id].overlaps_out[ov_target_out] in self.overlaps:
-				# add overlap at source:
-				self.sequences[source_id].overlaps_out[ov_target_out] = self.sequences[target_id].overlaps_out[ov_target_out]
-				# update source of overlap:
-				self.overlaps[self.sequences[target_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_id
-			else:
-				self.sequences[source_id].overlaps_out.pop(ov_target_out)
-		
-		# update incoming overlaps for adjacent sequences:
-		for adj_seq_id in self.sequences[source_id].overlaps_out:
-			# add source to list of incoming overlaps:
-			self.sequences[adj_seq_id].overlaps_in[source_id] = self.sequences[adj_seq_id].overlaps_in[target_id]
-			# remove target from list of incoming overlaps:
-			self.sequences[adj_seq_id].overlaps_in.pop(target_id)
+		if self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[target_id].sequence):
+			print ("Not contracting sequence with its own inverse:")
+			print ("Source: ")
+			print (self.sequences[source_id].print_data())
+			print ("Target: ")
+			print (self.sequences[target_id].print_data())
 			
-		self.sequences[target_id].overlaps_in = {}
-		self.sequences[target_id].overlaps_out = {}
-		self.sequences[target_id].is_relevant = False
-		# Don't use delete_overlap, because incident sequences have been handled manually:
-		self.overlaps.pop(overlap_id)
+		else:		
+			# combine nucleotide sequences:
+			self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
+			if verbose:
+				print ("combined sequence: " + self.sequences[source_id].sequence)
+			# update outgoing overlaps:
+			self.sequences[source_id].overlaps_out = self.sequences[target_id].overlaps_out
+			# update list of kmers:
+			for kmer in self.sequences[target_id].kmers:
+				if kmer not in self.sequences[source_id].kmers:
+					self.sequences[source_id].kmers.append(kmer)
+			# update maxweight:
+			if self.sequences[target_id].max_weight > self.sequences[source_id].max_weight:
+				self.sequences[source_id].max_weight = self.sequences[target_id].max_weight
+			
+			# move outgoing overlaps from target_seq to source_seq:
+			for ov_target_out in self.sequences[target_id].overlaps_out:
+				# check if overlap_id exists:
+				if self.sequences[target_id].overlaps_out[ov_target_out] in self.overlaps:
+					# add overlap at source:
+					self.sequences[source_id].overlaps_out[ov_target_out] = self.sequences[target_id].overlaps_out[ov_target_out]
+					# update source of overlap:
+					self.overlaps[self.sequences[target_id].overlaps_out[ov_target_out]].contig_sequence_1 = source_id
+				else:
+					self.sequences[source_id].overlaps_out.pop(ov_target_out)
+			
+			# update incoming overlaps for adjacent sequences:
+			for adj_seq_id in self.sequences[source_id].overlaps_out:
+				# add source to list of incoming overlaps:
+				self.sequences[adj_seq_id].overlaps_in[source_id] = self.sequences[adj_seq_id].overlaps_in[target_id]
+				# remove target from list of incoming overlaps:
+				self.sequences[adj_seq_id].overlaps_in.pop(target_id)
+				
+			# Don't use delete_overlap or delete_sequence, because incident sequences have been handled manually:
+			self.sequences[target_id].overlaps_in = {}
+			self.sequences[target_id].overlaps_out = {}
+			self.sequences[target_id].is_relevant = False
+			self.overlaps.pop(overlap_id)
 	
 	def remove_parallel_sequences(self, verbose=False):
 		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
