@@ -166,7 +166,9 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.remove_parallel_sequences(verbose = False)
 	
-	#debruijn.construct_assembly_ordering_labels()
+	debruijn.remove_single_sequence_components()
+	debruijn.reduce_to_single_largest_component()
+	debruijn.construct_assembly_ordering_labels()
 	#debruijn.reduce_to_single_path_max_weight()
 	#debruijn.contract_unique_overlaps(verbose = False)
 	
@@ -180,24 +182,43 @@ if __name__ == '__main__':
 
 	data_dir = "Output/corona_allreads"
 	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
+	#sourcefilename = data_dir+"/corona_realreads_k40_w10_k23_p2000_merged_k21.csv"
+	#sourcefilename = data_dir+"/corona_realreads_k40_w30_k19_p500_merged_k17.csv"
+	#sourcefilename = data_dir+"/corona_realreads_k40_w50_k15_p1000_merged_k13.csv"
 	outputfilename = data_dir+"/corona_realreads_k40"
 
 	if not os.path.exists(data_dir):
 		os.makedirs(data_dir)
+	'''
 	# mininum weight of sequences in original graph that are considered:
-	w = 10
+	w = 50#30#10
 	# number of parts for partitioning:
-	p = 1000
+	p = 1000#500#2000
 	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
-	o = 5
+	o = 2
 	# k for debruijn-graphs of parts:
-	k1 = 20
+	k1 = 15#19#23
 	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
-	k2 = 17
+	k2 = 13#17#21
 	# minimum weight of sequences in partition-graphs:
-	w2 = 15
+	w2 = 200#50
 	# lower bound to the length of sequences in partition-graphs as multiple of k:
-	f = 2
+	f = 1#1.5
+	'''
+	# mininum weight of sequences in original graph that are considered:
+	w = 5#30#10
+	# number of parts for partitioning:
+	p = 2000#500#2000
+	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
+	o = 2
+	# k for debruijn-graphs of parts:
+	k1 = 15#19#23
+	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
+	k2 = 13#17#21
+	# minimum weight of sequences in partition-graphs:
+	w2 = 10#50
+	# lower bound to the length of sequences in partition-graphs as multiple of k:
+	f = 1.0
 	
 	# get partitioning of sequences with minimum weight, as defined by param w, p, o:
 	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o)
