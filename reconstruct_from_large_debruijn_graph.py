@@ -4,9 +4,42 @@
 import re
 import gc
 import os
+import numpy as np
+
+import networkx as nx
+import matplotlib.pyplot as plt
+from sklearn.cluster import SpectralClustering
+from sklearn import metrics
 
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
+
+def construct_network_graph(filename_input):
+	nodes = []
+	edges = []
+
+	with open(filename_input) as inputfile:
+		lines = inputfile.readlines()
+	for l in lines:
+		data = re.split(r'\t', l)
+		if data[0] == "VT":
+			# case sequence data:
+			nodes.append(int(re.split(r'_',data[1])[1]))			
+		elif data[0] == "ED":
+			# case overlap data:
+			overlap_data = re.split(r'\s',data[1])
+			source_seq_id = int(re.split(r'_',overlap_data[0])[1])
+			target_seq_id = int(re.split(r'_',overlap_data[1])[1])
+			if source_seq_id > 0 and target_seq_id > 0:
+				edges.append((source_seq_id, target_seq_id))
+	G = nx.Graph()
+	G.add_nodes_from(nodes)
+	G.add_edges_from(edges)
+
+	adj_mat = nx.to_numpy_matrix(G)
+	print adj_mat
+	#cluster = nx.clustering(G)
+	#print cluster
 
 def get_sequences_by_params(filename_input, filename_output, min_weight=1, number_of_parts=1, overlap=1, verbose=False):
 	with open(filename_input) as inputfile:
@@ -198,8 +231,7 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	return filename_output+"_seqsonly.txt"
 	
-if __name__ == '__main__':
-
+def reconstruct_pipeline():
 	data_dir = "Output/corona_allreads"
 	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
 	#sourcefilename = data_dir+"/corona_realreads_k40_w10_k23_p2000_merged_k21.csv"
@@ -247,3 +279,8 @@ if __name__ == '__main__':
 	parts = reconstruct_parts(part_sequence_filenames, filename_output_base=outputfilename+"_w"+str(w), k=k1, minweight=w2, minlengthfactor=f, allow_recursion=False)
 	if len(parts) > 1:
 		reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w)+"_k"+str(k1), files_to_merge=parts, merge_k=k2, number_of_parts=p)
+
+if __name__ == '__main__':
+	data_dir = "Output/corona_allreads"
+	construct_network_graph(data_dir+"/corona_realreads_k40_w5_k15_p1000_merged_k15_singlepath.asqg")
+	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
