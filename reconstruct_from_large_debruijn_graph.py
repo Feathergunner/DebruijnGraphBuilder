@@ -5,7 +5,6 @@ import re
 import gc
 import os
 import numpy as np
-
 import networkx as nx
 import matplotlib.pyplot as plt
 from sklearn.cluster import SpectralClustering
@@ -35,17 +34,23 @@ def construct_network_graph(filename_input):
 	G = nx.Graph()
 	G.add_nodes_from(nodes)
 	G.add_edges_from(edges)
+	
+	nx.draw(G)
+	plt.show()
 
 	adj_mat = nx.to_numpy_matrix(G)
-	print adj_mat
-	#cluster = nx.clustering(G)
-	#print cluster
+	
+	sc = SpectralClustering(2, affinity='precomputed', n_init=100)
+	sc.fit(adj_mat)
+	
+	print('spectral clustering')
+	print(sc.labels_)
 
-def get_sequences_by_params(filename_input, filename_output, min_weight=1, number_of_parts=1, overlap=1, verbose=False):
+def get_sequences_by_params(filename_input, filename_output, min_weight=1, number_of_parts=1, overlap=1, partition_method="equidist", verbose=False):
 	with open(filename_input) as inputfile:
 		lines = inputfile.readlines()
 	i = 0
-	j = 0
+	num_of_relevant_sequences = 0
 	n = len(lines)
 	min_label = False
 	max_label = False
@@ -58,7 +63,7 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 	for l in lines:
 		if i > 0:
 			if i%10000 == 0:
-				print str(i)+"/"+str(n)+" - "+str(j)
+				print str(i)+"/"+str(n)+" - "+str(num_of_relevant_sequences)
 			data = re.split(r',',l)
 			if verbose:
 				print data
@@ -70,24 +75,49 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 					min_label = label
 				if not max_label or label > max_label:
 					max_label = label
-				j += 1
+				num_of_relevant_sequences += 1
 		i+=1
 	
-	if number_of_parts > 1:
-		partition_size = (max_label-min_label)*overlap/number_of_parts
-		partition_start_diff = (max_label-min_label-partition_size)/number_of_parts
-		
-		for i in range(number_of_parts):
-			partname = filename_output+"_p"+str(i)+".txt"
-			part_sequence_filenames.append(partname)
-			part_seqs = []
-			for s in sequences:
-				if s[1] > i*partition_start_diff and s[1] < i*partition_start_diff+partition_size:
-					part_seqs.append(s[0]+","+str(s[2])+"\n")
-			outputfile = file(partname, 'w')
-			for seq in part_seqs:
-				outputfile.write(seq)
+	if number_of_parts > 1 and partition_method in ["equidist", "equisize"]:
+		overlap = min(overlap, number_of_parts-1)
+		if partition_method == "equidist":
+			partition_size = (max_label-min_label)*overlap/number_of_parts
+			partition_start_diff = (max_label-min_label-partition_size)/number_of_parts
+			
+			for i in range(number_of_parts):
+				partname = filename_output+"_p"+str(i)+".txt"
+				part_sequence_filenames.append(partname)
+				part_seqs = []
+				for s in sequences:
+					if s[1] > i*partition_start_diff and s[1] < i*partition_start_diff+partition_size:
+						part_seqs.append(s[0]+","+str(s[2])+"\n")
+				outputfile = file(partname, 'w')
+				for seq in part_seqs:
+					outputfile.write(seq)
+					
+		elif partition_method == "equisize":
+			partition_size = num_of_relevant_sequences*overlap/(number_of_parts-1)
+			partition_start_diff = num_of_relevant_sequences/(number_of_parts-1)
+			seq_sorted_by_label = sorted(sequences, key=lambda x :x[1])
+			part_seqs = [[] for i in range(number_of_parts)]
+			number_of_seq = 0
+			#print ("number_of_parts: "+str(number_of_parts))
+			for s in seq_sorted_by_label:
+				first_part = number_of_seq / partition_start_diff
+				for p_i in range(first_part, first_part+overlap):
+					if p_i < number_of_parts:
+						part_seqs[p_i].append(s[0]+","+str(s[2])+"\n")
+				number_of_seq += 1
+			for i in range(number_of_parts):
+				partname = filename_output+"_p"+str(i)+".txt"
+				part_sequence_filenames.append(partname)
+				outputfile = file(partname, 'w')
+				for seq in part_seqs[i]:
+					outputfile.write(seq)
+			
 	else:
+		if partition_method not in ["equidist", "equisize"]:
+			print ("Error! No correct method for partitioning specified. No partitioning was applied.")
 		part_seqs = []
 		for s in sequences:
 			part_seqs.append(s[0]+","+str(s[2])+"\n")
@@ -116,15 +146,15 @@ def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, 
 	#debruijn.reduce_to_single_largest_component()
 	
 	debruijn.remove_insignificant_sequences(minimal_weight=minweight)
+	debruijn.remove_tips()
 	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.remove_short_sequences(length_bound_by_multiple_of_k=minlengthfactor)
-	debruijn.contract_unique_overlaps(verbose = False)
-		
 	#debruijn.remove_single_sequence_components()
 	debruijn.construct_assembly_ordering_labels()
+	
 	if reduce_to_single_path:
 		debruijn.reduce_to_single_path_max_weight()
 		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.remove_short_sequences(length_bound_by_multiple_of_k=minlengthfactor)
 		debruijn.construct_assembly_ordering_labels()
 		
 	#debruijn.reduce_to_single_path_max_weight()
@@ -202,7 +232,7 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 		else:
 			print "Error! File doesent exist: " + file
 	
-	reduce_to_single_path = True
+	reduce_to_single_path = False
 	
 	debruijn = fdgb.GraphData(reads, merge_k)
 	# delete reads and kmers to save ram:
@@ -215,6 +245,7 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	debruijn.contract_unique_overlaps(verbose = False)
 	
 	debruijn.remove_single_sequence_components()
+	debruijn.remove_tips()
 	debruijn.reduce_to_single_largest_component()
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.construct_assembly_ordering_labels()
@@ -231,13 +262,13 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	return filename_output+"_seqsonly.txt"
 	
-def reconstruct_pipeline():
+def reconstruction_pipeline():
 	data_dir = "Output/corona_allreads"
 	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
 	#sourcefilename = data_dir+"/corona_realreads_k40_w10_k23_p2000_merged_k21.csv"
 	#sourcefilename = data_dir+"/corona_realreads_k40_w30_k19_p500_merged_k17.csv"
 	#sourcefilename = data_dir+"/corona_realreads_k40_w50_k15_p1000_merged_k13.csv"
-	outputfilename = data_dir+"/corona_realreads_k40"
+	outputfilename = data_dir+"/corona_realreads_k40_equisizeparts"
 
 	if not os.path.exists(data_dir):
 		os.makedirs(data_dir)
@@ -270,17 +301,18 @@ def reconstruct_pipeline():
 	# minimum weight of sequences in partition-graphs:
 	w2 = 50#50
 	# lower bound to the length of sequences in partition-graphs as multiple of k:
-	f = 1.3
+	f = 2
 	
 	# get partitioning of sequences with minimum weight, as defined by param w, p, o:
-	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o)
+	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o, partition_method="equisize")
 	
 	# build debruijn graphs for each part and merge them together:
-	parts = reconstruct_parts(part_sequence_filenames, filename_output_base=outputfilename+"_w"+str(w), k=k1, minweight=w2, minlengthfactor=f, allow_recursion=False)
+	parts = reconstruct_parts(part_sequence_filenames, filename_output_base=outputfilename+"_w"+str(w), k=k1, minweight=w2, minlengthfactor=f, allow_recursion=False, saveall=True)
 	if len(parts) > 1:
 		reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w)+"_k"+str(k1), files_to_merge=parts, merge_k=k2, number_of_parts=p)
 
 if __name__ == '__main__':
-	data_dir = "Output/corona_allreads"
-	construct_network_graph(data_dir+"/corona_realreads_k40_w5_k15_p1000_merged_k15_singlepath.asqg")
+	#data_dir = "Output/corona_allreads"
+	#construct_network_graph(data_dir+"/corona_realreads_k40_w50_k17_p500_merged_k15.asqg")
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
+	reconstruction_pipeline()
