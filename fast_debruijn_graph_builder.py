@@ -336,10 +336,12 @@ class GraphData:
 		print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
-		num_deleted_overlaps = 0 
+		num_deleted_overlaps = 0
+		ov_counter = 0
 		for ov_index in ov_index_list:
-			if (ov_index%10000 == 0):
-				print_progress(ov_index, len(ov_index_list))
+			if (ov_counter%10000 == 0):
+				print_progress(ov_counter, len(ov_index_list))
+			ov_counter += 1
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
@@ -707,7 +709,6 @@ class GraphData:
 		components = self.get_components()
 		component_id = 0
 		while component_id < len(components):
-			#for c in components:
 			c = components[component_id]
 			component_id += 1
 			if verbose:
