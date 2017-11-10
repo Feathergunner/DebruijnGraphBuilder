@@ -44,7 +44,8 @@ class Kmer:
 
 class ContigSequence:
 	# Nodes in the Debruijn-Graph
-	def __init__(self, seq_id, inv_id, sequence, kmers, weight = 1, is_relevant = True):
+	#def __init__(self, seq_id, inv_id, sequence, kmers, evience_weight=1, baseweight=1, is_relevant=True):
+	def __init__(self, seq_id, inv_id, sequence, kmers, weight=1, is_relevant=True):
 		self.id = seq_id
 		self.id_of_inverse_seq = inv_id
 		self.sequence = sequence
@@ -127,8 +128,10 @@ class GraphData:
 		# Flag that marks if inverse sequences have been removed
 		self.is_unified = False
 		# min and max label of all sequences
-		self.max_label = 0
 		self.min_label = 0
+		self.max_label = 0
+		self.min_sequence = -1
+		self.max_sequence = -1
 		
 		if not reads == 0:
 			self.init_graph_database(reads, verbose=verbose)
@@ -521,16 +524,21 @@ class GraphData:
 	def remove_tips(self, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		print ("Removing tips ...")
-		for seq in self.sequences:
-			if seq.is_relevant:
-				if verbose:
-					print ("Consider sequence:")
-					seq.print_data()
-				# check if sequence is a tip and if sequence is shorter than 2k:
-				if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
+		num_of_removed_tips = -1
+		while (num_of_removed_tips != 0):
+			num_of_removed_tips = 0
+			for seq in self.sequences:
+				if seq.is_relevant:
 					if verbose:
-						print ("Sequence is a tip, remove this sequence.")
-					self.delete_sequence(seq.id, verbose)
+						print ("Consider sequence:")
+						seq.print_data()
+					# check if sequence is a tip and if sequence is shorter than 2k:
+					if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
+						if verbose:
+							print ("Sequence is a tip, remove this sequence.")
+						self.delete_sequence(seq.id, verbose)
+						num_of_removed_tips += 1
+			self.contract_unique_overlaps()
 
 	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
 		# removes all sequences with weight less than minimal_weight
@@ -632,7 +640,7 @@ class GraphData:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
 						
-	def construct_assembly_ordering_labels(self, verbose=False):
+	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=False):
 		# constructs a fuzzy partial ordering of all relevant sequences:
 		# algorithm assumes that graph
 		# 	is not empty and
@@ -640,6 +648,41 @@ class GraphData:
 		# 	has no cycles, i.e. implies a partial order
 		print "Construct assembly ordering labels..."
 		
+		if not self.sequences[start_sequence].is_relevant:
+			print ("Error! Start sequence does not exist! Start with first sequence instead.")
+			start_sequence = 0
+			while not self.sequences[start_sequence].is_relevant:
+				start_sequence += 1
+		
+		# reset labels
+		for seq in self.sequences:
+			if seq.is_relevant:
+				seq.label = False
+				
+		queue = [[self.sequences[start_sequence].id, 0]]
+		while (len(queue) > 0):
+			current_data = queue[0]
+			queue.pop(0)
+			current_node_id = current_data[0]
+			for seq_id in self.sequences[current_node_id].overlaps_out:
+				if self.sequences[seq_id].label == False:
+					start_label = current_data[1] + self.sequences[current_node_id].get_length()
+					if start_label > self.max_label:
+						self.max_label = start_label
+						self.max_sequence = current_data[0]
+					self.sequences[seq_id].label = start_label
+					queue.append([seq_id, start_label])
+			for seq_id in self.sequences[current_node_id].overlaps_in:
+				if self.sequences[seq_id].label == False:
+					start_label = current_data[1] - self.sequences[seq_id].get_length()
+					if start_label < self.min_label:
+						self.min_label = start_label
+						self.min_sequence = current_data[0]
+					self.sequences[seq_id].label = start_label
+					queue.append([seq_id, start_label])
+		
+		
+		'''
 		for start_seq_id in range(len(self.sequences)):
 			if self.sequences[start_seq_id].is_relevant and not self.sequences[start_seq_id].label:
 				queue = [[self.sequences[start_seq_id].id, 0]]
@@ -661,10 +704,24 @@ class GraphData:
 								self.min_label = start_label
 							self.sequences[seq_id].label = start_label
 							queue.append([seq_id, start_label])
+		'''
+		
 		if verbose:
 			for seq in self.sequences:
 				if seq.is_relevant:
 					print str(seq.id) + ": " + str(seq.label)
+		
+		if do_second_iteration:
+			next_start = 0
+			if abs(self.max_label) > abs(self.min_label):
+				next_start = self.max_sequence
+			else:
+				next_start = self.min_sequence
+			if verbose:
+				print ("max sequence of first iteration: "+str(self.max_sequence) + " with label "+str(self.max_label))
+				print ("min sequence of first iteration: "+str(self.min_sequence) + " with label "+str(self.min_label))
+				print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
+			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
@@ -707,30 +764,32 @@ class GraphData:
 		print ("Greedy reduction to single path with local max weight")
 		
 		components = self.get_components()
+		print ("Number of components: "+str(len(components)))
 		component_id = 0
 		while component_id < len(components):
 			c = components[component_id]
 			component_id += 1
 			if verbose:
 				print "next component"
-			start_seq_id = -1
+			start_seq_id = self.min_sequence
+			'''
 			min_label = False
 			max_weight = 0
 			if verbose:
 				print ("Searching for start sequence...")
 			for seq_id in c:
 				if verbose:
-					print ("Current min_label is: "+str(max_weight))
-					print ("Current weight of min_sequence is: "+str(min_label))
-					print ("Consider sequence "+str(seq_id)+" with label "+str(self.sequences[seq_id].label))
-				new_min_found = False
-				if (start_seq_id < 0) or (self.sequences[seq_id].label < min_label-self.k_value) or (self.sequences[seq_id].label < min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
+					print ("Current min_label is: "+str(min_label))
+					print ("Current weight of min_sequence is: "+str(max_weight))
+					print ("Consider sequence "+str(seq_id)+" with label "+str(self.sequences[seq_id].label)+ " and weight "+str(self.sequences[seq_id].max_weight))
+				#if (start_seq_id < 0) or (self.sequences[seq_id].label < min_label-self.k_value) or (self.sequences[seq_id].label < min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
+				#if (start_seq_id < 0) or (self.sequences[seq_id].label < self.min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
+				if (self.sequences[seq_id].label < self.min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
 					if verbose:
 						print ("Set sequence "+str(seq_id)+" as new minimal sequence")
 					start_seq_id = seq_id
-					min_label = self.sequences[seq_id].label
 					max_weight = self.sequences[seq_id].max_weight
-			
+			'''
 			current_seq_id = start_seq_id
 			last_seq_id = -1
 			if verbose:
@@ -738,7 +797,7 @@ class GraphData:
 			while len(self.sequences[current_seq_id].overlaps_out) > 0:
 				if verbose:
 					print ("Current seq: "+str(current_seq_id))
-				branching = False
+				#branching = False
 				next_sequences = []
 				for target_id in self.sequences[current_seq_id].overlaps_out:
 					next_sequences.append(target_id)
@@ -749,10 +808,15 @@ class GraphData:
 						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
 							max_seq_weight = self.sequences[seq_id].max_weight
 							max_seq_id = seq_id
+				
+				if verbose:
+					print ("Next sequence is sequence "+str(max_seq_id)+" with weight "+str(max_seq_weight))
+				'''
 				if len(next_sequences) > 1 and max_seq_weight == 1:
 					# no unique continuation, keep all sequences:
 					components += [[sid] for sid in next_sequences if not sid == max_seq_id]
 					branching = True
+				'''
 				# delete all incoming sequences except path:
 				if not last_seq_id == -1:
 					incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
@@ -764,7 +828,7 @@ class GraphData:
 					if seq_id == max_seq_id:
 						last_seq_id = current_seq_id
 						current_seq_id = seq_id
-					elif not branching:
+					else:#if not branching:
 						self.delete_sequence(seq_id, verbose=False)
 			# delete incoming sequences at final sequence, if there are any:
 			if not last_seq_id == -1:
