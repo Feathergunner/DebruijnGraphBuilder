@@ -143,7 +143,6 @@ def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, 
 	debruijn.remove_parallel_sequences()
 	debruijn.contract_unique_overlaps(verbose=False)
 	
-	#debruijn.reduce_to_single_largest_component()
 	
 	debruijn.remove_insignificant_sequences(minimal_weight=minweight)
 	debruijn.remove_tips()
@@ -152,9 +151,10 @@ def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, 
 	debruijn.construct_assembly_ordering_labels()
 	
 	if reduce_to_single_path:
+		debruijn.reduce_to_single_largest_component()
 		debruijn.reduce_to_single_path_max_weight()
 		debruijn.contract_unique_overlaps(verbose = False)
-		debruijn.remove_short_sequences(length_bound_by_multiple_of_k=minlengthfactor)
+		#debruijn.remove_short_sequences(length_bound_by_multiple_of_k=minlengthfactor)
 		debruijn.construct_assembly_ordering_labels()
 		
 	#debruijn.reduce_to_single_path_max_weight()
@@ -245,21 +245,24 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	debruijn.contract_unique_overlaps(verbose = False)
 	
 	debruijn.remove_single_sequence_components()
-	debruijn.remove_tips()
 	debruijn.reduce_to_single_largest_component()
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.construct_assembly_ordering_labels()
-	if reduce_to_single_path:
-		debruijn.reduce_to_single_path_max_weight()
-		debruijn.contract_unique_overlaps(verbose = False)
-		debruijn.construct_assembly_ordering_labels()
+	debruijn.remove_tips()
+	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	filename_output = filename_output_base+"_p"+str(number_of_parts)+"_merged_k"+str(merge_k)
-	if reduce_to_single_path:
-		filename_output += "_singlepath"
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+	
+	if reduce_to_single_path:
+		debruijn.reduce_to_single_path_max_weight(verbose = False)
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.construct_assembly_ordering_labels(verbose = False)
+		filename_output += "_singlepath"
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+	
 	return filename_output+"_seqsonly.txt"
 	
 def reconstruction_pipeline():
@@ -295,19 +298,19 @@ def reconstruction_pipeline():
 	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
 	o = 2
 	# k for debruijn-graphs of parts:
-	k1 = 15#19#23
+	k1 = 25#19#23
 	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
-	k2 = 15#17#21
+	k2 = 23#17#21
 	# minimum weight of sequences in partition-graphs:
-	w2 = 50#50
+	w2 = 5#50
 	# lower bound to the length of sequences in partition-graphs as multiple of k:
-	f = 2
+	f = 1
 	
 	# get partitioning of sequences with minimum weight, as defined by param w, p, o:
 	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o, partition_method="equisize")
 	
 	# build debruijn graphs for each part and merge them together:
-	parts = reconstruct_parts(part_sequence_filenames, filename_output_base=outputfilename+"_w"+str(w), k=k1, minweight=w2, minlengthfactor=f, allow_recursion=False, saveall=True)
+	parts = reconstruct_parts(part_sequence_filenames, filename_output_base=outputfilename+"_w"+str(w), k=k1, minweight=w2, minlengthfactor=f, allow_recursion=False, saveall=False)
 	if len(parts) > 1:
 		reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w)+"_k"+str(k1), files_to_merge=parts, merge_k=k2, number_of_parts=p)
 
