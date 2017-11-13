@@ -44,13 +44,13 @@ class Kmer:
 
 class ContigSequence:
 	# Nodes in the Debruijn-Graph
-	#def __init__(self, seq_id, inv_id, sequence, kmers, evience_weight=1, baseweight=1, is_relevant=True):
 	def __init__(self, seq_id, inv_id, sequence, kmers, weight=1, is_relevant=True):
 		self.id = seq_id
 		self.id_of_inverse_seq = inv_id
 		self.sequence = sequence
 		self.kmers = kmers
 		# the maximal read eavidence this sequence has for any subsequence
+		self.max_evidence_weight = len(kmers)
 		self.max_weight = weight
 		# overlaps (i.e. edges) are stored in dictionaries
 		# self.overlap[other_sequence_id] = overlap_id
@@ -60,6 +60,12 @@ class ContigSequence:
 		self.is_relevant = is_relevant
 		# used for estimation of position within assembly
 		self.label = False
+		
+	def get_evidence_weight(self):
+		return self.max_evidence_weight
+		
+	def get_total_weight(self):
+		return self.max_weight	
 
 	def get_length(self):
 		return len(self.sequence)
@@ -594,7 +600,7 @@ class GraphData:
 					for k_id in seq.kmers:
 						source_reads += [r for r in self.kmers[k_id].evidence_reads]
 					source_reads = set(source_reads)
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+","+str(self.reads)+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+","+str(source_reads)+"\n"
 				for r in source_reads:
 					data += str(r)+" "
 				data += "\n"
