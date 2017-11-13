@@ -50,7 +50,7 @@ class ContigSequence:
 		self.sequence = sequence
 		self.kmers = kmers
 		# the maximal read eavidence this sequence has for any subsequence
-		self.max_evidence_weight = len(kmers)
+		# self.max_evidence_weight = len(kmers)
 		self.max_weight = weight
 		# overlaps (i.e. edges) are stored in dictionaries
 		# self.overlap[other_sequence_id] = overlap_id
@@ -62,7 +62,7 @@ class ContigSequence:
 		self.label = False
 		
 	def get_evidence_weight(self):
-		return self.max_evidence_weight
+		return len(self.kmers)
 		
 	def get_total_weight(self):
 		return self.max_weight	
@@ -420,8 +420,8 @@ class GraphData:
 				if kmer not in self.sequences[source_id].kmers:
 					self.sequences[source_id].kmers.append(kmer)
 			# update maxweight:
-			if self.sequences[target_id].max_weight > self.sequences[source_id].max_weight:
-				self.sequences[source_id].max_weight = self.sequences[target_id].max_weight
+			if self.sequences[target_id].get_total_weight() > self.sequences[source_id].get_total_weight():
+				self.sequences[source_id].max_weight = self.sequences[target_id].get_total_weight()
 			
 			# move outgoing overlaps from target_seq to source_seq:
 			for ov_target_out in self.sequences[target_id].overlaps_out:
@@ -552,7 +552,7 @@ class GraphData:
 	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
 		# removes all sequences with weight less than minimal_weight
 		for seq in self.sequences:
-			if seq.max_weight < minimal_weight:
+			if seq.get_total_weight() < minimal_weight:
 				self.delete_sequence(seq.id, verbose)
 	
 	def remove_single_sequence_components(self, verbose=False):
@@ -600,7 +600,7 @@ class GraphData:
 					for k_id in seq.kmers:
 						source_reads += [r for r in self.kmers[k_id].evidence_reads]
 					source_reads = set(source_reads)
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+","+str(source_reads)+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.get_total_weight())+","+str(seq.label)+","+str(source_reads)+"\n"
 				for r in source_reads:
 					data += str(r)+" "
 				data += "\n"
@@ -615,7 +615,7 @@ class GraphData:
 			if seq.is_relevant:
 				data += seq.sequence
 				if addweights:
-					data += ","+str(seq.max_weight)
+					data += ","+str(seq.get_total_weight())
 				data += "\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(data)
@@ -788,8 +788,8 @@ class GraphData:
 				max_seq_weight = -1
 				for seq_id in next_sequences:
 					if not seq_id == current_seq_id:
-						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
-							max_seq_weight = self.sequences[seq_id].max_weight
+						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].get_total_weight() > max_seq_weight:
+							max_seq_weight = self.sequences[seq_id].get_total_weight()
 							max_seq_id = seq_id
 				
 					current_seq_id = max_seq_id
@@ -807,7 +807,7 @@ class GraphData:
 					current_seq_id = path[-1]
 					current_label  = self.sequences[current_seq_id].label
 					if verbose:
-						print ("Next sequence is sequence "+str(current_seq_id)+" with label " + str(current_label) + " and weight "+str(self.sequences[current_seq_id].max_weight))
+						print ("Next sequence is sequence "+str(current_seq_id)+" with label " + str(current_label) + " and weight "+str(self.sequences[current_seq_id].get_total_weight()))
 				else:
 					print ("Error! No path found")
 					path_finding_failed = True
@@ -867,8 +867,8 @@ class GraphData:
 				max_seq_weight = -1
 				for seq_id in next_sequences:
 					if not seq_id == current_seq_id:
-						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
-							max_seq_weight = self.sequences[seq_id].max_weight
+						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].get_total_weight() > max_seq_weight:
+							max_seq_weight = self.sequences[seq_id].get_total_weight()
 							max_seq_id = seq_id
 				
 				if verbose:
