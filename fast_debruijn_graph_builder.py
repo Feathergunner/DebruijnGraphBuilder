@@ -114,7 +114,7 @@ class SequenceOverlap:
 			print ("is not relevant")
 	
 class GraphData:
-	def __init__(self, reads=0, k=0, verbose=False, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
+	def __init__(self, reads=0, k=0, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}, load_weights=True, verbose=False):
 		print ("Creating empty graph ...")
 		
 		self.k_value = k
@@ -134,7 +134,7 @@ class GraphData:
 		self.max_sequence = -1
 		
 		if not reads == 0:
-			self.init_graph_database(reads, verbose=verbose)
+			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
 
 	def print_memory_usage(self):
 		size_reads = sys.getsizeof(self.reads)
@@ -148,7 +148,7 @@ class GraphData:
 		print ("\tsequences: " + str(size_sequences/1000000.0) + "MB")
 		print ("\toverlaps: " + str(size_overlaps/1000000.0) + "MB")
 		
-	def init_graph_database(self, reads, verbose=False):
+	def init_graph_database(self, reads, load_weights, verbose=False):
 		if verbose:
 			print ("Construct read database")
 			
@@ -161,7 +161,7 @@ class GraphData:
 				
 				readdata = re.split(r',',read)
 				readseq = readdata[0]
-				if len(readdata) > 1:
+				if load_weights and len(readdata) > 1:
 					readweight = int(readdata[1])
 				else:
 					readweight = 1
@@ -401,14 +401,8 @@ class GraphData:
 			print ("Target: ")
 			print (self.sequences[target_id].print_data())
 		
-		if self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[target_id].sequence):
-			print ("Not contracting sequence with its own inverse:")
-			print ("Source: ")
-			print (self.sequences[source_id].print_data())
-			print ("Target: ")
-			print (self.sequences[target_id].print_data())
-			
-		else:		
+		
+		if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[target_id].sequence):
 			# combine nucleotide sequences:
 			self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
 			if verbose:
@@ -446,6 +440,15 @@ class GraphData:
 			self.sequences[target_id].overlaps_out = {}
 			self.sequences[target_id].is_relevant = False
 			self.overlaps.pop(overlap_id)
+			
+		else:
+			if verbose:
+				print ("Not contracting sequence with its own inverse:")
+				print ("Source: ")
+				print (self.sequences[source_id].print_data())
+				print ("Target: ")
+				print (self.sequences[target_id].print_data())
+		
 	
 	def remove_parallel_sequences(self, verbose=False):
 		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
@@ -591,7 +594,7 @@ class GraphData:
 					for k_id in seq.kmers:
 						source_reads += [r for r in self.kmers[k_id].evidence_reads]
 					source_reads = set(source_reads)
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+","#+str(reads)+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.max_weight)+","+str(seq.label)+","+str(self.reads)+"\n"
 				for r in source_reads:
 					data += str(r)+" "
 				data += "\n"
@@ -648,16 +651,27 @@ class GraphData:
 		# 	has no cycles, i.e. implies a partial order
 		print "Construct assembly ordering labels..."
 		
-		if not self.sequences[start_sequence].is_relevant:
+		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
 			print ("Error! Start sequence does not exist! Start with first sequence instead.")
 			start_sequence = 0
-			while not self.sequences[start_sequence].is_relevant:
+			while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
 				start_sequence += 1
+		
+		if not start_sequence < len(self.sequences):
+			print("Error! No sequence found!")
+			return
 		
 		# reset labels
 		for seq in self.sequences:
 			if seq.is_relevant:
 				seq.label = False
+		self.min_label = False
+		self.max_label = False
+		self.min_sequence = -1
+		self.max_sequence = -1
+		
+		if verbose:
+			print ("Start with sequence " + str(start_sequence))
 				
 		queue = [[self.sequences[start_sequence].id, 0]]
 		while (len(queue) > 0):
@@ -669,7 +683,7 @@ class GraphData:
 					start_label = current_data[1] + self.sequences[current_node_id].get_length()
 					if start_label > self.max_label:
 						self.max_label = start_label
-						self.max_sequence = current_data[0]
+						self.max_sequence = seq_id
 					self.sequences[seq_id].label = start_label
 					queue.append([seq_id, start_label])
 			for seq_id in self.sequences[current_node_id].overlaps_in:
@@ -677,34 +691,9 @@ class GraphData:
 					start_label = current_data[1] - self.sequences[seq_id].get_length()
 					if start_label < self.min_label:
 						self.min_label = start_label
-						self.min_sequence = current_data[0]
+						self.min_sequence = seq_id
 					self.sequences[seq_id].label = start_label
 					queue.append([seq_id, start_label])
-		
-		
-		'''
-		for start_seq_id in range(len(self.sequences)):
-			if self.sequences[start_seq_id].is_relevant and not self.sequences[start_seq_id].label:
-				queue = [[self.sequences[start_seq_id].id, 0]]
-				while (len(queue) > 0):
-					current_data = queue[0]
-					queue.pop(0)
-					current_node_id = current_data[0]
-					for seq_id in self.sequences[current_node_id].overlaps_out:
-						if self.sequences[seq_id].label == False:
-							start_label = current_data[1] + self.sequences[current_node_id].get_length()
-							if start_label > self.max_label:
-								self.max_label = start_label
-							self.sequences[seq_id].label = start_label
-							queue.append([seq_id, start_label])
-					for seq_id in self.sequences[current_node_id].overlaps_in:
-						if self.sequences[seq_id].label == False:
-							start_label = current_data[1] - self.sequences[seq_id].get_length()
-							if start_label < self.min_label:
-								self.min_label = start_label
-							self.sequences[seq_id].label = start_label
-							queue.append([seq_id, start_label])
-		'''
 		
 		if verbose:
 			for seq in self.sequences:
@@ -758,8 +747,76 @@ class GraphData:
 		
 	def reduce_to_single_path_max_weight(self, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
-		# method assumes that graph has only one component and no cycles
-		# and sequences have weight-labels
+		# with backtracking: if a dead end is reached, the algorithm returns to the previous node until a second-best path is found.
+		# i.e. depth-first search, starting from node with smallest label to node with highest label where in each step the node with largest weight is chosen.
+		# method assumes that graph has only one component
+		# and sequences have position- and weight-labels
+		
+		print ("DFS for path with local maximum weight")
+		
+		components = self.get_components()
+		if verbose:
+			print ("Number of components: "+str(len(components)))
+		if len(components) > 1:
+			print ("Too many components.")
+			self.reduce_to_single_largest_component()
+			
+		# node-labels of the dfs:
+		#	0: not yet visited
+		#	1: node visited, is on current path
+		#	2: node visited and returned because it leads to a dead end
+		dfs_labels = [0 for s in self.sequences]
+		path = []
+		
+		current_seq_id = self.min_sequence
+		current_label = self.min_label
+		path_finding_failed = False
+		while (not path_finding_failed) and current_label < 0.95*self.max_label:
+			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
+			dfs_labels[current_seq_id] = 1
+			next_sequences = [target_id for target_id in self.sequences[current_seq_id].overlaps_out if dfs_labels[target_id] == 0]
+			#self.sequences[current_seq_id].print_data()
+			if len(next_sequences) > 0:
+				# go to next node:
+				max_seq_id = -1
+				max_seq_weight = -1
+				for seq_id in next_sequences:
+					if not seq_id == current_seq_id:
+						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
+							max_seq_weight = self.sequences[seq_id].max_weight
+							max_seq_id = seq_id
+				
+					current_seq_id = max_seq_id
+					current_label  = self.sequences[current_seq_id].label
+					path.append(current_seq_id)
+				if verbose:
+					print ("Next sequence is sequence "+str(max_seq_id)+" with label " + str(current_label) + " and weight "+str(max_seq_weight))
+			else:
+				# backtrack:
+				if len(path) > 1:
+					dfs_labels[current_seq_id] = 2
+					if verbose:
+						print ("Dead end! Remove sequence "+str(path[-1])+" from path")
+					path.pop(-1)
+					current_seq_id = path[-1]
+					current_label  = self.sequences[current_seq_id].label
+					if verbose:
+						print ("Next sequence is sequence "+str(current_seq_id)+" with label " + str(current_label) + " and weight "+str(self.sequences[current_seq_id].max_weight))
+				else:
+					print ("Error! No path found")
+					path_finding_failed = True
+			#print ("current path: " +str(path))
+		
+		# delete unused sequences:
+		for seq in self.sequences:
+			if seq.is_relevant and not dfs_labels[seq.id] == 1:
+				self.delete_sequence(seq.id)
+		print ("Reduction finished")
+		
+	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
+		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
+		# method assumes that graph has only one component // and no cycles
+		# and sequences have position- and weight-labels
 		
 		print ("Greedy reduction to single path with local max weight")
 		
@@ -770,7 +827,7 @@ class GraphData:
 			c = components[component_id]
 			component_id += 1
 			if verbose:
-				print "next component"
+				print ("next component")
 			start_seq_id = self.min_sequence
 			'''
 			min_label = False
@@ -797,7 +854,6 @@ class GraphData:
 			while len(self.sequences[current_seq_id].overlaps_out) > 0:
 				if verbose:
 					print ("Current seq: "+str(current_seq_id))
-				#branching = False
 				next_sequences = []
 				for target_id in self.sequences[current_seq_id].overlaps_out:
 					next_sequences.append(target_id)
@@ -881,6 +937,8 @@ class GraphData:
 		'''
 		
 	def reduce_to_single_largest_component(self):
+		# deletes all sequences that are not part of the largest (by number of sequences) component
+		print ("Reducing graph to largest component...")
 		components = self.get_components()
 		if len(components) > 1:
 			max_size = 0#len(components[0])
