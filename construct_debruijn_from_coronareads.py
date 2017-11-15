@@ -13,7 +13,7 @@ if not os.path.exists(output_dir):
 	os.makedirs(output_dir)
 
 k = 50
-num_reads = 500
+num_reads = -1
 start = 1
 	
 casename = "corona_realreads_s_"+str(start)+"n_"+str(num_reads)+"_k"+str(k)
@@ -26,7 +26,6 @@ reads = []
 debruijn.reads = []
 # run garbage collector:
 gc.collect()
-debruijn.add_overlaps_for_sequences_with_small_insert_distance(max_insert_distance=1)
 debruijn.contract_unique_overlaps(verbose=False)
 debruijn.remove_parallel_sequences()
 debruijn.remove_single_sequence_components()
