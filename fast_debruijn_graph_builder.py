@@ -697,8 +697,8 @@ class GraphData:
 		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
 			print ("Error! Start sequence does not exist! Start with first sequence instead.")
 			start_sequence = 0
-			while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
-				start_sequence += 1
+		while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
+			start_sequence += 1
 		
 		if not start_sequence < len(self.sequences):
 			print("Error! No sequence found!")
@@ -708,10 +708,12 @@ class GraphData:
 		for seq in self.sequences:
 			if seq.is_relevant:
 				seq.label = False
-		self.min_label = False
-		self.max_label = False
-		self.min_sequence = -1
-		self.max_sequence = -1
+		# init for start sequence
+		self.min_label = 0
+		self.max_label = 0
+		self.min_sequence = start_sequence
+		self.max_sequence = start_sequence
+		self.sequences[start_sequence].label = 0
 		
 		if verbose:
 			print ("Start with sequence " + str(start_sequence))
