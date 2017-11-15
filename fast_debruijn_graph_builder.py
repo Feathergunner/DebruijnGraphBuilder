@@ -344,7 +344,9 @@ class GraphData:
 		self.overlaps[ov_id].add_evidence(read_evidence)
 	
 	def add_overlaps_for_sequences_with_small_insert_distance(self, max_insert_distance=1, verbose = False):
+		print ("Adding overlaps to sequences with small insert distance ...")
 		for sequence_id_1 in range(len(self.sequences)):
+			print_progress(sequence_id_1, len(self.sequences))
 			if self.sequences[sequence_id_1].is_relevant:
 				for sequence_id_2 in range(sequence_id_1+1, len(self.sequences)):
 					if self.sequences[sequence_id_2].is_relevant:
