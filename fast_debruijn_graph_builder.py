@@ -132,8 +132,6 @@ class GraphData:
 		self.overlaps = {}
 		self.alphabet = alphabet
 		
-		#self.maximum_tolerated_insert_distance = max_insert_distance
-		
 		# Flag that marks if inverse sequences have been removed
 		self.is_unified = False
 		# min and max label of all sequences
@@ -141,7 +139,6 @@ class GraphData:
 		self.max_label = 0
 		self.min_sequence = -1
 		self.max_sequence = -1
-		
 		
 		if not reads == 0:
 			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
@@ -164,10 +161,12 @@ class GraphData:
 			
 		read_id = 0
 		number_of_reads = sum((len(r) for r in reads))
+		if verbose:
+			print ("Number of reads: "+str(number_of_reads))
 		for r in reads:
 			for read in r:
-				#if (read_id%1000 == 0):
-				#	print_progress(read_id, number_of_reads)
+				if (read_id%1000 == 0):
+					print_progress(read_id, number_of_reads)
 				
 				readdata = re.split(r',',read)
 				readseq = readdata[0]
@@ -180,10 +179,13 @@ class GraphData:
 				for c in readseq:
 					if c not in self.alphabet:
 						is_correct = False
+						if verbose:
+							print ("Error! Character "+str(c)+" not in alphabet "+str(self.alphabet.keys()))
 				if is_correct:
 					self.reads.append(Read(read_id, readseq, readweight))
-					read_id += 1
-		
+				read_id += 1
+		if verbose:
+			print ("Number of reads in database: "+str(len(self.reads)))
 		
 		# construct k-mer database:
 		self.get_kmerdata_from_reads(verbose)
