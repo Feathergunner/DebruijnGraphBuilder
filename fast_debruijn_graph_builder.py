@@ -106,7 +106,8 @@ class SequenceOverlap:
 		self.bla = 0
 	
 	def add_evidence(self, read_id):
-		self.evidence_reads.append(read_id)
+		if read_id >= 0:
+			self.evidence_reads.append(read_id)
 		
 	def get_evidence_weight(self):
 		return len(self.evidence_reads)
@@ -131,6 +132,8 @@ class GraphData:
 		self.overlaps = {}
 		self.alphabet = alphabet
 		
+		#self.maximum_tolerated_insert_distance = max_insert_distance
+		
 		# Flag that marks if inverse sequences have been removed
 		self.is_unified = False
 		# min and max label of all sequences
@@ -138,6 +141,7 @@ class GraphData:
 		self.max_label = 0
 		self.min_sequence = -1
 		self.max_sequence = -1
+		
 		
 		if not reads == 0:
 			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
@@ -336,6 +340,32 @@ class GraphData:
 		else:
 			ov_id = self.sequences[source_seq_id].overlaps_out[target_seq_id]
 		self.overlaps[ov_id].add_evidence(read_evidence)
+	
+	def add_overlaps_for_sequences_with_small_insert_distance(self, max_insert_distance=1, verbose = False):
+		for sequence_id_1 in range(len(self.sequences)):
+			if self.sequences[sequence_id_1].is_relevant:
+				for sequence_id_2 in range(sequence_id_1+1, len(self.sequences)):
+					if self.sequences[sequence_id_2].is_relevant:
+						s1 = self.sequences[sequence_id_1].sequence
+						s2 = self.sequences[sequence_id_2].sequence
+						l1 = len(s1)
+						l2 = len(s2)
+						# note that a sequence from the same read has always position-distance = insert-distance, but we do not want to add an overlap to these sequences:
+						# check if both sequence do share common evidence-reads:
+						reads_seq_1 = []
+						for kmer_id in self.sequences[sequence_id_1].kmers:
+							reads_seq_1 += self.kmers[kmer_id].evidence_reads
+						reads_seq_2 = []
+						for kmer_id in self.sequences[sequence_id_2].kmers:
+							reads_seq_2 += self.kmers[kmer_id].evidence_reads
+						common_reads = [r for r in reads_seq_1 if r in reads_seq_2]
+						if len(common_reads) == 0:
+							#if not sequence_id_2 in self.sequences[sequence_id_1].overlaps_in:
+							if compute_insert_distance(s1[l1-self.k_value:], s2[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
+								self.increment_overlap(sequence_id_1, sequence_id_2, -1)
+							#if not sequence_id_1 in self.sequences[sequence_id_2].overlaps_in:
+							if compute_insert_distance(s2[l2-self.k_value:], s1[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
+								self.increment_overlap(sequence_id_2, sequence_id_1, -1)
 
 	def contract_unique_overlaps(self, verbose = False):
 		# This method contracts all overlaps between adjacent sequences that form an unique path
@@ -389,9 +419,13 @@ class GraphData:
 			print ("Removing Sequence "+str(sequence_id))
 		adj_seq_out = self.sequences[sequence_id].overlaps_out.keys()
 		for adj_seq in adj_seq_out:
+			if verbose:
+				print ("Delete overlap to sequence " +str(adj_seq))
 			self.delete_overlap(self.sequences[sequence_id].overlaps_out[adj_seq], verbose)
 		adj_seq_in = self.sequences[sequence_id].overlaps_in.keys()
 		for adj_seq in adj_seq_in:
+			if verbose:
+				print ("Delete overlap to sequence " +str(adj_seq))
 			self.delete_overlap(self.sequences[sequence_id].overlaps_in[adj_seq], verbose)
 		self.sequences[sequence_id].is_relevant = False
 			
@@ -454,7 +488,6 @@ class GraphData:
 				print (self.sequences[source_id].print_data())
 				print ("Target: ")
 				print (self.sequences[target_id].print_data())
-		
 	
 	def remove_parallel_sequences(self, verbose=False):
 		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
@@ -873,12 +906,6 @@ class GraphData:
 				
 				if verbose:
 					print ("Next sequence is sequence "+str(max_seq_id)+" with weight "+str(max_seq_weight))
-				'''
-				if len(next_sequences) > 1 and max_seq_weight == 1:
-					# no unique continuation, keep all sequences:
-					components += [[sid] for sid in next_sequences if not sid == max_seq_id]
-					branching = True
-				'''
 				# delete all incoming sequences except path:
 				if not last_seq_id == -1:
 					incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
@@ -898,49 +925,6 @@ class GraphData:
 				for seq_id in incoming_sequences:
 					if not seq_id == last_seq_id:
 						self.delete_sequence(seq_id, verbose=False)
-		
-		'''			
-		for seq in self.sequences:
-			if seq.is_relevant:
-				if (not min_label) or (seq.label < min_label-self.k_value) or (seq.label < min_label+self.k_value and seq.max_weight > max_weight):
-					start_seq_id = seq.id
-					min_label = seq.label
-					max_weight = seq.max_weight
-			
-		current_seq_id = start_seq_id
-		last_seq_id = -1
-		if verbose:
-			print "start_id: " +str(current_seq_id)
-		while len(self.sequences[current_seq_id].overlaps_out) > 0:
-			next_sequences = []
-			for target_id in self.sequences[current_seq_id].overlaps_out:
-				next_sequences.append(target_id)
-			max_seq_id = -1
-			max_seq_weight = -1
-			for seq_id in next_sequences:
-				if self.sequences[seq_id].is_relevant and self.sequences[seq_id].max_weight > max_seq_weight:
-					max_seq_weight = self.sequences[seq_id].max_weight
-					max_seq_id = seq_id
-			# delete all incoming sequences except path:
-			if not last_seq_id == -1:
-				incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
-				for seq_id in incoming_sequences:
-					if not seq_id == last_seq_id:
-						self.delete_sequence(seq_id)
-			# set next sequence and delete other outgoing sequences:
-			for seq_id in next_sequences:
-				if seq_id == max_seq_id:
-					last_seq_id = current_seq_id
-					current_seq_id = seq_id
-				else:
-					self.delete_sequence(seq_id)
-		# delete incoming sequences at final sequence, if there are any:
-		if not last_seq_id == -1:
-			incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
-			for seq_id in incoming_sequences:
-				if not seq_id == last_seq_id:
-					self.delete_sequence(seq_id)
-		'''
 		
 	def reduce_to_single_largest_component(self):
 		# deletes all sequences that are not part of the largest (by number of sequences) component
@@ -984,3 +968,37 @@ def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}
 			print ("Error! Incorrect Alphabet!")
 			break
 	return ''.join(inv_sequence)
+
+def compute_insert_distance(sequence_1, sequence_2, maxdist = -1):
+	# algorithm may not work properly for arbitrary large insert-distances,
+	# but is correct if local insert-distace is <= 1
+	# returns insert-distance if insert_distance <= maxdist,
+	# otherwise returns maxdist + x for a x >= 1
+	if not len(sequence_1) == len(sequence_2):
+		return -1
+	index_1 = 0
+	index_2 = 0
+	
+	insert_distance = 0
+	n = len(sequence_1)
+	if maxdist < 0:
+		maxdist = n
+	while (insert_distance < (maxdist+1) and index_1 < n and index_2 < n):
+		t1 = 0
+		t2 = 0
+		
+		while (index_1 + t1 < n and (not sequence_1[index_1+t1] == sequence_2[index_2])):
+			t1 += 1
+		while (index_2 + t2 < n and (not sequence_1[index_1] == sequence_2[index_2+t2])):
+			t2 += 1
+			
+		if t1 <= t2:
+			index_1 += t1
+			insert_distance += t1
+		elif t2 < t1:
+			index_2 += t2
+			insert_distance += t2
+			
+		index_1 += 1
+		index_2 += 1
+	return insert_distance
