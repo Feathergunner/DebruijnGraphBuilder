@@ -264,6 +264,38 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	
 	return filename_output+"_seqsonly.txt"
+
+def singlestep_assembly():
+	reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", um_of_reads=10000)
+	data_dir = "Output/corona_allreads"
+
+	k = 30
+	filename_output = data_dir+"/corona_realreads_singlestep_"+str(k)
+
+	debruijn = fdgb.GraphData(reads, k)
+	# delete reads to save ram:
+	reads = []
+	debruijn.reads = []
+	#debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+	
+	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	
+	debruijn.remove_single_sequence_components()
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	
+	debruijn.reduce_to_single_path_max_weight(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	filename_output += "_singlepath"
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+
 	
 def reconstruction_pipeline():
 	data_dir = "Output/corona_allreads"
