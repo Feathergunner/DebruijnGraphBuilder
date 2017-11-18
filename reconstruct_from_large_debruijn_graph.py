@@ -315,7 +315,6 @@ def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath
 	
 	debruijn.remove_parallel_sequences(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
-	
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
@@ -331,7 +330,6 @@ def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath
 		debruijn.construct_assembly_ordering_labels(verbose = False)
 		
 		filename_output += "_reduced"
-		
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
@@ -340,6 +338,7 @@ def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath
 		debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
 		debruijn.construct_assembly_ordering_labels(verbose = False)
+		
 		filename_output += "_singlepath"
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
@@ -401,7 +400,7 @@ if __name__ == '__main__':
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
 	
 	#reconstruction_pipeline()
-	singlestep_assembly_test(nr=1000, rs=56000, k=40, do_singlepath=True)
+	singlestep_assembly_test(nr=500, rs=56250, k=40, do_singlepath=True)
 	
 	'''
 	data_dir = "Output/corona_allreads"
