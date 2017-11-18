@@ -131,34 +131,32 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, allow_recursion=False, saveall=False):
 	print ("Reconstruct part "+filename_output+" ...")
 	
-	reduce_to_single_path = True
+	reduce_to_single_path = False
 	
-	debruijn = fdgb.GraphData(reads, k, verbose=False)
+	debruijn = fdgb.GraphData(reads, k, load_weights=False, verbose=False)
 	# delete reads and kmers to save ram:
-	#reads = []
+	reads = []
 	debruijn.reads = []
-	debruijn.kmers = []
+	# debruijn.kmers = []
 	# run garbage collector:
 	gc.collect()
 	debruijn.remove_parallel_sequences()
 	debruijn.contract_unique_overlaps(verbose=False)
 	
-	
-	debruijn.remove_insignificant_sequences(minimal_weight=minweight)
-	debruijn.remove_tips()
-	debruijn.contract_unique_overlaps(verbose = False)
+	#debruijn.remove_insignificant_sequences(minimal_weight=minweight, verbose=False)
+	#debruijn.remove_tips()
+	#debruijn.contract_unique_overlaps(verbose = False)
 	#debruijn.remove_single_sequence_components()
-	debruijn.construct_assembly_ordering_labels()
+	#debruijn.reduce_to_single_largest_component()
+	#debruijn.construct_assembly_ordering_labels()
 	
 	if reduce_to_single_path:
 		debruijn.reduce_to_single_largest_component()
-		debruijn.reduce_to_single_path_max_weight()
+		debruijn.construct_assembly_ordering_labels(verbose = True)
+		debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
 		#debruijn.remove_short_sequences(length_bound_by_multiple_of_k=minlengthfactor)
 		debruijn.construct_assembly_ordering_labels()
-		
-	#debruijn.reduce_to_single_path_max_weight()
-	#debruijn.contract_unique_overlaps(verbose = False)
 	
 	if saveall:
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
@@ -173,6 +171,7 @@ def reconstruct_parts(list_of_inputfiles, filename_output_base, k, minweight, mi
 	partcounter = 0
 	totalparts = len(list_of_inputfiles)
 	for filename in list_of_inputfiles:
+	    #if filename == list_of_inputfiles[0]:
 		reads = dio.get_reads_from_file(filename)
 		if delete_parts:
 			os.remove(filename)
@@ -232,7 +231,7 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 		else:
 			print "Error! File doesent exist: " + file
 	
-	reduce_to_single_path = False
+	reduce_to_single_path = True
 	
 	debruijn = fdgb.GraphData(reads, merge_k)
 	# delete reads and kmers to save ram:
@@ -244,9 +243,9 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	debruijn.remove_parallel_sequences(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
 	
-	debruijn.remove_single_sequence_components()
-	debruijn.reduce_to_single_largest_component()
-	debruijn.remove_tips()
+	#debruijn.remove_single_sequence_components()
+	#debruijn.reduce_to_single_largest_component()
+	#debruijn.remove_tips()
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	filename_output = filename_output_base+"_p"+str(number_of_parts)+"_merged_k"+str(merge_k)
@@ -268,9 +267,6 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 def reconstruction_pipeline():
 	data_dir = "Output/corona_allreads"
 	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
-	#sourcefilename = data_dir+"/corona_realreads_k40_w10_k23_p2000_merged_k21.csv"
-	#sourcefilename = data_dir+"/corona_realreads_k40_w30_k19_p500_merged_k17.csv"
-	#sourcefilename = data_dir+"/corona_realreads_k40_w50_k15_p1000_merged_k13.csv"
 	outputfilename = data_dir+"/corona_realreads_k40_equisizeparts"
 
 	if not os.path.exists(data_dir):
@@ -294,15 +290,15 @@ def reconstruction_pipeline():
 	# mininum weight of sequences in original graph that are considered:
 	w = 5#30#10
 	# number of parts for partitioning:
-	p = 1000#500#2000
+	p = 500#500#2000
 	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
 	o = 2
 	# k for debruijn-graphs of parts:
-	k1 = 25#19#23
+	k1 = 23#19#23
 	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
-	k2 = 23#17#21
+	k2 = 21#17#21
 	# minimum weight of sequences in partition-graphs:
-	w2 = 5#50
+	w2 = 2#50
 	# lower bound to the length of sequences in partition-graphs as multiple of k:
 	f = 1
 	
@@ -318,4 +314,10 @@ if __name__ == '__main__':
 	#data_dir = "Output/corona_allreads"
 	#construct_network_graph(data_dir+"/corona_realreads_k40_w50_k17_p500_merged_k15.asqg")
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
-	reconstruction_pipeline()
+	
+	#reconstruction_pipeline()
+	data_dir = "Output/corona_allreads"
+	inputfiles = []
+	for i in range(3500, 70000, 3500):
+		inputfiles.append(data_dir+"/corona_realreads_singlestep_numreads5000_s"+str(i)+"_k40_singlepath_seqsonly.txt")
+	reconstruct_merge(data_dir+"/singlestep_results_merge", inputfiles, merge_k=50, number_of_parts=len(inputfiles), delete_parts=False)
