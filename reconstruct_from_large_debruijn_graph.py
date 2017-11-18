@@ -300,14 +300,11 @@ def singlestep_assembly():
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 
-def singlestep_assembly_test():
-	num_of_reads = 1000
+def singlestep_assembly_test(nr=1000, rs=0, k=40):
 	data_dir = "Output/corona_allreads"
-	k = 50
-	read_start = 0
-	reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", num_of_reads=num_of_reads, first_read=read_start)
+	reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", num_of_reads=nr, first_read=rs)
 		
-	filename_output = data_dir+"/crs_n"+str(num_of_reads)+"_k"+str(k)+"_s"+str(read_start)+"_reduced"
+	filename_output = data_dir+"/crs_n"+str(nr)+"_k"+str(k)+"_s"+str(rs)
 
 	debruijn = fdgb.GraphData([reads], k)
 	# delete reads to save ram:
@@ -319,17 +316,24 @@ def singlestep_assembly_test():
 	debruijn.remove_parallel_sequences(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
 	
-	debruijn.remove_single_sequence_components()
-	debruijn.remove_tips()
-	#debruijn.remove_parallel_sequences()
-	debruijn.remove_insignificant_sequences(5)
-	debruijn.contract_unique_overlaps()
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
-
+	
+	debruijn.remove_single_sequence_components()
+	debruijn.remove_tips()
+	debruijn.remove_parallel_sequences()
+	debruijn.remove_insignificant_sequences(2)
+	debruijn.contract_unique_overlaps()
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	
+	filename_output += "_reduced"
+	
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	
 	debruijn.reduce_to_single_path_max_weight(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
@@ -386,17 +390,22 @@ def reconstruction_pipeline():
 	if len(parts) > 1:
 		reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w)+"_k"+str(k1), files_to_merge=parts, merge_k=k2, number_of_parts=p)
 
+'''
+longest read: 56510
+'''
+	
 if __name__ == '__main__':
 	#data_dir = "Output/corona_allreads"
 	#construct_network_graph(data_dir+"/corona_realreads_k40_w50_k17_p500_merged_k15.asqg")
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
 	
 	#reconstruction_pipeline()
-	#singlestep_assembly_test()
+	singlestep_assembly_test(nr=1000, rs=56000, k=40)
 	
+	'''
 	data_dir = "Output/corona_allreads"
 	inputfiles = []
 	for i in range(3500, 70000, 3500):
 		inputfiles.append(data_dir+"/corona_realreads_singlestep_numreads5000_s"+str(i)+"_k40_singlepath_seqsonly.txt")
 	reconstruct_merge(data_dir+"/singlestep_results_merge", inputfiles, merge_k=50, number_of_parts=len(inputfiles), delete_parts=False)
-
+	'''
