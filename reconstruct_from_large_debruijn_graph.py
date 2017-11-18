@@ -414,7 +414,7 @@ if __name__ == '__main__':
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
 	
 	#reconstruction_pipeline()
-	singlestep_assembly_test(nr=500, rs=56250, k=40, do_singlepath=True)
+	singlestep_assembly()
 	
 	'''
 	data_dir = "Output/corona_allreads"
