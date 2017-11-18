@@ -206,15 +206,16 @@ class GraphData:
 			self.sequences.append(ContigSequence(seq_id, seq_inv_id, kmer.sequence, [kmer.id], weight))
 			
 		# construct overlaps between adjacent sequences with read-evidence:
-		print ("Construct overlaps ...")			
+		print ("Construct overlaps ...")
+		read_number = 0
 		for read in self.reads:
 			if (read.id%1000 == 0):
-				print_progress(read.id, len(reads))
+				print_progress(read_number, len(self.reads))
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
 				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
-				
+			read_number += 1
 		if verbose:
 			self.print_memory_usage()
 

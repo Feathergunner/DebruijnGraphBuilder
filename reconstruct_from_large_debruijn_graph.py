@@ -267,6 +267,7 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 
 def singlestep_assembly():
 	num_of_reads = 5000
+	# reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", num_of_reads=10000)
 	data_dir = "Output/corona_allreads"
 	k=40
 	for i in range(20):
