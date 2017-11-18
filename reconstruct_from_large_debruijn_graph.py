@@ -300,7 +300,7 @@ def singlestep_assembly():
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 
-def singlestep_assembly_test(nr=1000, rs=0, k=40):
+def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath=False):
 	data_dir = "Output/corona_allreads"
 	reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", num_of_reads=nr, first_read=rs)
 		
@@ -322,36 +322,29 @@ def singlestep_assembly_test(nr=1000, rs=0, k=40):
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	
-	debruijn.reduce_to_single_path_max_weight(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.construct_assembly_ordering_labels(verbose = False)
-	filename_output_s = filename_output+"_singlepath"
-	debruijn.get_asqg_output(filename = filename_output_s+".asqg")
-	debruijn.get_csv_output(filename = filename_output_s+".csv")
-	debruijn.write_sequences_to_file(filename = filename_output_s+"_seqsonly.txt", addweights=True)
+	if do_reduce:
+		debruijn.remove_single_sequence_components()
+		debruijn.remove_tips()
+		debruijn.remove_parallel_sequences()
+		debruijn.remove_insignificant_sequences(2)
+		debruijn.contract_unique_overlaps()
+		debruijn.construct_assembly_ordering_labels(verbose = False)
+		
+		filename_output += "_reduced"
+		
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	
-	debruijn.remove_single_sequence_components()
-	debruijn.remove_tips()
-	debruijn.remove_parallel_sequences()
-	debruijn.remove_insignificant_sequences(2)
-	debruijn.contract_unique_overlaps()
-	debruijn.construct_assembly_ordering_labels(verbose = False)
-	
-	filename_output_r = filename_output+"_reduced"
-	
-	debruijn.get_asqg_output(filename = filename_output_r+".asqg")
-	debruijn.get_csv_output(filename = filename_output_r+".csv")
-	debruijn.write_sequences_to_file(filename = filename_output_r+"_seqsonly.txt", addweights=True)
-	
-	debruijn.reduce_to_single_path_max_weight(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.construct_assembly_ordering_labels(verbose = False)
-	filename_output_rs = filename_output_r+"_singlepath"
-	debruijn.get_asqg_output(filename = filename_output_rs+".asqg")
-	debruijn.get_csv_output(filename = filename_output_rs+".csv")
-	debruijn.write_sequences_to_file(filename = filename_output_rs+"_seqsonly.txt", addweights=True)
-
-	
+	if do_singlepath:
+		debruijn.reduce_to_single_path_max_weight(verbose = False)
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.construct_assembly_ordering_labels(verbose = False)
+		filename_output += "_singlepath"
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+		
 def reconstruction_pipeline():
 	data_dir = "Output/corona_allreads"
 	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
@@ -408,7 +401,7 @@ if __name__ == '__main__':
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
 	
 	#reconstruction_pipeline()
-	singlestep_assembly_test(nr=1000, rs=56000, k=40)
+	singlestep_assembly_test(nr=1000, rs=56000, k=40, do_singlepath=True)
 	
 	'''
 	data_dir = "Output/corona_allreads"
