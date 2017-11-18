@@ -264,22 +264,20 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	
 	return filename_output+"_seqsonly.txt"
 
-def singlestep_assembly():
-	num_of_reads = 5000
-	# reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", num_of_reads=10000)
-	data_dir = "Output/corona_allreads"
-	k=40
-	for i in range(20):
-		read_start = i*3500
-		reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq", num_of_reads=num_of_reads, first_read=read_start)
+def singlestep_assembly(partsize=5000, startdiff=4000, k=55, readfile="Data/hcov229e_only.fq", output_dir="Output/corona_allreads"):
+	allreads = dio.get_reads_from_fastq_file(readfile, num_of_reads=-1, first_read=0)
+	num_of_parts = len(allreads)/startdiff
+	for i in range(num_of_parts):
+		reads_start = i*startdiff
+		reads_end = max(len(allreads), i*startdiff+partsize)
+		reads = allreads[reads_start:reads_end]		
 		
-		filename_output = data_dir+"/corona_realreads_singlestep_numreads"+str(num_of_reads)+"_s"+str(read_start)+"_k"+str(k)
+		filename_output = output_dir+"/crs_n"+str(partsize)+"_k"+str(k)+"_s"+str(read_start)
 
 		debruijn = fdgb.GraphData([reads], k)
 		# delete reads to save ram:
 		reads = []
 		debruijn.reads = []
-		#debruijn.kmers = []
 		# run garbage collector:
 		gc.collect()
 	
@@ -291,7 +289,18 @@ def singlestep_assembly():
 	
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 	
+		debruijn.remove_tips()
+		debruijn.remove_parallel_sequences()
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.construct_assembly_ordering_labels(verbose = False)
+		
+		filename_output += "_reduced"
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+		
 		debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
 		debruijn.construct_assembly_ordering_labels(verbose = False)
@@ -299,6 +308,11 @@ def singlestep_assembly():
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+		
+	merge_inputfiles = []
+	for i in range(num_of_parts):
+		inputfiles.append(output_dir+"/crs_n"+str(partsize)+"_k"+str(k)+"_s"+str(i*startdiff)+"_reduced_singlepath_seqsonly.txt")
+	reconstruct_merge(data_dir+"/crs_n"+str(partsize)+"_k"+str(k)+"_merged", inputfiles, merge_k=k-2, number_of_parts=len(inputfiles), delete_parts=False)
 
 def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath=False):
 	data_dir = "Output/corona_allreads"
@@ -325,7 +339,7 @@ def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath
 		debruijn.remove_single_sequence_components()
 		debruijn.remove_tips()
 		debruijn.remove_parallel_sequences()
-		debruijn.remove_insignificant_sequences(2)
+		#debruijn.remove_insignificant_sequences(2)
 		debruijn.contract_unique_overlaps()
 		debruijn.construct_assembly_ordering_labels(verbose = False)
 		
