@@ -4,6 +4,8 @@
 import scipy.stats as scs
 import scipy.misc as scm
 
+import math
+
 def compute_n(r, k, i):
 	# brute-force-check
 	n = 0
@@ -67,12 +69,56 @@ def compute_T_recursion(n, k, i, data_T):
 		
 	data_T[n][k] = data_T_tmp
 	return data_T
+	
+def compute_T_nonrecurcive(nn, kk, i):
+	max_n = int(max(nn))
+	max_k = int(max(kk))
+	
+	data_T = [[-1]*(max_k+1) for nnn in range(max_n+1)]
+	for n in range(max_n+1):
+		for k in range(max_k+1):
+			#print str(n)+","+str(k)
+			if k > n:
+				data_T[n][k] = 0
+			elif i > k:
+				data_T[n][k] = int(scm.comb(n,k))
+			else:
+				data_T[n][k] = 0
+				for j in range(i):
+					data_T[n][k] += data_T[n-j-1][k-j]
+	
+	'''
+	for n in nn:
+		for k in kk:
+			print ("T("+str(n)+","+str(k)+") = "+str(data_T[n][k]))	
+	'''
+	return data_T
 
-r = 10
-k = 5
-for i in range (r/k, r+1):
-	print ""
-	print i
-	print compute_n(r, k, i)
-	print compute_T(r, r-k, i)
-	#compute_T(r, k, i)
+if __name__ == '__main__':
+	e = 0.15
+	'''
+	r = 10
+	k = 5
+	for i in range (r/k, r+1):
+		print ""
+		print i
+		print compute_n(r, k, i)
+		print compute_T(r, r-k, i)
+		#compute_T(r, k, i)
+	'''
+	readlengths = [500,1000,2000,5000,10000,15000,20000]
+	r = [int(n*(1-e)) for n in readlengths]
+	
+	for k in [20,30,40,50]:
+		print ("k="+str(k))
+		data_T = compute_T_nonrecurcive(readlengths, r, k)
+		for j in range(len(readlengths)):
+			n = readlengths[j]
+			i = r[j]
+			log_m_e = math.log(data_T[n][i],2)
+			log_m_t = math.log(scm.comb(n,i),2)
+			log_p = log_m_e-log_m_t
+			p = 2**(log_p)
+			print ("log_m_e = "+str(log_m_e))
+			print ("log_m_t = "+str(log_m_t))
+			print ("P(n="+str(n)+",k="+str(k)+") = 2^"+str(log_p)+" ~= "+str(p))
