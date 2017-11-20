@@ -75,7 +75,7 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
-def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
+def get_reads_from_fastq_file(filename="fastqreads.fq", read_ids=-1):#num_of_reads=-1, first_read=1):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
@@ -86,16 +86,22 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_r
 			#print line[:10]
 			if status == 1 and not line[0] == "@":
 				#print "- get read "+str(n)
-				if n >= first_read:
+				if  read_ids<0 or n in read_ids:#n >= first_read:
 					reads.append(line.strip())
 				status = 0
 				n += 1
-				if num_of_reads > 0 and n >= first_read+num_of_reads:
-					break
+				#if num_of_reads > 0 and n >= first_read+num_of_reads:
+				#	break
 			if line[0] == "@":
 				status = 1
 	return reads
-	
+
+def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
+	if num_of_reads > 0:
+		return get_reads_from_fastq_file(filename, range(first_read, first_read+num_of_reads))
+	else:
+		return get_reads_from_fastq_file(filename)
+
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
 	print ("Writing asqg-file ...")
 	headline = "HT\t\n"
@@ -131,3 +137,32 @@ def print_alignment(dna, alignments):
 			print read_align_string
 			read_align_string = ""
 			alignment_position = 0
+
+def get_readlengths(filename):
+	reads = dio.get_reads_from_fastq_file(filename)
+	n = len(reads)
+	readlengths = [0]*n
+	for i in range(n):
+		readlengths[i] = [len(reads[i]),i]
+	#rl_sorted = sorted(readlengths, key=lambda x: x[0])
+	return readlengths
+
+'''
+def write_readlength_statistics_to_file(filename):
+	filename = "Data/hcov229e_only.fq"
+	read_statistics = get_readlengths(filename)
+
+	outputfilename = filename+"_readlengths.txt"
+	outputfile = open(outputfilename, 'w')
+	for r in read_statistics:
+		outputfile.write(str(r[0])+","+str(r[1])+"\n")
+'''
+
+def get_read_partition_by_readlength(filename, minlength, maxlength):
+	readlengths = get_readlengths(filename)
+	read_ids = []
+	for r in readlengths:
+		if r[0] >= minlength and r[0] <= maxlength:
+			read_ids.append(r[1])
+
+	return read_ids
