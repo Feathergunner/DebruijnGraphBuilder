@@ -158,7 +158,7 @@ def write_readlength_statistics_to_file(filename):
 		outputfile.write(str(r[0])+","+str(r[1])+"\n")
 '''
 
-def get_read_partition_by_readlength(filename, minlength, maxlength):
+def get_read_subset_by_readlength(filename, minlength, maxlength):
 	readlengths = get_readlengths(filename)
 	read_ids = []
 	for r in readlengths:
@@ -166,3 +166,26 @@ def get_read_partition_by_readlength(filename, minlength, maxlength):
 			read_ids.append(r[1])
 
 	return read_ids
+
+def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts=-1):
+	readlengths = get_readlengths(filename)
+	readlengths_sorted = sorted(readlengths, key=lambda x: x[0])
+	
+	if number_of_parts*size_of_parts>0:
+		print ("Error! Exactly one of the parameters number_of_parts and size_of_parts has to be specified!")
+		return [i[1] for i in readlengths]
+
+	parts = []
+	if number_of_parts > 0:
+		size_of_parts = len(readlengths)/num_of_reads
+	elif size_of_parts > 0:
+		number_of_parts = len(readlengths)/number_of_parts
+
+	for i in range(number_of_parts):
+		if i = number_of_parts-1:
+			partend = len(readlengths)-1
+		else:
+			partend = size_of_parts*(i+1)
+		parts.append(readlengths_sorted[size_of_parts*i:partend])
+
+	return parts
