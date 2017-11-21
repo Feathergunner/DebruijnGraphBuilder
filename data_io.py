@@ -79,17 +79,18 @@ def get_reads_from_fastq_file_by_length(read_ids, filename="fastqreads.fq"):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
+	n = 0
 	with open(filename) as fh:
 		readdata = fh.readlines()
 		for line in readdata:
 			if status == 1 and not line[0] == "@":
-				if  read_ids<0 or n in read_ids:
+				if read_ids<0 or n in read_ids:
 					reads.append(line.strip())
 				status = 0
+				n += 1
 			if line[0] == "@":
 				status = 1
-	return reads	
-
+	return reads
 
 def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
@@ -109,14 +110,6 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_r
 			if line[0] == "@":
 				status = 1
 	return reads
-
-'''
-def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
-	if num_of_reads > 0:
-		return get_reads_from_fastq_file(filename, range(first_read, first_read+num_of_reads))
-	else:
-		return get_reads_from_fastq_file(filename)
-'''
 
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
 	print ("Writing asqg-file ...")
@@ -160,19 +153,7 @@ def get_readlengths(filename):
 	readlengths = [0]*n
 	for i in range(n):
 		readlengths[i] = [len(reads[i]),i]
-	#rl_sorted = sorted(readlengths, key=lambda x: x[0])
 	return readlengths
-
-'''
-def write_readlength_statistics_to_file(filename):
-	filename = "Data/hcov229e_only.fq"
-	read_statistics = get_readlengths(filename)
-
-	outputfilename = filename+"_readlengths.txt"
-	outputfile = open(outputfilename, 'w')
-	for r in read_statistics:
-		outputfile.write(str(r[0])+","+str(r[1])+"\n")
-'''
 
 def get_read_subset_by_readlength(filename, minlength, maxlength):
 	readlengths = get_readlengths(filename)
@@ -183,7 +164,7 @@ def get_read_subset_by_readlength(filename, minlength, maxlength):
 
 	return read_ids
 
-def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts=-1):
+def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts=-1, verbose=False):
 	readlengths = get_readlengths(filename)
 	readlengths_sorted = sorted(readlengths, key=lambda x: x[0])
 	
@@ -193,9 +174,13 @@ def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts
 
 	parts = []
 	if number_of_parts > 0:
-		size_of_parts = len(readlengths)/num_of_reads
+		size_of_parts = len(readlengths)/number_of_parts
 	elif size_of_parts > 0:
-		number_of_parts = len(readlengths)/number_of_parts
+		number_of_parts = len(readlengths)/size_of_parts
+
+	if verbose:
+		print ("size_of_parts = "+str(size_of_parts))
+		print ("number_of_parts = "+str(number_of_parts))
 
 	for i in range(number_of_parts):
 		if i == number_of_parts-1:
