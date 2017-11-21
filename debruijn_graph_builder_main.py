@@ -433,7 +433,10 @@ def construct_consensus_from_multiple_parts():
 	size_of_parts = 1000
 	k = 40
 	filename = "Data/hcov229e_only.fq"
-	filename_output = "Output/corona_recons_multiparts/crm_partsize"+str(size_of_parts)
+	filepath_output = "Output/corona_recons_multiparts"
+	filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)
+	if not os.path.exists(filepath_output):
+		os.makedirs(filepath_output)
 
 	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
 	p = 0
