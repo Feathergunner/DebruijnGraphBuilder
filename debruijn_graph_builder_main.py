@@ -431,11 +431,58 @@ def test_assembly_ordering():
 
 def construct_consensus_from_multiple_parts():
 	size_of_parts = 1000
+	k = 40
 	filename = "Data/hcov229e_only.fq"
+	filename_output = "Output/corona_recons_multiparts/crm_partsize"+str(size_of_parts)
 
 	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
+	p = 0
 	for rp in readpartition:
-		reads = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = rp)
+		minreadlength = min([x[0] for x in rp])
+		k = get_adaptive_k(minreadlength)
+		p += 1
+		filename_output += "_k"+str(k)+"_p"+str(p)
+		read_ids = [x[1] for x in rp]
+		reads = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_ids)
+		
+		debruijn = fdgb.GraphData([reads], k)
+
+		print debruijn.kmers
+		# delete reads and kmers to save ram:
+		debruijn.reads = []
+		debruijn.kmers = []
+		# run garbage collector:
+		gc.collect()
+	
+		debruijn.remove_parallel_sequences(verbose = False)
+		debruijn.contract_unique_overlaps(verbose = False)
+		
+		debruijn.remove_single_sequence_components()
+		debruijn.construct_assembly_ordering_labels(verbose = False)
+
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"sequences.txt")
+		
+		debruijn.reduce_to_single_path_max_weight(verbose = False)
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.construct_assembly_ordering_labels(verbose = False)
+		filename_output += "_singlepath"
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		debruijn.write_sequences_to_file(filename = filename_output+"sequences.txt")
+
+def get_adaptive_k(readlength):
+	if readlength < 100:
+		return 25
+	elif readlength < 500:
+		return 30
+	elif readlength < 2000:
+		return 40
+	elif readlength < 10000:
+		return 45
+	else:
+		return 50
 
 if __name__ == '__main__':
 	#test_reconstruction_4()
