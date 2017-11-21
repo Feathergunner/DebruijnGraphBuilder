@@ -434,7 +434,7 @@ def construct_consensus_from_multiple_parts():
 	k = 40
 	filename = "Data/hcov229e_only.fq"
 	filepath_output = "Output/corona_recons_multiparts"
-	filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)
+	filename_output_base = filepath_output+"/crm_partsize"+str(size_of_parts)
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
 
@@ -444,7 +444,7 @@ def construct_consensus_from_multiple_parts():
 		minreadlength = min([x[0] for x in rp])
 		k = get_adaptive_k(minreadlength)
 		p += 1
-		filename_output += "_k"+str(k)+"_p"+str(p)
+		filename_output = filename_output_base+"_k"+str(k)+"_p"+str(p)
 		read_ids = [x[1] for x in rp]
 		reads = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_ids)
 		
