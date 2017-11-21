@@ -447,7 +447,7 @@ class GraphData:
 			print (self.sequences[target_id].print_data())
 		
 		
-		if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[target_id].sequence):
+		if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[target_id].sequence, self.alphabet):
 			# combine nucleotide sequences:
 			self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
 			if verbose:
