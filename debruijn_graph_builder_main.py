@@ -450,7 +450,6 @@ def construct_consensus_from_multiple_parts():
 		
 		debruijn = fdgb.GraphData([reads], k)
 
-		print debruijn.kmers
 		# delete reads and kmers to save ram:
 		debruijn.reads = []
 		debruijn.kmers = []
@@ -465,7 +464,7 @@ def construct_consensus_from_multiple_parts():
 
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
-		debruijn.write_sequences_to_file(filename = filename_output+"sequences.txt")
+		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
 		
 		debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
@@ -473,7 +472,7 @@ def construct_consensus_from_multiple_parts():
 		filename_output += "_singlepath"
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
-		debruijn.write_sequences_to_file(filename = filename_output+"sequences.txt")
+		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
 
 def get_adaptive_k(readlength):
 	if readlength < 100:
