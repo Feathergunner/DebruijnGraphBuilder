@@ -75,7 +75,7 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
-def get_reads_from_fastq_file(filename="fastqreads.fq", read_ids=-1):
+def get_reads_from_fastq_file_by_length(read_ids, filename="fastqreads.fq"):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
@@ -89,6 +89,7 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", read_ids=-1):
 			if line[0] == "@":
 				status = 1
 	return reads	
+
 
 def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
@@ -107,13 +108,15 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_r
 					break
 			if line[0] == "@":
 				status = 1
-	return reads	
+	return reads
 
+'''
 def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	if num_of_reads > 0:
 		return get_reads_from_fastq_file(filename, range(first_read, first_read+num_of_reads))
 	else:
 		return get_reads_from_fastq_file(filename)
+'''
 
 def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
 	print ("Writing asqg-file ...")
@@ -152,7 +155,7 @@ def print_alignment(dna, alignments):
 			alignment_position = 0
 
 def get_readlengths(filename):
-	reads = dio.get_reads_from_fastq_file(filename)
+	reads = get_reads_from_fastq_file(filename)
 	n = len(reads)
 	readlengths = [0]*n
 	for i in range(n):

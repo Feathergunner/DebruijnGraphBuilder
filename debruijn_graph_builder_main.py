@@ -429,6 +429,14 @@ def test_assembly_ordering():
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
 
+def construct_consensus_from_multiple_parts():
+	size_of_parts = 1000
+	filename = "Data/hcov229e_only.fq"
+
+	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
+	for rp in readpartition:
+		reads = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = rp)
+
 if __name__ == '__main__':
 	#test_reconstruction_4()
 	#test_recons_from_sequences()
@@ -436,4 +444,5 @@ if __name__ == '__main__':
 	
 	#measure_runtime()
 	
-	test_assembly_ordering()
+	#test_assembly_ordering()
+	construct_consensus_from_multiple_parts()
