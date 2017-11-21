@@ -75,7 +75,22 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
-def get_reads_from_fastq_file(filename="fastqreads.fq", read_ids=-1):#num_of_reads=-1, first_read=1):
+def get_reads_from_fastq_file(filename="fastqreads.fq", read_ids=-1):
+	# if num_of_reads > 0, only the specified number of reads will be read from the file.
+	status = 0
+	reads = []
+	with open(filename) as fh:
+		readdata = fh.readlines()
+		for line in readdata:
+			if status == 1 and not line[0] == "@":
+				if  read_ids<0 or n in read_ids:
+					reads.append(line.strip())
+				status = 0
+			if line[0] == "@":
+				status = 1
+	return reads	
+
+def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
@@ -83,18 +98,16 @@ def get_reads_from_fastq_file(filename="fastqreads.fq", read_ids=-1):#num_of_rea
 	with open(filename) as fh:
 		readdata = fh.readlines()
 		for line in readdata:
-			#print line[:10]
 			if status == 1 and not line[0] == "@":
-				#print "- get read "+str(n)
-				if  read_ids<0 or n in read_ids:#n >= first_read:
+				if n >= first_read:
 					reads.append(line.strip())
 				status = 0
 				n += 1
-				#if num_of_reads > 0 and n >= first_read+num_of_reads:
-				#	break
+				if num_of_reads > 0 and n >= first_read+num_of_reads:
+					break
 			if line[0] == "@":
 				status = 1
-	return reads
+	return reads	
 
 def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	if num_of_reads > 0:
@@ -182,7 +195,7 @@ def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts
 		number_of_parts = len(readlengths)/number_of_parts
 
 	for i in range(number_of_parts):
-		if i = number_of_parts-1:
+		if i == number_of_parts-1:
 			partend = len(readlengths)-1
 		else:
 			partend = size_of_parts*(i+1)
