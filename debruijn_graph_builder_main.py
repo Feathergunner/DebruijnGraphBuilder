@@ -440,9 +440,9 @@ def construct_consensus_from_multiple_parts():
 
 	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
 	n = len(readpartition)
-	p = 0
+	p = 3*(n/4)
 	# consider only second half of partition (parts with longer reads)
-	for rp in readpartition[n/2:]:
+	for rp in readpartition[p:]:
 		minreadlength = min([x[0] for x in rp])
 		k = get_adaptive_k(minreadlength)
 		p += 1
