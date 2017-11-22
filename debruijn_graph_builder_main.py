@@ -530,7 +530,7 @@ def get_adaptive_k(readlength):
 		return 40
 	elif readlength < 1000:
 		return 45
-	else readlength < 5000:
+	else
 		return 50
 
 if __name__ == '__main__':
@@ -541,4 +541,5 @@ if __name__ == '__main__':
 	#measure_runtime()
 	
 	#test_assembly_ordering()
-	exp_construct_consensus_from_specific_part()
+	#exp_construct_consensus_from_specific_part()
+	construct_consensus_from_multiple_parts()
