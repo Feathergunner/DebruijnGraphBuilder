@@ -639,9 +639,9 @@ class GraphData:
 						source_reads += [r for r in self.kmers[k_id].evidence_reads]
 					source_reads = set(source_reads)
 				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.get_total_weight())+","+str(seq.label)+","+str(source_reads)+"\n"
-				for r in source_reads:
-					data += str(r)+" "
-				data += "\n"
+				#for r in source_reads:
+				#	data += str(r)+" "
+				#data += "\n"
 		outputfile = file(filename, 'w')
 		outputfile.write(headline)
 		outputfile.write(data)
