@@ -474,6 +474,46 @@ def construct_consensus_from_multiple_parts():
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
 
+def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filename_output):
+	if not os.path.exists(filepath_output):
+		os.makedirs(filepath_output)
+
+	reads = dio.get_reads_from_fastq_file_by_length(filename = readfile, read_ids = read_ids)
+	
+	debruijn = fdgb.GraphData([reads], k)
+	# delete reads and kmers to save ram:
+	debruijn.reads = []
+	debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+
+	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	
+	debruijn.remove_single_sequence_components()
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
+	
+	debruijn.reduce_to_single_path_max_weight(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	filename_output += "_singlepath"
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
+	
+def exp_construct_consensus_from_specific_part():
+	size_of_parts = 1000
+	readfilename = "Data/hcov229e_only.fq"
+	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
+	# get read ids of 50 largest reads:
+	read_ids = [x[1] for x in readpartition[-1]]
+	
+	construct_consensus_from_part(k=50, read_ids = read_ids, readfile = readfilename, filepath_output = "Output/corona_recons_multiparts", filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)+"_k"+str(k)+"_p"+str(len(readpartition)))
+		
 def get_adaptive_k(readlength):
 	if readlength < 100:
 		return 25
@@ -494,4 +534,4 @@ if __name__ == '__main__':
 	#measure_runtime()
 	
 	#test_assembly_ordering()
-	construct_consensus_from_multiple_parts()
+	exp_construct_consensus_from_specific_part()
