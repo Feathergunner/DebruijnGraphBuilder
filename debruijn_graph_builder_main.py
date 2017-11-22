@@ -530,7 +530,7 @@ def get_adaptive_k(readlength):
 		return 40
 	elif readlength < 1000:
 		return 45
-	else
+	else:
 		return 50
 
 if __name__ == '__main__':
