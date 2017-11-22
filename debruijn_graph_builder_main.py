@@ -520,15 +520,15 @@ def exp_construct_consensus_from_specific_part():
 	construct_consensus_from_part(k=k, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
 		
 def get_adaptive_k(readlength):
-	if readlength < 50:
+	if readlength < 100:
 		return 25
-	elif readlength < 100:
-		return 30
 	elif readlength < 200:
-		return 35
+		return 30
 	elif readlength < 500:
-		return 40
+		return 35
 	elif readlength < 1000:
+		return 40
+	elif readlength < 3000:
 		return 45
 	else:
 		return 50
