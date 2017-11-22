@@ -430,7 +430,7 @@ def test_assembly_ordering():
 	debruijn.get_csv_output(filename = filename_output+".csv")
 
 def construct_consensus_from_multiple_parts():
-	size_of_parts = 1000
+	size_of_parts = 100
 	k = 40
 	filename = "Data/hcov229e_only.fq"
 	filepath_output = "Output/corona_recons_multiparts"
@@ -439,8 +439,10 @@ def construct_consensus_from_multiple_parts():
 		os.makedirs(filepath_output)
 
 	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
+	n = len(readpartition)
 	p = 0
-	for rp in readpartition:
+	# consider only second half of partition (parts with longer reads)
+	for rp in readpartition[n/2:]:
 		minreadlength = min([x[0] for x in rp])
 		k = get_adaptive_k(minreadlength)
 		p += 1
@@ -518,15 +520,17 @@ def exp_construct_consensus_from_specific_part():
 	construct_consensus_from_part(k=k, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
 		
 def get_adaptive_k(readlength):
-	if readlength < 100:
+	if readlength < 50:
 		return 25
-	elif readlength < 500:
+	elif readlength < 100:
 		return 30
-	elif readlength < 2000:
+	elif readlength < 200:
+		return 35
+	elif readlength < 500:
 		return 40
-	elif readlength < 10000:
+	elif readlength < 1000:
 		return 45
-	else:
+	else readlength < 5000:
 		return 50
 
 if __name__ == '__main__':
