@@ -506,7 +506,8 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
 	
 def exp_construct_consensus_from_specific_part():
-	size_of_parts = 1000
+	size_of_parts = 50
+	k=50
 	readfilename = "Data/hcov229e_only.fq"
 	readpartition = dio.get_read_partition_by_readlength(filename = readfilename, size_of_parts=size_of_parts)
 	# get read ids of 50 largest reads:
@@ -514,8 +515,7 @@ def exp_construct_consensus_from_specific_part():
 	filepath_output = "Output/corona_recons_multiparts"
 	filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)+"_k"+str(k)+"_p"+str(len(readpartition))
 	
-	
-	construct_consensus_from_part(k=50, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
+	construct_consensus_from_part(k=k, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
 		
 def get_adaptive_k(readlength):
 	if readlength < 100:
