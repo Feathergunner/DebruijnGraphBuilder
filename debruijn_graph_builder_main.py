@@ -6,6 +6,7 @@ import os
 import gc
 import re
 import sys
+import math
 
 #import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
@@ -466,7 +467,7 @@ def construct_consensus_from_multiple_parts():
 
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
-		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
+		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 		
 		debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
@@ -497,7 +498,7 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
-	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
+	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 	
 	debruijn.reduce_to_single_path_max_weight(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
@@ -520,6 +521,7 @@ def exp_construct_consensus_from_specific_part():
 	construct_consensus_from_part(k=k, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
 		
 def get_adaptive_k(readlength):
+	'''
 	if readlength < 100:
 		return 25
 	elif readlength < 200:
@@ -532,6 +534,8 @@ def get_adaptive_k(readlength):
 		return 45
 	else:
 		return 50
+	'''
+	return int(math.log(readlength, 2.1)*4)
 
 if __name__ == '__main__':
 	#test_reconstruction_4()
