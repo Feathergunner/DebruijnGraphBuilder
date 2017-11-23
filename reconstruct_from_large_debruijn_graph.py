@@ -61,22 +61,23 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 	
 	sequences = []
 	for l in lines:
-		if i > 0:
-			if i%10000 == 0:
-				print str(i)+"/"+str(n)+" - "+str(num_of_relevant_sequences)
-			data = re.split(r',',l)
-			if verbose:
-				print data
-			if int(data[2]) > min_weight:
-				label = int(data[3])
-				sequences.append([data[1], label, data[2]])
-				
-				if not min_label or label < min_label:
-					min_label = label
-				if not max_label or label > max_label:
-					max_label = label
-				num_of_relevant_sequences += 1
-		i+=1
+		if not l == "\n":
+			if i > 0:
+				if i%10000 == 0:
+					print str(i)+"/"+str(n)+" - "+str(num_of_relevant_sequences)
+				data = re.split(r',',l.strip())
+				if verbose:
+					print data
+				if int(data[2]) >= min_weight:
+					label = int(data[3])
+					sequences.append([data[1], label, data[2]])
+					
+					if not min_label or label < min_label:
+						min_label = label
+					if not max_label or label > max_label:
+						max_label = label
+					num_of_relevant_sequences += 1
+			i+=1
 	
 	if number_of_parts > 1 and partition_method in ["equidist", "equisize"]:
 		overlap = min(overlap, number_of_parts-1)
@@ -131,9 +132,10 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, allow_recursion=False, saveall=False):
 	print ("Reconstruct part "+filename_output+" ...")
 	
+	
 	reduce_to_single_path = False
 	
-	debruijn = fdgb.GraphData(reads, k, load_weights=False, verbose=False)
+	debruijn = fdgb.GraphData([reads], k, load_weights=False, verbose=False)
 	# delete reads and kmers to save ram:
 	reads = []
 	debruijn.reads = []
@@ -179,12 +181,14 @@ def reconstruct_parts(list_of_inputfiles, filename_output_base, k, minweight, mi
 			filename_output = filename_output_base+"_k"+str(k)+"_p"+str(partcounter)
 			partcounter += 1
 			graph_span = reconstruct_part(reads, filename_output, k, minweight, minlengthfactor, allow_recursion, saveall=saveall)
+			'''
 			if (allow_recursion):# and graph_span > 100*k):
 				part_sequence_filenames = get_sequences_by_params(filename_input=filename_output+".csv", filename_output=filename_output+"_w"+str(minweight), min_weight=minweight, number_of_parts=100, overlap=10, verbose=True)
 				part_parts = reconstruct_parts_lv2(part_sequence_filenames, filename_output_base=filename_output+"_w"+str(minweight), k=15)
 				
 				merged_parts_seqfilename = reconstruct_merge(filename_output_base=filename_output_base+"_w"+str(minweight)+"_k"+str(17), files_to_merge=part_parts, merge_k=11, saveall=saveall)
 				filename_output = merged_parts_seqfilename
+			'''
 			files_of_parts.append(filename_output+"_seqsonly.txt")
 			
 	return files_of_parts
@@ -233,7 +237,7 @@ def reconstruct_merge(filename_output_base, files_to_merge, merge_k, number_of_p
 	
 	reduce_to_single_path = True
 	
-	debruijn = fdgb.GraphData(reads, merge_k)
+	debruijn = fdgb.GraphData([reads], merge_k)
 	# delete reads and kmers to save ram:
 	debruijn.reads = []
 	debruijn.kmers = []
@@ -359,9 +363,12 @@ def singlestep_assembly_test(nr=1000, rs=0, k=40, do_reduce=False, do_singlepath
 		debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
 		
 def reconstruction_pipeline():
-	data_dir = "Output/corona_allreads"
-	sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
-	outputfilename = data_dir+"/corona_realreads_k40_equisizeparts"
+	#data_dir = "Output/corona_allreads"
+	#sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
+	#outputfilename = data_dir+"/corona_realreads_k40_equisizeparts"
+	data_dir = "Output/corona_recons_multiparts"
+	sourcefilename = data_dir+"/crm_partsize50_k50_p1445.csv"
+	outputfilename = data_dir+"/crm_max50_recons_pipeline"
 
 	if not os.path.exists(data_dir):
 		os.makedirs(data_dir)
@@ -382,28 +389,47 @@ def reconstruction_pipeline():
 	f = 1#1.5
 	'''
 	# mininum weight of sequences in original graph that are considered:
-	w = 5#30#10
+	w = 1#30#10
 	# number of parts for partitioning:
-	p = 500#500#2000
+	p = 100#500#2000
 	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
-	o = 2
+	o = 3
 	# k for debruijn-graphs of parts:
-	k1 = 23#19#23
+	k1 = 35#19#23
 	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
-	k2 = 21#17#21
+	k2 = 33#17#21
 	# minimum weight of sequences in partition-graphs:
-	w2 = 2#50
+	w2 = 10#50
 	# lower bound to the length of sequences in partition-graphs as multiple of k:
 	f = 1
 	
 	# get partitioning of sequences with minimum weight, as defined by param w, p, o:
-	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o, partition_method="equisize")
+	part_sequence_filenames = get_sequences_by_params(filename_input=sourcefilename, filename_output=outputfilename, min_weight=w, number_of_parts=p, overlap=o, partition_method="equisize", verbose=False)
 	
 	# build debruijn graphs for each part and merge them together:
 	parts = reconstruct_parts(part_sequence_filenames, filename_output_base=outputfilename+"_w"+str(w), k=k1, minweight=w2, minlengthfactor=f, allow_recursion=False, saveall=False)
-	if len(parts) > 1:
-		reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w)+"_k"+str(k1), files_to_merge=parts, merge_k=k2, number_of_parts=p)
+	
+	reconstruct_merge(filename_output_base=outputfilename+"_w"+str(w)+"_k"+str(k1), files_to_merge=parts, merge_k=k2, number_of_parts=p)
 
+def test():
+	reads = dio.get_reads_from_file("Output/corona_recons_multiparts/crm_partsize50_k50_p1445_sequences.txt")
+	debruijn = fdgb.GraphData([reads], k=40, load_weights=True)
+	# delete reads to save ram:
+	reads = []
+	debruijn.reads = []
+	# run garbage collector:
+	gc.collect()
+	
+	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	
+	filename_output = "Output/corona_recons_multiparts/atest"
+	
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
+	
 '''
 longest read: 56510
 '''
@@ -413,13 +439,7 @@ if __name__ == '__main__':
 	#construct_network_graph(data_dir+"/corona_realreads_k40_w50_k17_p500_merged_k15.asqg")
 	#construct_network_graph(data_dir+"/corona_realreads_n-1_k40.asqg")
 	
-	#reconstruction_pipeline()
-	singlestep_assembly()
+	reconstruction_pipeline()
+	#singlestep_assembly()
 	
-	'''
-	data_dir = "Output/corona_allreads"
-	inputfiles = []
-	for i in range(3500, 70000, 3500):
-		inputfiles.append(data_dir+"/corona_realreads_singlestep_numreads5000_s"+str(i)+"_k40_singlepath_seqsonly.txt")
-	reconstruct_merge(data_dir+"/singlestep_results_merge", inputfiles, merge_k=50, number_of_parts=len(inputfiles), delete_parts=False)
-	'''
+	#test()
