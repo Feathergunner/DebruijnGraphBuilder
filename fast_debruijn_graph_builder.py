@@ -167,7 +167,6 @@ class GraphData:
 			for read in r:
 				if (read_id%1000 == 0):
 					print_progress(read_id, number_of_reads)
-				
 				readdata = re.split(r',',read)
 				readseq = readdata[0]
 				if load_weights and len(readdata) > 1:
@@ -817,7 +816,7 @@ class GraphData:
 		current_seq_id = self.min_sequence
 		current_label = self.min_label
 		path_finding_failed = False
-		while (not path_finding_failed) and current_label < 0.95*self.max_label:
+		while (not path_finding_failed) and current_label < self.max_label-2*self.k_value:
 			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
 			dfs_labels[current_seq_id] = 1
 			next_sequences = [target_id for target_id in self.sequences[current_seq_id].overlaps_out if dfs_labels[target_id] == 0]
