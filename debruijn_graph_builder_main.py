@@ -431,7 +431,7 @@ def test_assembly_ordering():
 	debruijn.get_csv_output(filename = filename_output+".csv")
 
 def construct_consensus_from_multiple_parts():
-	size_of_parts = 100
+	size_of_parts = 200
 	k = 40
 	filename = "Data/hcov229e_only.fq"
 	filepath_output = "Output/corona_recons_multiparts"
@@ -535,7 +535,23 @@ def get_adaptive_k(readlength):
 	else:
 		return 50
 	'''
-	return int(math.log(readlength, 2.1)*4)
+	return int(math.log(readlength, 2)*4)
+	
+def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, filename_parts_base, first_part_id, last_part_id):
+	readpartition = dio.get_read_partition_by_readlength(filename = filename_source_data, size_of_parts=size_of_parts)
+	n = len(readpartition)
+	files_to_merge = []
+	
+	for i in range(first_part_id, last_part_id):
+		rp = readpartition[i]
+		minreadlength = min([x[0] for x in rp])
+		k = get_adaptive_k(minreadlength)
+		readfilename = filename_parts_base+"_k"+str(k)+"_p"+str(i)+"_singlepath_sequences.txt"
+		files_to_merge.append(readfilename)
+	merge_k = 50
+	
+	import reconstruct_from_large_debruijn_graph as recons
+	recons.reconstruct_merge(filename_output_base=filename_parts_base, files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
 
 if __name__ == '__main__':
 	#test_reconstruction_4()
@@ -546,4 +562,5 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	construct_consensus_from_multiple_parts()
+	#construct_consensus_from_multiple_parts()
+	merge_consensus_from_multiple_parts(100, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize100", 541, 722)
