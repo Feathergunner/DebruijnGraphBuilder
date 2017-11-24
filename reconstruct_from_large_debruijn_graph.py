@@ -132,7 +132,6 @@ def get_sequences_by_params(filename_input, filename_output, min_weight=1, numbe
 def reconstruct_part(reads, filename_output, k, minweight=1, minlengthfactor=1, allow_recursion=False, saveall=False):
 	print ("Reconstruct part "+filename_output+" ...")
 	
-	
 	reduce_to_single_path = False
 	
 	debruijn = fdgb.GraphData([reads], k, load_weights=False, verbose=False)
@@ -367,8 +366,8 @@ def reconstruction_pipeline():
 	#sourcefilename = data_dir+"/corona_realreads_n-1_k40.csv"
 	#outputfilename = data_dir+"/corona_realreads_k40_equisizeparts"
 	data_dir = "Output/corona_recons_multiparts"
-	sourcefilename = data_dir+"/crm_partsize50_k50_p1445.csv"
-	outputfilename = data_dir+"/crm_max50_recons_pipeline"
+	sourcefilename = data_dir+"/crm_partsize1000_k50_p72.csv"
+	outputfilename = data_dir+"/crm_max1000_recons_pipeline"
 
 	if not os.path.exists(data_dir):
 		os.makedirs(data_dir)
@@ -389,13 +388,13 @@ def reconstruction_pipeline():
 	f = 1#1.5
 	'''
 	# mininum weight of sequences in original graph that are considered:
-	w = 1#30#10
+	w = 2#30#10
 	# number of parts for partitioning:
-	p = 100#500#2000
+	p = 1000#500#2000
 	# number of overlapping parts (local redundancy: larger for better reconstruction of total graph from parts):
 	o = 3
 	# k for debruijn-graphs of parts:
-	k1 = 35#19#23
+	k1 = 19#19#23
 	# k for reconstruction, should be smaller than k1 to ensure that parts can be merged:
 	k2 = 33#17#21
 	# minimum weight of sequences in partition-graphs:
@@ -429,10 +428,6 @@ def test():
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_seqsonly.txt", addweights=True)
-	
-'''
-longest read: 56510
-'''
 	
 if __name__ == '__main__':
 	#data_dir = "Output/corona_allreads"
