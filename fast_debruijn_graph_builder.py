@@ -4,6 +4,9 @@ import random
 import re
 import sys
 
+import scipy.sparse
+from numpy import linalg as LA
+
 #import gc
 
 def print_progress(part, total):
@@ -960,6 +963,33 @@ class GraphData:
 	def get_label_span(self):
 		return self.max_label - self.min_label
 		
+	def compute_mincut(self):
+		# construct adjacency matrix as numpy-array:
+		x = []
+		y = []
+		
+		deg_entries = []
+		degrees = []
+		
+		for s in self.sequences:
+			if s.is_relevant:
+				d = 0
+				for t in s.overlaps_out:
+					if self.sequences[t].is_relevant:
+						d += 1
+						x.append(s.id)
+						y.append(t)
+				deg_entries.append(s.id)
+				degrees.append(d)
+		data = [1]*len(x)
+		n = len(self.sequences)
+		
+		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n))
+		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n))
+		
+		laplac_mat = -(adj_mat-deg_mat)
+		
+		w,v = LA.eig(laplac_mat)		
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)

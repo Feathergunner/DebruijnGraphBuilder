@@ -510,7 +510,7 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 	
 def exp_construct_consensus_from_specific_part():
 	size_of_parts = 50
-	k=50
+	k=60
 	readfilename = "Data/hcov229e_only.fq"
 	readpartition = dio.get_read_partition_by_readlength(filename = readfilename, size_of_parts=size_of_parts)
 	# get read ids of 50 largest reads:
@@ -537,21 +537,42 @@ def get_adaptive_k(readlength):
 	'''
 	return int(math.log(readlength, 2)*4)
 	
+def test_spectral_partitioning()
+	readpartition = dio.get_read_partition_by_readlength(filename = "Data/hcov229e_only.fq", size_of_parts=200)
+	rp = readpartition[-1]
+	reads = dio.get_reads_from_fastq_file_by_length(filename = "Data/hcov229e_only.fq", read_ids = rp)
+	k = 50
+	
+	debruijn = fdgb.GraphData([reads], k)
+	# delete reads and kmers to save ram:
+	debruijn.reads = []
+	debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+
+	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	
+	debruijn.compute_mincut()
+	
+	
 def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, filename_parts_base, first_part_id, last_part_id):
 	readpartition = dio.get_read_partition_by_readlength(filename = filename_source_data, size_of_parts=size_of_parts)
 	n = len(readpartition)
 	files_to_merge = []
 	
-	for i in range(first_part_id, last_part_id):
-		rp = readpartition[i]
+	last_part_id = min(last_part_id, n)
+	
+	for i in range(first_part_id, last_part_id+1):
+		rp = readpartition[i-1]
 		minreadlength = min([x[0] for x in rp])
-		k = get_adaptive_k(minreadlength)
+		k = 50#get_adaptive_k(minreadlength)
 		readfilename = filename_parts_base+"_k"+str(k)+"_p"+str(i)+"_singlepath_sequences.txt"
 		files_to_merge.append(readfilename)
-	merge_k = 50
+	merge_k = 35
 	
 	import reconstruct_from_large_debruijn_graph as recons
-	recons.reconstruct_merge(filename_output_base=filename_parts_base, files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
+	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
 
 if __name__ == '__main__':
 	#test_reconstruction_4()
@@ -563,4 +584,6 @@ if __name__ == '__main__':
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
 	#construct_consensus_from_multiple_parts()
-	merge_consensus_from_multiple_parts(100, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize100", 541, 722)
+	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
+	
+	test_spectral_partitioning()
