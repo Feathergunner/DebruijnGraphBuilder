@@ -5,7 +5,7 @@ import re
 import sys
 
 import scipy.sparse
-from numpy import linalg as LA
+from scipy.sparse import linalg as la
 
 #import gc
 
@@ -982,31 +982,46 @@ class GraphData:
 						x.append(s.id)
 						y.append(t)
 				deg_entries.append(s.id)
-				degrees.append(d)
-		data = [1]*len(x)
+				degrees.append(float(d))
+		data = [1.0]*len(x)
 		n = len(self.sequences)
-	
-		'''
-		print ("x:")
-		print (x)
-		print ("y:")
-		print (y)
-		'''
 	
 		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsr()
 		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
+		laplace_mat = -(adj_mat-deg_mat)
 		
+		'''
 		print ("adj_mat:")
 		print adj_mat
 		print ("deg_mat:")
 		print deg_mat
-
-		laplace_mat = deg_mat#-(adj_mat-deg_mat)
-
 		print ("laplace_mat:")
 		print laplace_mat
+		'''
 		
-		w,v = scipy.sparse.linalg.eigs(laplace_mat)		
+		[w,v] = la.eigs(laplace_mat)
+		
+		# find second smallest eigenvalue and corresponding eigenvector:
+		min_eigenvalue = -1
+		min_eigenvalue_id = -1
+		secmin_eigenvalue = -1
+		secmin_eigenvalue_id = -1
+		
+		for i in range(len(w)):
+			if min_eigenvalue_id < 0 or w[i] < min_eigenvalue:
+				secmin_eigenvalue = min_eigenvalue
+				secmin_eigenvalue_id = min_eigenvalue_id
+				min_eigenvalue = w[i]
+				min_eigenvalue_id = i
+			elif secmin_eigenvalue_id < 0 or w[i] < secmin_eigenvalue:
+				secmin_eigenvalue = w[i]
+				secmin_eigenvalue_id = i
+			
+		secmin_eigenvector = v[i]
+		
+		print min_eigenvalue
+		print secmin_eigenvalue
+		print secmin_eigenvector
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
