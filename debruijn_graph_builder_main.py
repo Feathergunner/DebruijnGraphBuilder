@@ -538,10 +538,11 @@ def get_adaptive_k(readlength):
 	return int(math.log(readlength, 2)*4)
 	
 def test_spectral_partitioning():
-	readpartition = dio.get_read_partition_by_readlength(filename = "Data/hcov229e_only.fq", size_of_parts=200)
-	rp = [r[1] for r in readpartition[1]]
+	readpartition = dio.get_read_partition_by_readlength(filename = "Data/hcov229e_only.fq", size_of_parts=300)
+	#n = readpartition
+	rp = [r[1] for r in readpartition[-6]]
 	reads = dio.get_reads_from_fastq_file_by_length(filename = "Data/hcov229e_only.fq", read_ids = rp)
-	k = 25
+	k = 50
 
 	debruijn = fdgb.GraphData([reads], k)
 	# delete reads and kmers to save ram:
@@ -552,9 +553,13 @@ def test_spectral_partitioning():
 
 	debruijn.remove_parallel_sequences(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.reduce_to_single_largest_component()
 	
+	c = debruijn.get_components()
+	print ("number of components: "+str(len(c)))
 	debruijn.compute_mincut()
 	
+	debruijn.get_asqg_output(filename = "Output/test/mincuttest.asqg")
 	
 def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, filename_parts_base, first_part_id, last_part_id):
 	readpartition = dio.get_read_partition_by_readlength(filename = filename_source_data, size_of_parts=size_of_parts)
