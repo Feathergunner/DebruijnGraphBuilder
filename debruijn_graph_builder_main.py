@@ -537,12 +537,12 @@ def get_adaptive_k(readlength):
 	'''
 	return int(math.log(readlength, 2)*4)
 	
-def test_spectral_partitioning()
+def test_spectral_partitioning():
 	readpartition = dio.get_read_partition_by_readlength(filename = "Data/hcov229e_only.fq", size_of_parts=200)
-	rp = readpartition[-1]
+	rp = [r[1] for r in readpartition[1]]
 	reads = dio.get_reads_from_fastq_file_by_length(filename = "Data/hcov229e_only.fq", read_ids = rp)
-	k = 50
-	
+	k = 25
+
 	debruijn = fdgb.GraphData([reads], k)
 	# delete reads and kmers to save ram:
 	debruijn.reads = []

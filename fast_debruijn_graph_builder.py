@@ -971,6 +971,8 @@ class GraphData:
 		deg_entries = []
 		degrees = []
 		
+		print ("num sequences: "+str(len(self.sequences)))
+
 		for s in self.sequences:
 			if s.is_relevant:
 				d = 0
@@ -983,13 +985,28 @@ class GraphData:
 				degrees.append(d)
 		data = [1]*len(x)
 		n = len(self.sequences)
+	
+		'''
+		print ("x:")
+		print (x)
+		print ("y:")
+		print (y)
+		'''
+	
+		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsr()
+		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
 		
-		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n))
-		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n))
+		print ("adj_mat:")
+		print adj_mat
+		print ("deg_mat:")
+		print deg_mat
+
+		laplace_mat = deg_mat#-(adj_mat-deg_mat)
+
+		print ("laplace_mat:")
+		print laplace_mat
 		
-		laplac_mat = -(adj_mat-deg_mat)
-		
-		w,v = LA.eig(laplac_mat)		
+		w,v = scipy.sparse.linalg.eigs(laplace_mat)		
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
