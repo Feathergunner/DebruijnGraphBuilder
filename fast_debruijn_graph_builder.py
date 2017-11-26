@@ -182,8 +182,7 @@ class GraphData:
 				for c in readseq:
 					if c not in self.alphabet:
 						is_correct = False
-						if verbose:
-							print ("Error! Character "+str(c)+" not in alphabet "+str(self.alphabet.keys()))
+						print ("Error! Character "+str(c)+" not in alphabet "+str(self.alphabet.keys()))
 				if is_correct:
 					self.reads.append(Read(read_id, readseq, readweight))
 				read_id += 1
@@ -1042,9 +1041,21 @@ class GraphData:
 		
 		part_a = []
 		part_b = []
+		part_c = []
 		
-		#for i in secmin_eigenvector:
-		#	if 
+		for i in range(len(secmin_eigenvector)):
+			if self.sequences[i].is_relevant:
+				if secmin_eigenvector[i] < -0.00001:
+					part_a.append(i)
+				elif secmin_eigenvector[i] > 0.00001:
+					#self.delete_sequence(i)
+					part_b.append(i)
+				else:
+					self.delete_sequence(i)
+					part_c.append(i)
+		print len(part_a)
+		print len(part_b)
+		print len(part_c)
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
