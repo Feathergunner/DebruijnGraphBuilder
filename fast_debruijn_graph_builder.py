@@ -4,6 +4,7 @@ import random
 import re
 import sys
 
+import numpy as np
 import scipy.sparse
 from scipy.sparse import linalg as la
 
@@ -973,6 +974,7 @@ class GraphData:
 		
 		print ("num sequences: "+str(len(self.sequences)))
 
+		# construct symmetric (i.e. undirected) adjacency matrix and diagonal matrix of vertex-degrees:
 		for s in self.sequences:
 			if s.is_relevant:
 				d = 0
@@ -981,6 +983,8 @@ class GraphData:
 						d += 1
 						x.append(s.id)
 						y.append(t)
+						x.append(t)
+						y.append(s.id)
 				deg_entries.append(s.id)
 				degrees.append(float(d))
 		data = [1.0]*len(x)
@@ -988,18 +992,25 @@ class GraphData:
 	
 		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsr()
 		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
-		laplace_mat = -(adj_mat-deg_mat)
+		# laplacian L=-A+D
+		laplacian = -(adj_mat-deg_mat)
+		
+		print ("shape of laplacian: ")
+		print (laplacian.shape)
 		
 		'''
 		print ("adj_mat:")
 		print adj_mat
 		print ("deg_mat:")
 		print deg_mat
-		print ("laplace_mat:")
-		print laplace_mat
+		print ("laplacian:")
+		print laplacian
 		'''
 		
-		[w,v] = la.eigs(laplace_mat)
+		[w,v] = la.eigs(laplacian, tol=0.001)#, k=20, which='SM')
+		print ("number of eigenvalues: "+str(len(w)))
+		
+		print (w)
 		
 		# find second smallest eigenvalue and corresponding eigenvector:
 		min_eigenvalue = -1
@@ -1017,11 +1028,23 @@ class GraphData:
 				secmin_eigenvalue = w[i]
 				secmin_eigenvalue_id = i
 			
-		secmin_eigenvector = v[i]
+		secmin_eigenvector = v[:,i]
 		
 		print min_eigenvalue
 		print secmin_eigenvalue
-		print secmin_eigenvector
+		print len(set(x))
+		print len(secmin_eigenvector)
+		
+		'''
+		print len(set(x))
+		print len(secmin_eigenvector)
+		'''
+		
+		part_a = []
+		part_b = []
+		
+		#for i in secmin_eigenvector:
+		#	if 
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
