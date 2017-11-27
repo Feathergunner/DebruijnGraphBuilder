@@ -972,43 +972,50 @@ class GraphData:
 		degrees = []
 		
 		print ("num sequences: "+str(len(self.sequences)))
+		
+		# maps original sequence_ids to smaller id for only relevant sequences (-> matrix position)
+		seq_id_to_index = {}
+		index_to_seq_id = {}
 
 		# construct symmetric (i.e. undirected) adjacency matrix and diagonal matrix of vertex-degrees:
-		for s in self.sequences:
-			if s.is_relevant:
+		n = 0
+		for seq_s in self.sequences:
+			if seq_s.is_relevant:
 				d = 0
-				for t in s.overlaps_out:
-					if self.sequences[t].is_relevant:
+				if seq_s.id not in seq_id_to_index:
+					seq_id_to_index[seq_s.id] = n
+					index_to_seq_id[n] = seq_s.id
+					n += 1
+				s = seq_id_to_index[seq_s.id]
+				for seq_t in seq_s.overlaps_out:
+					if self.sequences[seq_t].is_relevant:
+						if seq_t not in seq_id_to_index:
+							seq_id_to_index[seq_t] = n
+							index_to_seq_id[n] = seq_t
+							n += 1
+						t = seq_id_to_index[seq_t]
 						d += 1
-						x.append(s.id)
+						x.append(s)
 						y.append(t)
 						x.append(t)
-						y.append(s.id)
-				deg_entries.append(s.id)
+						y.append(s)
+				deg_entries.append(s)
 				degrees.append(float(d))
 		data = [1.0]*len(x)
-		n = len(self.sequences)
+		#n = len(self.sequences)
+		#n = len(set(x))
 	
 		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsr()
 		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
-		# laplacian L=-A+D
+		# laplacian L = D - A
 		laplacian = -(adj_mat-deg_mat)
 		
-		print ("shape of laplacian: ")
-		print (laplacian.shape)
+		#print ("shape of laplacian: ")
+		#print (laplacian.shape)
 		
-		'''
-		print ("adj_mat:")
-		print adj_mat
-		print ("deg_mat:")
-		print deg_mat
-		print ("laplacian:")
-		print laplacian
-		'''
+		[w,v] = la.eigs(laplacian)#, tol=0.001)#, k=20, which='SM')
 		
-		[w,v] = la.eigs(laplacian, tol=0.001)#, k=20, which='SM')
 		print ("number of eigenvalues: "+str(len(w)))
-		
 		print (w)
 		
 		# find second smallest eigenvalue and corresponding eigenvector:
@@ -1029,12 +1036,14 @@ class GraphData:
 			
 		secmin_eigenvector = v[:,i]
 		
-		print min_eigenvalue
-		print secmin_eigenvalue
-		print len(set(x))
-		print len(secmin_eigenvector)
+		print secmin_eigenvector
 		
 		'''
+		print min_eigenvalue
+		print secmin_eigenvalue
+		print len(index_to_seq_id)
+		print len(seq_id_to_index)
+		print len(x)
 		print len(set(x))
 		print len(secmin_eigenvector)
 		'''
@@ -1044,15 +1053,22 @@ class GraphData:
 		part_c = []
 		
 		for i in range(len(secmin_eigenvector)):
-			if self.sequences[i].is_relevant:
-				if secmin_eigenvector[i] < -0.00001:
+			if self.sequences[index_to_seq_id[i]].is_relevant:
+				'''
+				if secmin_eigenvector[i] < 0:
 					part_a.append(i)
-				elif secmin_eigenvector[i] > 0.00001:
-					#self.delete_sequence(i)
+				elif secmin_eigenvector[i] > 0:
+					self.delete_sequence(index_to_seq_id[i])
+					part_b.append(i)
+				'''
+				if secmin_eigenvector[i] < -10e-8:
+					part_a.append(i)
+				elif secmin_eigenvector[i] > 10e-8:
 					part_b.append(i)
 				else:
-					self.delete_sequence(i)
+					self.delete_sequence(index_to_seq_id[i])
 					part_c.append(i)
+
 		print len(part_a)
 		print len(part_b)
 		print len(part_c)
