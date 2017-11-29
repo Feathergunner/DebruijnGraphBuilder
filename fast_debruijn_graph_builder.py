@@ -985,6 +985,8 @@ class GraphData:
 		return self.max_label - self.min_label
 		
 	def compute_mincut(self):
+		self.remove_irrelevant_overlaps()
+		
 		# construct adjacency matrix as numpy-array:
 		x = []
 		y = []
@@ -1021,15 +1023,12 @@ class GraphData:
 						x.append(t)
 						y.append(s)
 		data = [1.0]*len(x)
-		#n = len(self.sequences)
-		#n = len(set(x))
-	
-		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsc()
-		deg_mat = scipy.sparse.diags(degrees).tocsc()#((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
 		
+		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsc()
+		deg_mat = scipy.sparse.diags(degrees).tocsc()
 		
 		# laplacian L = D - A
-		laplacian = -(adj_mat-deg_mat)#+ scipy.sparse.eye(n)
+		laplacian = -(adj_mat-deg_mat)
 		
 		'''
 		print "adj_mat:"
@@ -1043,7 +1042,7 @@ class GraphData:
 		print (laplacian.shape)
 		'''
 		
-		[w,v] = la.eigs(laplacian, which='SM', k=2)#, tol=0.1)#, k=3, sigma=0)#, which='SM')#, k=3, sigma=0)#, )#, tol=0.001)#, k=20)
+		[w,v] = la.eigs(laplacian, which='SM', k=2)
 		
 		#print ("number of eigenvalues: "+str(len(w)))
 		#print (w)
@@ -1069,21 +1068,9 @@ class GraphData:
 		#print secmin_eigenvalue
 		#print secmin_eigenvector
 		
-		'''
-		print min_eigenvalue
-		print secmin_eigenvalue
-		print len(index_to_seq_id)
-		print len(seq_id_to_index)
-		print len(x)
-		print len(set(x))
-		print len(secmin_eigenvector)
-		'''
-		
 		part_a = []
 		part_b = []
 		part_c = []
-		
-		#abs_value_dist = {}
 		
 		for i in range(len(secmin_eigenvector)):
 			if self.sequences[index_to_seq_id[i]].is_relevant:
@@ -1091,20 +1078,6 @@ class GraphData:
 					abs_value_exp = int(math.log10(abs(secmin_eigenvector[i])))
 				else:
 					abs_value_exp = -100
-				'''
-				if abs_value_exp not in abs_value_dist:
-					abs_value_dist[abs_value_exp] = 1
-				else:
-					abs_value_dist[abs_value_exp] += 1
-				'''
-				
-				'''
-				if secmin_eigenvector[i] < 0:
-					part_a.append(i)
-				elif secmin_eigenvector[i] > 0:
-					self.delete_sequence(index_to_seq_id[i])
-					part_b.append(i)
-				'''
 				if secmin_eigenvector[i] < -10e-8:
 					part_a.append(i)
 				elif secmin_eigenvector[i] > 10e-8:
@@ -1117,15 +1090,30 @@ class GraphData:
 		print len(part_b)
 		print len(part_c)
 		'''
-		#print abs_value_dist
 		
 		# delete all overlaps between different parts:
 		overlaps_to_delete = []
 		for ov in self.overlaps:
-			if (seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_a and seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_b) or (seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_b and seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_a):
-				overlaps_to_delete.append(self.overlaps[ov].id)
-		for ov_id in overlaps_to_delete:
+			#print ov
+			#print self.overlaps[ov].contig_sequence_1
+			#print self.sequences[self.overlaps[ov].contig_sequence_1].is_relevant
+			#print self.sequences[self.overlaps[ov].contig_sequence_2].is_relevant
+			if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_a:
+				if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_b:
+					overlaps_to_delete.append(ov)
+			if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_b:
+				if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_a:
+					overlaps_to_delete.append(ov)
+		for ov_id in set(overlaps_to_delete):
 			self.delete_overlap(ov_id)
+	
+	def remove_irrelevant_overlaps(self):
+		ov_to_del = []
+		for ov in self.overlaps:
+			if not self.sequences[self.overlaps[ov].contig_sequence_1].is_relevant or not self.sequences[self.overlaps[ov].contig_sequence_2].is_relevant:
+				ov_to_del.append(ov)
+		for ov in ov_to_del:
+			self.overlaps.pop(ov)
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
