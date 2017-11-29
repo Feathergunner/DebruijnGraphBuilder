@@ -794,7 +794,7 @@ class GraphData:
 		reads = list(set(reads))
 		return reads
 		
-	def reduce_to_single_path_max_weight(self, verbose=False):
+	def reduce_to_single_path_max_weight(self, start_sequence=False, restrict_to_component=False, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
 		# with backtracking: if a dead end is reached, the algorithm returns to the previous node until a second-best path is found.
 		# i.e. depth-first search, starting from node with smallest label to node with highest label where in each step the node with largest weight is chosen.
@@ -803,12 +803,14 @@ class GraphData:
 		
 		print ("DFS for path with local maximum weight")
 		
+		'''
 		components = self.get_components()
 		if verbose:
 			print ("Number of components: "+str(len(components)))
 		if len(components) > 1:
 			print ("Too many components.")
 			self.reduce_to_single_largest_component()
+		'''
 			
 		# node-labels of the dfs:
 		#	0: not yet visited
@@ -817,8 +819,11 @@ class GraphData:
 		dfs_labels = [0 for s in self.sequences]
 		path = []
 		
-		current_seq_id = self.min_sequence
-		current_label = self.min_label
+		if not start_sequence:
+			current_seq_id = self.min_sequence
+		else:
+			current_seq_id = start_sequence
+		current_label = self.sequences[current_seq_id].label
 		path_finding_failed = False
 		while (not path_finding_failed) and current_label < self.max_label-2*self.k_value:
 			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
@@ -858,9 +863,24 @@ class GraphData:
 		
 		# delete unused sequences:
 		for seq in self.sequences:
-			if seq.is_relevant and not dfs_labels[seq.id] == 1:
+			if seq.is_relevant and not dfs_labels[seq.id] == 1 and (not restrict_to_component or seq.id in restrict_to_component):
 				self.delete_sequence(seq.id)
 		print ("Reduction finished")
+		
+	def reduce_every_component_to_single_path_max_weight(self, verbose=False):
+		components = self.get_components()
+		print ("Number of components: "+str(len(components)))
+		for c in components:
+			print c[0]
+			self.construct_assembly_ordering_labels(start_sequence=c[0])
+			start_sequence = -1
+			min_label = False
+			for seq_id in c:
+				if not min_label or self.sequences[seq_id].label < min_label:
+					start_sequence = seq_id
+					min_label = self.sequences[seq_id].label
+			print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
+			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c)
 		
 	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else

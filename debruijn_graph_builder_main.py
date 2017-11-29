@@ -540,7 +540,7 @@ def get_adaptive_k(readlength):
 def test_spectral_partitioning():
 	#readpartition = dio.get_read_partition_by_readlength(filename = "Data/2017-09-05_coronavirus.fq", size_of_parts=500)
 	#rp = [r[1] for r in readpartition[0]]
-	reads = dio.get_reads_from_fastq_file(filename = "Data/2017-09-05_coronavirus.fq", num_of_reads = 200)
+	reads = dio.get_reads_from_fastq_file(filename = "Data/2017-09-05_coronavirus.fq", num_of_reads = 1000)
 	k = 25
 	
 	print len(reads)
@@ -562,11 +562,15 @@ def test_spectral_partitioning():
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_precut.asqg")
 	
-	c = debruijn.get_components()
-	print ("number of components: "+str(len(c)))
+	#c = debruijn.get_components()
+	#print ("number of components: "+str(len(c)))
 	debruijn.compute_mincut()
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_postcut.asqg")
+	
+	debruijn.reduce_every_component_to_single_path_max_weight()
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.get_asqg_output(filename = "Output/test/mincuttest_postcut_postreduce.asqg")
 	
 def minimal_test_spectral_partitioning():
 	'''
