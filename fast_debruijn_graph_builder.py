@@ -975,7 +975,6 @@ class GraphData:
 					
 	def remove_short_sequences(self, length_bound_by_multiple_of_k=5):
 		# brutally removes all sequences with length less than 5 times k_value (if not specified otherwise)
-		
 		for seq in self.sequences:
 			if seq.is_relevant:
 				if seq.get_length() < length_bound_by_multiple_of_k*self.k_value:
@@ -984,17 +983,15 @@ class GraphData:
 	def get_label_span(self):
 		return self.max_label - self.min_label
 		
-	def compute_mincut(self):
+	def compute_mincut(self, divide_clusters=True):
+		print ("Do spectral clustering of the nodes into two clusters ...")
 		self.remove_irrelevant_overlaps()
-		
 		# construct adjacency matrix as numpy-array:
 		x = []
 		y = []
 		
 		deg_entries = []
 		degrees = [0.0]*len([s for s in self.sequences if s.is_relevant])
-		
-		#print ("num sequences: "+str(len(self.sequences)))
 		
 		# maps original sequence_ids to smaller id for only relevant sequences (-> matrix position)
 		seq_id_to_index = {}
@@ -1030,22 +1027,7 @@ class GraphData:
 		# laplacian L = D - A
 		laplacian = -(adj_mat-deg_mat)
 		
-		'''
-		print "adj_mat:"
-		print adj_mat.toarray()
-		print "deg_mat:"
-		print deg_mat.toarray()
-		print "laplacian:"
-		print laplacian.toarray()
-				
-		print ("shape of laplacian: ")
-		print (laplacian.shape)
-		'''
-		
 		[w,v] = la.eigs(laplacian, which='SM', k=2)
-		
-		#print ("number of eigenvalues: "+str(len(w)))
-		#print (w)
 		
 		# find second smallest eigenvalue and corresponding eigenvector:
 		min_eigenvalue = -1
@@ -1065,19 +1047,11 @@ class GraphData:
 			
 		secmin_eigenvector = v[:,i]
 		
-		#print secmin_eigenvalue
-		#print secmin_eigenvector
-		
 		part_a = []
 		part_b = []
 		part_c = []
-		
 		for i in range(len(secmin_eigenvector)):
 			if self.sequences[index_to_seq_id[i]].is_relevant:
-				if not abs(secmin_eigenvector[i]) < 10e-10:
-					abs_value_exp = int(math.log10(abs(secmin_eigenvector[i])))
-				else:
-					abs_value_exp = -100
 				if secmin_eigenvector[i] < -10e-8:
 					part_a.append(i)
 				elif secmin_eigenvector[i] > 10e-8:
@@ -1085,27 +1059,21 @@ class GraphData:
 				else:
 					self.delete_sequence(index_to_seq_id[i])
 					part_c.append(i)
-		'''
-		print len(part_a)
-		print len(part_b)
-		print len(part_c)
-		'''
 		
-		# delete all overlaps between different parts:
-		overlaps_to_delete = []
-		for ov in self.overlaps:
-			#print ov
-			#print self.overlaps[ov].contig_sequence_1
-			#print self.sequences[self.overlaps[ov].contig_sequence_1].is_relevant
-			#print self.sequences[self.overlaps[ov].contig_sequence_2].is_relevant
-			if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_a:
-				if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_b:
-					overlaps_to_delete.append(ov)
-			if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_b:
-				if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_a:
-					overlaps_to_delete.append(ov)
-		for ov_id in set(overlaps_to_delete):
-			self.delete_overlap(ov_id)
+		if divide_clusters:
+			print ("Delete all overlaps between different parts ...")
+			overlaps_to_delete = []
+			for ov in self.overlaps:
+				if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_a:
+					if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_b:
+						overlaps_to_delete.append(ov)
+				if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_b:
+					if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_a:
+						overlaps_to_delete.append(ov)
+			for ov_id in set(overlaps_to_delete):
+				self.delete_overlap(ov_id)
+		
+		return [part_a, part_b]
 	
 	def remove_irrelevant_overlaps(self):
 		ov_to_del = []

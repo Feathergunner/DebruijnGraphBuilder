@@ -441,7 +441,7 @@ def construct_consensus_from_multiple_parts():
 
 	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
 	n = len(readpartition)
-	p = 3*(n/4)
+	p = n-1#3*(n/4)
 	# consider only second half of partition (parts with longer reads)
 	for rp in readpartition[p:]:
 		minreadlength = min([x[0] for x in rp])
@@ -468,6 +468,9 @@ def construct_consensus_from_multiple_parts():
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
+		
+		debruijn.compute_mincut()
+		debruijn.reduce_every_component_to_single_path_max_weight()
 		
 		debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
@@ -540,7 +543,7 @@ def get_adaptive_k(readlength):
 def test_spectral_partitioning():
 	#readpartition = dio.get_read_partition_by_readlength(filename = "Data/2017-09-05_coronavirus.fq", size_of_parts=500)
 	#rp = [r[1] for r in readpartition[0]]
-	reads = dio.get_reads_from_fastq_file(filename = "Data/2017-09-05_coronavirus.fq", num_of_reads = 1000)
+	reads = dio.get_reads_from_fastq_file(filename = "Data/2017-09-05_coronavirus.fq", num_of_reads = 500)
 	k = 25
 	
 	print len(reads)
@@ -571,6 +574,8 @@ def test_spectral_partitioning():
 	debruijn.reduce_every_component_to_single_path_max_weight()
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_postcut_postreduce.asqg")
+	debruijn.get_csv_output(filename = "Output/test/mincuttest_postcut_postreduce.csv")
+	debruijn.write_sequences_to_file(filename = "Output/test/mincuttest_postcut_postreduce_sequences.txt")
 	
 def minimal_test_spectral_partitioning():
 	'''
@@ -672,8 +677,5 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	#construct_consensus_from_multiple_parts()
+	construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
-	
-	test_spectral_partitioning()
-	#test_laplacian_construction()
