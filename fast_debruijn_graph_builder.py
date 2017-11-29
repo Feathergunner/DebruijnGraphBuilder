@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import scipy.sparse
 from scipy.sparse import linalg as la
+import math
 
 #import gc
 
@@ -969,9 +970,9 @@ class GraphData:
 		y = []
 		
 		deg_entries = []
-		degrees = []
+		degrees = [0.0]*len([s for s in self.sequences if s.is_relevant])
 		
-		print ("num sequences: "+str(len(self.sequences)))
+		#print ("num sequences: "+str(len(self.sequences)))
 		
 		# maps original sequence_ids to smaller id for only relevant sequences (-> matrix position)
 		seq_id_to_index = {}
@@ -981,7 +982,6 @@ class GraphData:
 		n = 0
 		for seq_s in self.sequences:
 			if seq_s.is_relevant:
-				d = 0
 				if seq_s.id not in seq_id_to_index:
 					seq_id_to_index[seq_s.id] = n
 					index_to_seq_id[n] = seq_s.id
@@ -994,29 +994,39 @@ class GraphData:
 							index_to_seq_id[n] = seq_t
 							n += 1
 						t = seq_id_to_index[seq_t]
-						d += 1
+						degrees[s] += 1
+						degrees[t] += 1
 						x.append(s)
 						y.append(t)
 						x.append(t)
 						y.append(s)
-				deg_entries.append(s)
-				degrees.append(float(d))
 		data = [1.0]*len(x)
 		#n = len(self.sequences)
 		#n = len(set(x))
 	
-		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsr()
-		deg_mat = scipy.sparse.coo_matrix((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
+		adj_mat = scipy.sparse.coo_matrix((data, (x,y)), shape = (n,n)).tocsc()
+		deg_mat = scipy.sparse.diags(degrees).tocsc()#((degrees, (deg_entries,deg_entries)), shape = (n,n)).tocsr()
+		
+		
 		# laplacian L = D - A
-		laplacian = -(adj_mat-deg_mat)
+		laplacian = -(adj_mat-deg_mat)#+ scipy.sparse.eye(n)
 		
-		#print ("shape of laplacian: ")
-		#print (laplacian.shape)
+		'''
+		print "adj_mat:"
+		print adj_mat.toarray()
+		print "deg_mat:"
+		print deg_mat.toarray()
+		print "laplacian:"
+		print laplacian.toarray()
+				
+		print ("shape of laplacian: ")
+		print (laplacian.shape)
+		'''
 		
-		[w,v] = la.eigs(laplacian)#, tol=0.001)#, k=20, which='SM')
+		[w,v] = la.eigs(laplacian, which='SM', k=2)#, tol=0.1)#, k=3, sigma=0)#, which='SM')#, k=3, sigma=0)#, )#, tol=0.001)#, k=20)
 		
-		print ("number of eigenvalues: "+str(len(w)))
-		print (w)
+		#print ("number of eigenvalues: "+str(len(w)))
+		#print (w)
 		
 		# find second smallest eigenvalue and corresponding eigenvector:
 		min_eigenvalue = -1
@@ -1036,7 +1046,8 @@ class GraphData:
 			
 		secmin_eigenvector = v[:,i]
 		
-		print secmin_eigenvector
+		#print secmin_eigenvalue
+		#print secmin_eigenvector
 		
 		'''
 		print min_eigenvalue
@@ -1052,8 +1063,21 @@ class GraphData:
 		part_b = []
 		part_c = []
 		
+		#abs_value_dist = {}
+		
 		for i in range(len(secmin_eigenvector)):
 			if self.sequences[index_to_seq_id[i]].is_relevant:
+				if not abs(secmin_eigenvector[i]) < 10e-10:
+					abs_value_exp = int(math.log10(abs(secmin_eigenvector[i])))
+				else:
+					abs_value_exp = -100
+				'''
+				if abs_value_exp not in abs_value_dist:
+					abs_value_dist[abs_value_exp] = 1
+				else:
+					abs_value_dist[abs_value_exp] += 1
+				'''
+				
 				'''
 				if secmin_eigenvector[i] < 0:
 					part_a.append(i)
@@ -1068,10 +1092,20 @@ class GraphData:
 				else:
 					self.delete_sequence(index_to_seq_id[i])
 					part_c.append(i)
-
+		'''
 		print len(part_a)
 		print len(part_b)
 		print len(part_c)
+		'''
+		#print abs_value_dist
+		
+		# delete all overlaps between different parts:
+		overlaps_to_delete = []
+		for ov in self.overlaps:
+			if (seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_a and seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_b) or (seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_b and seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_a):
+				overlaps_to_delete.append(self.overlaps[ov].id)
+		for ov_id in overlaps_to_delete:
+			self.delete_overlap(ov_id)
 		
 def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
 	n = len(sequence)
