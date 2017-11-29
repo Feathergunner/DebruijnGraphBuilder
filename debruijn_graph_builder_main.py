@@ -470,9 +470,13 @@ def construct_consensus_from_multiple_parts():
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 		
 		debruijn.compute_mincut()
+		filename_output += "_divided"
+		debruijn.get_asqg_output(filename = filename_output+".asqg")
+		debruijn.get_csv_output(filename = filename_output+".csv")
+		
 		debruijn.reduce_every_component_to_single_path_max_weight()
 		
-		debruijn.reduce_to_single_path_max_weight(verbose = False)
+		#debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
 		debruijn.construct_assembly_ordering_labels(verbose = False)
 		filename_output += "_singlepath"
