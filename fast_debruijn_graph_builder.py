@@ -1082,11 +1082,11 @@ class GraphData:
 		else:
 			return False, part_a, part_b
 			
-	def partition_graph_into_components_of_clusters():
-		components_to_potentially_cut = debruijn.get_components()
+	def partition_graph_into_components_of_clusters(self):
+		components_to_potentially_cut = self.get_components()
 		while (len(components_to_potentially_cut) > 0):
-			res, part_a, part_b = debruijn.compute_mincut(c[0])
-			c.pop(0)
+			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0])
+			components_to_potentially_cut.pop(0)
 			if res:
 				components_to_potentially_cut.append(part_a)
 				components_to_potentially_cut.append(part_b)
