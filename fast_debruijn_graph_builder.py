@@ -1058,11 +1058,13 @@ class GraphData:
 					
 		return secmin_eigenvalue, part_a, part_b, part_c
 					
-	def compute_mincut(self, divide_clusters=False, verbose=False):
+	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
 		print ("Do spectral clustering of the nodes into two clusters ...")
 		self.remove_irrelevant_overlaps()
 		
-		laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian([seq.id for seq in self.sequences])
+		if component < 0:
+			component = [seq.id for seq in self.sequences]
+		laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian(component)
 		
 		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id)
 		
@@ -1072,12 +1074,22 @@ class GraphData:
 		laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
 		secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b)
 		
-		if divide_clusters or (secmin_eigenvalue*10 < secmin_eigenvalue_a and secmin_eigenvalue*10 < secmin_eigenvalue_b):
+		if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a and secmin_eigenvalue*10 < secmin_eigenvalue_b):
 			if verbose:
 				print ("Cut graph according to partitions.")
 			self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
-		
-		return [part_a, part_b]
+			return True, part_a, part_b
+		else:
+			return False, part_a, part_b
+			
+	def partition_graph_into_components_of_clusters():
+		components_to_potentially_cut = debruijn.get_components()
+		while (len(components_to_potentially_cut) > 0):
+			res, part_a, part_b = debruijn.compute_mincut(c[0])
+			c.pop(0)
+			if res:
+				components_to_potentially_cut.append(part_a)
+				components_to_potentially_cut.append(part_b)
 		
 	def cut_graph_into_partitions(self, partitions, seq_id_to_index):
 		print ("Delete all overlaps between different parts ...")

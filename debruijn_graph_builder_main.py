@@ -582,20 +582,22 @@ def test_spectral_partitioning():
 	debruijn.write_sequences_to_file(filename = "Output/test/mincuttest_postcut_postreduce_sequences.txt")
 	
 def minimal_test_spectral_partitioning():
-	'''
+	#'''
 	dna_1 = dio.genereate_dna(length=1000)
-	dna_2 = dio.genereate_dna(length=1000)
-	dna_3 = dio.genereate_dna(length=100)
-	dna_1+=dna_2[-25:]+dna_3
+	#dna_2 = dio.genereate_dna(length=1000)
+	#dna_3 = dio.genereate_dna(length=100)
+	#dna_1+=dna_2[-25:]+dna_3
 	dio.write_dna_to_file("Output/test/genome_dna_test_1.txt", dna_1)
-	dio.write_dna_to_file("Output/test/genome_dna_test_2.txt", dna_2)
+	#dio.write_dna_to_file("Output/test/genome_dna_test_2.txt", dna_2)
 	#if not os.path.isfile("Output/test/testreads.txt"):
+	#sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads_1.txt", read_length=100, length_stddev=0, set_of_viruses=["dna_test_1"], number_of_reads=[300], replace_error_percentage=1.0, indel_error_percentage=0.0, inverted_reads=False)
 	sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads_1.txt", read_length=300, length_stddev=0, set_of_viruses=["dna_test_1"], number_of_reads=[1000], replace_error_percentage=3.0, indel_error_percentage=0.0, inverted_reads=False)
-	sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads_2.txt", read_length=300, length_stddev=0, set_of_viruses=["dna_test_2"], number_of_reads=[1000], replace_error_percentage=3.0, indel_error_percentage=0.0, inverted_reads=False)
-	'''
+	#sr.samplereads(input_filedir="Output/test/", output_filename="Output/test/testreads_2.txt", read_length=300, length_stddev=0, set_of_viruses=["dna_test_2"], number_of_reads=[1000], replace_error_percentage=3.0, indel_error_percentage=0.0, inverted_reads=False)
+	#'''
 	
 	reads_1 = dio.get_reads_from_file("Output/test/testreads_1.txt")
-	reads_2 = dio.get_reads_from_file("Output/test/testreads_2.txt")
+	#reads_2 = dio.get_reads_from_file("Output/test/testreads_2.txt")
+	reads_2 = []
 	k = 25
 	
 	debruijn = fdgb.GraphData(reads_1 + reads_2, k)
@@ -614,10 +616,7 @@ def minimal_test_spectral_partitioning():
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_precut.asqg")
-	
-	c = debruijn.get_components()
-	print ("number of components: "+str(len(c)))
-	debruijn.compute_mincut()
+	debruijn.partition_graph_into_components_of_clusters()
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_postcut.asqg")
 	
@@ -681,5 +680,6 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	construct_consensus_from_multiple_parts()
+	#construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
+	minimal_test_spectral_partitioning()
