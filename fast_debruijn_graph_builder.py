@@ -983,36 +983,31 @@ class GraphData:
 	def get_label_span(self):
 		return self.max_label - self.min_label
 		
-	def compute_mincut(self, divide_clusters=True):
-		print ("Do spectral clustering of the nodes into two clusters ...")
-		self.remove_irrelevant_overlaps()
-		# construct adjacency matrix as numpy-array:
-		x = []
-		y = []
-		
-		deg_entries = []
-		degrees = [0.0]*len([s for s in self.sequences if s.is_relevant])
-		
+	def construct_laplacian(self, list_of_nodes):
+		# this method constructs the laplacian for a specific subset of nodes
 		# maps original sequence_ids to smaller id for only relevant sequences (-> matrix position)
 		seq_id_to_index = {}
 		index_to_seq_id = {}
-
+		
 		# construct symmetric (i.e. undirected) adjacency matrix and diagonal matrix of vertex-degrees:
 		n = 0
-		for seq_s in self.sequences:
-			if seq_s.is_relevant:
-				if seq_s.id not in seq_id_to_index:
-					seq_id_to_index[seq_s.id] = n
-					index_to_seq_id[n] = seq_s.id
+		x = []
+		y = []
+		degrees = [0.0]*len([s_id for s_id in list_of_nodes if self.sequences[s_id].is_relevant])
+		for seq_s_id in list_of_nodes:
+			if self.sequences[seq_s_id].is_relevant:
+				if seq_s_id not in seq_id_to_index:
+					seq_id_to_index[seq_s_id] = n
+					index_to_seq_id[n] = seq_s_id
 					n += 1
-				s = seq_id_to_index[seq_s.id]
-				for seq_t in seq_s.overlaps_out:
-					if self.sequences[seq_t].is_relevant:
-						if seq_t not in seq_id_to_index:
-							seq_id_to_index[seq_t] = n
-							index_to_seq_id[n] = seq_t
+				s = seq_id_to_index[seq_s_id]
+				for seq_t_id in self.sequences[seq_s_id].overlaps_out:
+					if seq_t_id in list_of_nodes and self.sequences[seq_t_id].is_relevant:
+						if seq_t_id not in seq_id_to_index:
+							seq_id_to_index[seq_t_id] = n
+							index_to_seq_id[n] = seq_t_id
 							n += 1
-						t = seq_id_to_index[seq_t]
+						t = seq_id_to_index[seq_t_id]
 						degrees[s] += 1
 						degrees[t] += 1
 						x.append(s)
@@ -1027,9 +1022,11 @@ class GraphData:
 		# laplacian L = D - A
 		laplacian = -(adj_mat-deg_mat)
 		
+		return laplacian, seq_id_to_index, index_to_seq_id
+		
+	def construct_spectral_clusters(self, laplacian, index_to_seq_id):
 		[w,v] = la.eigs(laplacian, which='SM', k=2)
 		
-		# find second smallest eigenvalue and corresponding eigenvector:
 		min_eigenvalue = -1
 		min_eigenvalue_id = -1
 		secmin_eigenvalue = -1
@@ -1057,23 +1054,45 @@ class GraphData:
 				elif secmin_eigenvector[i] > 10e-8:
 					part_b.append(i)
 				else:
-					self.delete_sequence(index_to_seq_id[i])
 					part_c.append(i)
+					
+		return secmin_eigenvalue, part_a, part_b, part_c
+					
+	def compute_mincut(self, divide_clusters=False, verbose=False):
+		print ("Do spectral clustering of the nodes into two clusters ...")
+		self.remove_irrelevant_overlaps()
 		
-		if divide_clusters:
-			print ("Delete all overlaps between different parts ...")
-			overlaps_to_delete = []
-			for ov in self.overlaps:
-				if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_a:
-					if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_b:
-						overlaps_to_delete.append(ov)
-				if seq_id_to_index[self.overlaps[ov].contig_sequence_1] in part_b:
-					if seq_id_to_index[self.overlaps[ov].contig_sequence_2] in part_a:
-						overlaps_to_delete.append(ov)
-			for ov_id in set(overlaps_to_delete):
-				self.delete_overlap(ov_id)
+		laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian([seq.id for seq in self.sequences])
+		
+		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id)
+		
+		laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
+		secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a)
+		
+		laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
+		secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b)
+		
+		if divide_clusters or (secmin_eigenvalue*10 < secmin_eigenvalue_a and secmin_eigenvalue*10 < secmin_eigenvalue_b):
+			if verbose:
+				print ("Cut graph according to partitions.")
+			self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
 		
 		return [part_a, part_b]
+		
+	def cut_graph_into_partitions(self, partitions, seq_id_to_index):
+		print ("Delete all overlaps between different parts ...")
+		id_to_part={}
+		for i in range(len(partitions)):
+			for id in partitions[i]:
+				id_to_part[id]=i
+		
+		overlaps_to_delete = []
+		for ov in self.overlaps:
+			if not id_to_part[seq_id_to_index[self.overlaps[ov].contig_sequence_1]] == id_to_part[seq_id_to_index[self.overlaps[ov].contig_sequence_2]]:
+				overlaps_to_delete.append(ov)
+		
+		for ov_id in set(overlaps_to_delete):
+			self.delete_overlap(ov_id)
 	
 	def remove_irrelevant_overlaps(self):
 		ov_to_del = []
