@@ -11,9 +11,17 @@ import math
 
 #import gc
 
+'''
 def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
-
+'''
+	
+def print_progress(part, total, front_string="Progress:", end_string=""):
+	print front_string+" "+str("%6.2f" % ((float(part)/(float(total)/100)))) + "% "+end_string+"\r",
+	if part >= total:
+		print 
+	sys.stdout.flush()
+	
 class Read:
 	def __init__(self, read_id, sequence, weight=1):
 		self.id = read_id
@@ -170,8 +178,8 @@ class GraphData:
 			print ("Number of reads: "+str(number_of_reads))
 		for r in reads:
 			for read in r:
-				if (read_id%1000 == 0):
-					print_progress(read_id, number_of_reads)
+				if (read_id%1000 == 0 or read_id == number_of_reads-1):
+					print_progress(read_id, number_of_reads-1)
 				readdata = re.split(r',',read)
 				readseq = readdata[0]
 				if load_weights and len(readdata) > 1:
@@ -196,8 +204,8 @@ class GraphData:
 		# construct sequences from kmers:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
-			if (kmer.id % 10000 == 0):
-				print_progress(kmer.id, len(self.kmers))
+			if (kmer.id % 10000 == 0 or kmer.id == len(self.kmers)-1):
+				print_progress(kmer.id, len(self.kmers)-1)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = kmer.get_evidence_weight()
@@ -212,8 +220,8 @@ class GraphData:
 		print ("Construct overlaps ...")
 		read_number = 0
 		for read in self.reads:
-			if (read.id%1000 == 0):
-				print_progress(read_number, len(self.reads))
+			if (read.id%1000 == 0 or read_number == len(self.reads)-1):
+				print_progress(read_number, len(self.reads)-1)
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
@@ -260,9 +268,11 @@ class GraphData:
 		print ("Get kmer-data from reads ...")
 		read_index = 0
 		kmer_counter = 0
+		
+		progress_step = math.ceil(len(self.reads)/1000)
 		for read_index in range(len(self.reads)):
-			if read_index%1000 == 0 and not verbose:
-				print_progress(read_index, len(self.reads))
+			if (read_index%progress_step == 0 or read_index == range(len(self.reads)-1)) and not verbose:
+				print_progress(read_index, len(self.reads)-1)
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -386,8 +396,8 @@ class GraphData:
 		num_deleted_overlaps = 0
 		ov_counter = 0
 		for ov_index in ov_index_list:
-			if (ov_counter%10000 == 0):
-				print_progress(ov_counter, len(ov_index_list))
+			if (ov_counter%1000 == 0 or ov_counter == len(ov_index_list)-1):
+				print_progress(ov_counter, len(ov_index_list)-1)
 			ov_counter += 1
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
