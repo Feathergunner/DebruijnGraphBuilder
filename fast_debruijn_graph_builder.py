@@ -269,7 +269,7 @@ class GraphData:
 		read_index = 0
 		kmer_counter = 0
 		
-		progress_step = int(math.ceil(len(self.reads)/1000))
+		progress_step = max(1, int(math.ceil(len(self.reads)/1000)))
 		for read_index in range(len(self.reads)):
 			if (read_index%progress_step == 0 or read_index == range(len(self.reads)-1)) and not verbose:
 				print_progress(read_index, len(self.reads)-1)
