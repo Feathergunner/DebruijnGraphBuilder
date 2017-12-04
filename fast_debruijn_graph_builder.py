@@ -17,6 +17,8 @@ def print_progress(part, total):
 '''
 	
 def print_progress(part, total, front_string="Progress:", end_string=""):
+	if total <= 0:
+		total = part
 	print front_string+" "+str("%6.2f" % ((float(part)/(float(total)/100)))) + "% "+end_string+"\r",
 	if part >= total:
 		print 
