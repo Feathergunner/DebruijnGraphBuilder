@@ -1084,7 +1084,12 @@ class GraphData:
 		laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
 		secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b)
 		
-		if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a and secmin_eigenvalue*10 < secmin_eigenvalue_b):
+		if verbose:
+			print ("lambda_2 of this component: "+str(secmin_eigenvalue))
+			print ("lambda_2 of decomposition: "+str(secmin_eigenvalue_a)+","+str(secmin_eigenvalue_b))
+			
+		
+		if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a or secmin_eigenvalue*10 < secmin_eigenvalue_b):
 			if verbose:
 				print ("Cut graph according to partitions.")
 			self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
