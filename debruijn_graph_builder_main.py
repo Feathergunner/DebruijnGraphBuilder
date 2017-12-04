@@ -7,6 +7,8 @@ import gc
 import re
 import sys
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
 #import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
@@ -474,7 +476,7 @@ def construct_consensus_from_multiple_parts():
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		
-		debruijn.reduce_every_component_to_single_path_max_weight()
+		debruijn.reduce_every_component_to_single_path_max_weight(verbose=True)
 		
 		#debruijn.reduce_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
@@ -550,7 +552,7 @@ def test_spectral_partitioning():
 	reads = dio.get_reads_from_fastq_file(filename = "Data/2017-09-05_coronavirus.fq", num_of_reads = 500)
 	k = 25
 	
-	print len(reads)
+	print (len(reads))
 
 	debruijn = fdgb.GraphData([reads], k, alphabet={"A":"U", "C":"G", "G":"C", "U":"A"})
 	# delete reads and kmers to save ram:
@@ -671,6 +673,28 @@ def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, fil
 	import reconstruct_from_large_debruijn_graph as recons
 	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
 
+def get_readlength_distribution(filename, bucketsize=10):
+	readlengths = sorted([x[1] for x in dio.get_readlengths(filename)])
+	minlength = min(readlengths)
+	maxlength = max(readlengths)
+	
+	x = []
+	y = []
+	
+	current_index = 0
+	
+	print minlength
+	print maxlength
+	for b in range(minlength, maxlength, bucketsize):
+		x.append(b)
+		y.append(0)
+		while (current_index < len(readlengths) and readlengths[current_index] < b+bucketsize):
+			y[-1] += 1
+			
+	plt.plot(x,y)
+	plt.show()
+	return x, y
+	
 if __name__ == '__main__':
 	#test_reconstruction_4()
 	#test_recons_from_sequences()
@@ -680,6 +704,9 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	construct_consensus_from_multiple_parts()
+	#construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
+	get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq")
+	get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode02.fq")
+	get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode03.fq")

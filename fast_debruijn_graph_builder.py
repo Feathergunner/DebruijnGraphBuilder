@@ -17,16 +17,11 @@ def print_progress(part, total):
 '''
 	
 def print_progress(part, total, front_string="Progress:", end_string=""):
-	if total <= 0:
-		total = part
-	try:
+	if not total == 0:
 		print front_string+" "+str("%6.2f" % ((float(part)/(float(total)/100)))) + "% "+end_string+"\r",
-	except:
-		print part
-		print total
-	if part >= total:
-		print 
-	sys.stdout.flush()
+		if part >= total:
+			print 
+		sys.stdout.flush()
 	
 class Read:
 	def __init__(self, read_id, sequence, weight=1):
@@ -884,10 +879,13 @@ class GraphData:
 		print ("Reduction finished")
 		
 	def reduce_every_component_to_single_path_max_weight(self, verbose=False):
+		print ("Reducing every component to a single path with maximum local weight ...")
 		components = self.get_components()
-		print ("Number of components: "+str(len(components)))
+		if verbose:
+			print ("Number of components: "+str(len(components)))
 		for c in components:
-			print c[0]
+			if verbose:
+				print ("Size of this component: "+str(len(c)))
 			self.construct_assembly_ordering_labels(start_sequence=c[0])
 			start_sequence = -1
 			min_label = False
@@ -895,7 +893,8 @@ class GraphData:
 				if not min_label or self.sequences[seq_id].label < min_label:
 					start_sequence = seq_id
 					min_label = self.sequences[seq_id].label
-			print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
+			if verbose:
+				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c)
 		
 	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
@@ -1089,16 +1088,22 @@ class GraphData:
 		
 		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id, verbose)
 		
-		laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
-		secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a, verbose)
+		if len(part_a) > sqrt(len(componentlen)) and len(part_b) > sqrt(len(componentlen)):
+			# only consider a cut if parts of decomposition have significant size.
+			# compute eigenvalues of parts to check if decomposition increases clustering
+			laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
+			secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a, verbose)
+			
+			laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
+			secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b, verbose)
+			
+			if verbose:
+				print ("lambda_2 of this component: "+str(secmin_eigenvalue))
+				print ("lambda_2 of decomposition: "+str(secmin_eigenvalue_a)+","+str(secmin_eigenvalue_b))
+		else:
+			divide_clusters = False
 		
-		laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
-		secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b, verbose)
-		
-		if verbose:
-			print ("lambda_2 of this component: "+str(secmin_eigenvalue))
-			print ("lambda_2 of decomposition: "+str(secmin_eigenvalue_a)+","+str(secmin_eigenvalue_b))
-		
+		# only cut if decomposition significantly increases clustering-coefficient:
 		if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a or secmin_eigenvalue*10 < secmin_eigenvalue_b):
 			if verbose:
 				print ("Cut graph according to partitions.")
