@@ -1034,7 +1034,7 @@ class GraphData:
 		
 		return laplacian, seq_id_to_index, index_to_seq_id
 		
-	def construct_spectral_clusters(self, laplacian, index_to_seq_id):
+	def construct_spectral_clusters(self, laplacian, index_to_seq_id, verbose=False):
 		[w,v] = la.eigs(laplacian, which='SM', k=2)
 		
 		min_eigenvalue = -1
@@ -1065,6 +1065,11 @@ class GraphData:
 					part_b.append(i)
 				else:
 					part_c.append(i)
+		
+		if verbose:
+			print ("Number of nodes in first part: "+str(len(part_a)))
+			print ("Number of nodes in second part: "+str(len(part_b)))
+			print ("Number of nodes in neither part: "+str(len(part_c)))
 					
 		return secmin_eigenvalue, part_a, part_b, part_c
 					
@@ -1076,18 +1081,17 @@ class GraphData:
 			component = [seq.id for seq in self.sequences]
 		laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian(component)
 		
-		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id)
+		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id, verbose)
 		
 		laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
-		secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a)
+		secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a, verbose)
 		
 		laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
-		secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b)
+		secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b, verbose)
 		
 		if verbose:
 			print ("lambda_2 of this component: "+str(secmin_eigenvalue))
 			print ("lambda_2 of decomposition: "+str(secmin_eigenvalue_a)+","+str(secmin_eigenvalue_b))
-			
 		
 		if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a or secmin_eigenvalue*10 < secmin_eigenvalue_b):
 			if verbose:
@@ -1095,12 +1099,14 @@ class GraphData:
 			self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
 			return True, part_a, part_b
 		else:
+			if verbose:
+				print ("Do not cut graph.")
 			return False, part_a, part_b
 			
-	def partition_graph_into_components_of_clusters(self):
+	def partition_graph_into_components_of_clusters(self, verbose=False):
 		components_to_potentially_cut = self.get_components()
 		while (len(components_to_potentially_cut) > 0):
-			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0])
+			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0], verbose)
 			components_to_potentially_cut.pop(0)
 			if res:
 				components_to_potentially_cut.append(part_a)
