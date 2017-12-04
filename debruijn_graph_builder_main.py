@@ -704,9 +704,9 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	#construct_consensus_from_multiple_parts()
+	construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq")
-	get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode02.fq")
-	get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode03.fq")
+	#get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq")
+	#get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode02.fq")
+	#get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode03.fq")

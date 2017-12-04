@@ -1088,7 +1088,7 @@ class GraphData:
 		
 		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id, verbose)
 		
-		if len(part_a) > math.sqrt(len(componentlen)) and len(part_b) > math.sqrt(len(componentlen)):
+		if len(part_a) > math.sqrt(len(component)) and len(part_b) > math.sqrt(len(component)):
 			# only consider a cut if parts of decomposition have significant size.
 			# compute eigenvalues of parts to check if decomposition increases clustering
 			laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
