@@ -148,8 +148,10 @@ def print_alignment(dna, alignments):
 			alignment_position = 0
 
 def get_readlengths(filename):
+	print ("Get readlengths from file "+filename)
 	reads = get_reads_from_fastq_file(filename)
 	n = len(reads)
+	print ("Number of reads: "+str(n))
 	readlengths = [0]*n
 	for i in range(n):
 		readlengths[i] = [len(reads[i]),i]

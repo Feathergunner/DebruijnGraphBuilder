@@ -673,25 +673,25 @@ def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, fil
 	import reconstruct_from_large_debruijn_graph as recons
 	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
 
-def get_readlength_distribution(filename, bucketsize=10):
-	readlengths = sorted([x[1] for x in dio.get_readlengths(filename)])
+def get_readlength_distribution(filename, bucketsize=1000):
+	readlengths = sorted([x[0] for x in dio.get_readlengths(filename)])
 	minlength = min(readlengths)
 	maxlength = max(readlengths)
 	
 	x = []
 	y = []
-	
 	current_index = 0
-	
-	print minlength
-	print maxlength
 	for b in range(minlength, maxlength, bucketsize):
 		x.append(b)
-		y.append(0)
+		y_val = 0
 		while (current_index < len(readlengths) and readlengths[current_index] < b+bucketsize):
-			y[-1] += 1
+			y_val += 1
+			current_index += 1
+		#print (str(b)+" : "+str(y_val))
+		y.append(y_val)
 			
-	plt.plot(x,y)
+	#plt.plot(x, [math.log10(i+1) for i in y])
+	plt.plot(x, y)
 	plt.show()
 	return x, y
 	
