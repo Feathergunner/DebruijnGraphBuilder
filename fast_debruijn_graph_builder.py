@@ -1108,7 +1108,7 @@ class GraphData:
 		while (len(components_to_potentially_cut) > 0):
 			if verbose:
 				print ("current number of components to consider: "+str(len(components_to_potentially_cut)))
-			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0], verbose)
+			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0], verbose=verbose)
 			components_to_potentially_cut.pop(0)
 			if res:
 				components_to_potentially_cut.append(part_a)
