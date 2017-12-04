@@ -469,7 +469,7 @@ def construct_consensus_from_multiple_parts():
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 		
-		debruijn.partition_graph_into_components_of_clusters(verbose=False)
+		debruijn.partition_graph_into_components_of_clusters(verbose=True)
 		filename_output += "_divided"
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
