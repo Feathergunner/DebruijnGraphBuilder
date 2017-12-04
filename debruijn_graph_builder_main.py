@@ -431,7 +431,7 @@ def test_assembly_ordering():
 	debruijn.get_csv_output(filename = filename_output+".csv")
 
 def construct_consensus_from_multiple_parts():
-	size_of_parts = 500
+	size_of_parts = 100
 	k = 50
 	filename = "Data/hcov229e_only.fq"
 	filepath_output = "Output/corona_recons_multiparts"
@@ -441,9 +441,9 @@ def construct_consensus_from_multiple_parts():
 
 	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
 	n = len(readpartition)
-	p = n-1#3*(n/4)
+	p = n-2#3*(n/4)
 	# consider only second half of partition (parts with longer reads)
-	for rp in readpartition[p:]:
+	for rp in readpartition[p:n-1]:
 		minreadlength = min([x[0] for x in rp])
 		#k = get_adaptive_k(minreadlength)
 		p += 1
@@ -469,7 +469,7 @@ def construct_consensus_from_multiple_parts():
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 		
-		debruijn.partition_graph_into_components_of_clusters()
+		debruijn.partition_graph_into_components_of_clusters(verbose=False)
 		filename_output += "_divided"
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
@@ -616,7 +616,7 @@ def minimal_test_spectral_partitioning():
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_precut.asqg")
-	debruijn.partition_graph_into_components_of_clusters(verbose=True)
+	debruijn.partition_graph_into_components_of_clusters(verbose=False)
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_postcut.asqg")
 	
