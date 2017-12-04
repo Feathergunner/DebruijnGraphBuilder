@@ -680,6 +680,6 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	#construct_consensus_from_multiple_parts()
+	construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
-	minimal_test_spectral_partitioning()
+	#minimal_test_spectral_partitioning()
