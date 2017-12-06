@@ -998,7 +998,7 @@ class GraphData:
 	def get_label_span(self):
 		return self.max_label - self.min_label
 		
-	def construct_laplacian(self, list_of_nodes):
+	def construct_laplacian(self, list_of_nodes, verbose=False):
 		# this method constructs the laplacian for a specific subset of nodes
 		# maps original sequence_ids to smaller id for only relevant sequences (-> matrix position)
 		seq_id_to_index = {}
@@ -1080,7 +1080,7 @@ class GraphData:
 					
 	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
 		print ("Do spectral clustering of the nodes into two clusters ...")
-		absoulute_minimum_component_size = 100
+		absoulute_minimum_component_size = 1000
 		
 		self.remove_irrelevant_overlaps()
 		
