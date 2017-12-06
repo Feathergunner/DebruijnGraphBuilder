@@ -436,7 +436,7 @@ def construct_consensus_from_multiple_parts():
 	size_of_parts = 1000
 	k = 50
 	#filename = "Data/hcov229e_only.fq"
-	filename = Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq
+	filename = "Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq"
 	filepath_output = "Output/ringtrial"
 	filename_output_base = filepath_output+"/rt_partsize"+str(size_of_parts)
 	if not os.path.exists(filepath_output):
