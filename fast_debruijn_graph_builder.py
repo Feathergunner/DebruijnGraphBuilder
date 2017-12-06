@@ -1080,41 +1080,46 @@ class GraphData:
 					
 	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
 		print ("Do spectral clustering of the nodes into two clusters ...")
+		absoulute_minimum_component_size = 100
+		
 		self.remove_irrelevant_overlaps()
 		
 		if component < 0:
 			component = [seq.id for seq in self.sequences]
-		laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian(component)
-		
-		secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id, verbose)
-		
-		min_part_size = max(100, math.sqrt(len(component)))
-		
-		if len(part_a) > min_part_size and len(part_b) > min_part_size:
-			# only consider a cut if parts of decomposition have significant size.
-			# compute eigenvalues of parts to check if decomposition increases clustering
-			laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
-			secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a, verbose)
+		if len(component) > absoulute_minimum_component_size:
+			laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian(component)
 			
-			laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
-			secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b, verbose)
+			secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id, verbose)
 			
-			if verbose:
-				print ("lambda_2 of this component: "+str(secmin_eigenvalue))
-				print ("lambda_2 of decomposition: "+str(secmin_eigenvalue_a)+","+str(secmin_eigenvalue_b))
+			min_part_size = max(absoulute_minimum_component_size, math.sqrt(len(component)))
+			
+			if len(part_a) > min_part_size and len(part_b) > min_part_size:
+				# only consider a cut if parts of decomposition have significant size.
+				# compute eigenvalues of parts to check if decomposition increases clustering
+				laplacian_a, seq_id_to_index_a, index_to_seq_id_a = self.construct_laplacian([index_to_seq_id[i] for i in part_a])
+				secmin_eigenvalue_a, part_a_a, part_b_a, part_c_a = self.construct_spectral_clusters(laplacian_a, index_to_seq_id_a, verbose)
+				
+				laplacian_b, seq_id_to_index_b, index_to_seq_id_b = self.construct_laplacian([index_to_seq_id[i] for i in part_b])
+				secmin_eigenvalue_b, part_a_b, part_b_b, part_c_b = self.construct_spectral_clusters(laplacian_b, index_to_seq_id_b, verbose)
+				
+				if verbose:
+					print ("lambda_2 of this component: "+str(secmin_eigenvalue))
+					print ("lambda_2 of decomposition: "+str(secmin_eigenvalue_a)+","+str(secmin_eigenvalue_b))
+			else:
+				divide_clusters = False
+			
+			# only cut if decomposition significantly increases clustering-coefficient:
+			if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a or secmin_eigenvalue*10 < secmin_eigenvalue_b):
+				if verbose:
+					print ("Cut graph according to partitions.")
+				self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
+				return True, part_a, part_b
+			else:
+				if verbose:
+					print ("Do not cut graph.")
+				return False, part_a, part_b
 		else:
-			divide_clusters = False
-		
-		# only cut if decomposition significantly increases clustering-coefficient:
-		if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a or secmin_eigenvalue*10 < secmin_eigenvalue_b):
-			if verbose:
-				print ("Cut graph according to partitions.")
-			self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
-			return True, part_a, part_b
-		else:
-			if verbose:
-				print ("Do not cut graph.")
-			return False, part_a, part_b
+			return False, component, []
 			
 	def partition_graph_into_components_of_clusters(self, verbose=False):
 		components_to_potentially_cut = self.get_components()
