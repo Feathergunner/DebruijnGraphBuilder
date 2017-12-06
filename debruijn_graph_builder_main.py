@@ -433,7 +433,7 @@ def test_assembly_ordering():
 	debruijn.get_csv_output(filename = filename_output+".csv")
 
 def construct_consensus_from_multiple_parts():
-	size_of_parts = 300
+	size_of_parts = 1000
 	k = 50
 	filename = "Data/hcov229e_only.fq"
 	filepath_output = "Output/corona_recons_multiparts"
@@ -441,9 +441,9 @@ def construct_consensus_from_multiple_parts():
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
 
-	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts)
+	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts, max_readlength=10000)
 	n = len(readpartition)
-	p = n-10#3*(n/4)
+	p = n-1#3*(n/4)
 	# consider only second half of partition (parts with longer reads)
 	for rp in readpartition[p:]:
 		minreadlength = min([x[0] for x in rp])

@@ -166,9 +166,10 @@ def get_read_subset_by_readlength(filename, minlength, maxlength):
 
 	return read_ids
 
-def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts=-1, verbose=False):
+def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts=-1, max_readlength=-1, verbose=False):
 	readlengths = get_readlengths(filename)
 	readlengths_sorted = sorted(readlengths, key=lambda x: x[0])
+	readlengths_sorted_reduced = [x for x in readlengths_sorted if (x[0] <= max_readlength or max_readlength == -1)]
 	
 	if number_of_parts*size_of_parts>0:
 		print ("Error! Exactly one of the parameters number_of_parts and size_of_parts has to be specified!")
@@ -176,9 +177,9 @@ def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts
 
 	parts = []
 	if number_of_parts > 0:
-		size_of_parts = len(readlengths)/number_of_parts
+		size_of_parts = len(readlengths_sorted_reduced)/number_of_parts
 	elif size_of_parts > 0:
-		number_of_parts = len(readlengths)/size_of_parts
+		number_of_parts = len(readlengths_sorted_reduced)/size_of_parts
 
 	if verbose:
 		print ("size_of_parts = "+str(size_of_parts))
@@ -186,9 +187,9 @@ def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts
 
 	for i in range(number_of_parts):
 		if i == number_of_parts-1:
-			partend = len(readlengths)-1
+			partend = len(readlengths_sorted_reduced)-1
 		else:
 			partend = size_of_parts*(i+1)
-		parts.append(readlengths_sorted[size_of_parts*i:partend])
+		parts.append(readlengths_sorted_reduced[size_of_parts*i:partend])
 
 	return parts
