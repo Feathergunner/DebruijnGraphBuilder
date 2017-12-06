@@ -1087,6 +1087,9 @@ class GraphData:
 		if component < 0:
 			component = [seq.id for seq in self.sequences]
 		if len(component) > absoulute_minimum_component_size:
+			if verbose:
+				print ("Size of component: "+str(len(component)))
+				print ("Component is large enough to consider a spectral cut")
 			laplacian, seq_id_to_index, index_to_seq_id = self.construct_laplacian(component)
 			
 			secmin_eigenvalue, part_a, part_b, part_c = self.construct_spectral_clusters(laplacian, index_to_seq_id, verbose)
