@@ -9,19 +9,7 @@ import scipy.sparse
 from scipy.sparse import linalg as la
 import math
 
-#import gc
-
-'''
-def print_progress(part, total):
-	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
-'''
-	
-def print_progress(part, total, front_string="Progress:", end_string=""):
-	if not total == 0:
-		print front_string+" "+str("%6.2f" % ((float(part)/(float(total)/100)))) + "% "+end_string+"\r",
-		if part >= total:
-			print 
-		sys.stdout.flush()
+import meta
 	
 class Read:
 	def __init__(self, read_id, sequence, weight=1):
@@ -180,7 +168,7 @@ class GraphData:
 		for r in reads:
 			for read in r:
 				if (read_id%1000 == 0 or read_id == number_of_reads-1):
-					print_progress(read_id, number_of_reads-1)
+					meta.print_progress(read_id, number_of_reads-1)
 				readdata = re.split(r',',read)
 				readseq = readdata[0]
 				if load_weights and len(readdata) > 1:
@@ -206,7 +194,7 @@ class GraphData:
 		print ("Construct Sequences from k-mers ...")
 		for kmer in self.kmers:
 			if (kmer.id % 10000 == 0 or kmer.id == len(self.kmers)-1):
-				print_progress(kmer.id, len(self.kmers)-1)
+				meta.print_progress(kmer.id, len(self.kmers)-1)
 			seq_id = kmer.id
 			seq_inv_id = kmer.id_of_inverse_kmer
 			weight = kmer.get_evidence_weight()
@@ -222,7 +210,7 @@ class GraphData:
 		read_number = 0
 		for read in self.reads:
 			if (read.id%1000 == 0 or read_number == len(self.reads)-1):
-				print_progress(read_number, len(self.reads)-1)
+				meta.print_progress(read_number, len(self.reads)-1)
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
@@ -273,7 +261,7 @@ class GraphData:
 		progress_step = max(1, int(math.ceil(len(self.reads)/1000)))
 		for read_index in range(len(self.reads)):
 			if (read_index%progress_step == 0 or read_index == range(len(self.reads)-1)) and not verbose:
-				print_progress(read_index, len(self.reads)-1)
+				meta.print_progress(read_index, len(self.reads)-1)
 			elif verbose:
 				print ("Current read: "+str(read_index)+"/"+str(len(self.reads)) + " - " + self.reads[read_index].sequence)
 			current_read_sequence = self.reads[read_index].sequence
@@ -303,7 +291,7 @@ class GraphData:
 					if verbose:
 						print ("Kmer does not exist in database. Add new kmer ...")
 					
-					inv_kmer_seq = get_inverse_sequence(new_kmer_sequence, self.alphabet)
+					inv_kmer_seq = meta.get_inverse_sequence(new_kmer_sequence, self.alphabet)
 					if not inv_kmer_seq == new_kmer_sequence:
 						# add kmer:
 						self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index], baseweight=current_read_weight))
@@ -358,10 +346,11 @@ class GraphData:
 			ov_id = self.sequences[source_seq_id].overlaps_out[target_seq_id]
 		self.overlaps[ov_id].add_evidence(read_evidence)
 	
+	'''
 	def add_overlaps_for_sequences_with_small_insert_distance(self, max_insert_distance=1, verbose = False):
 		print ("Adding overlaps to sequences with small insert distance ...")
 		for sequence_id_1 in range(len(self.sequences)):
-			print_progress(sequence_id_1, len(self.sequences))
+			meta.print_progress(sequence_id_1, len(self.sequences))
 			if self.sequences[sequence_id_1].is_relevant:
 				for sequence_id_2 in range(sequence_id_1+1, len(self.sequences)):
 					if self.sequences[sequence_id_2].is_relevant:
@@ -380,11 +369,12 @@ class GraphData:
 						common_reads = [r for r in reads_seq_1 if r in reads_seq_2]
 						if len(common_reads) == 0:
 							#if not sequence_id_2 in self.sequences[sequence_id_1].overlaps_in:
-							if compute_insert_distance(s1[l1-self.k_value:], s2[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
+							if meta.compute_insert_distance(s1[l1-self.k_value:], s2[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
 								self.increment_overlap(sequence_id_1, sequence_id_2, -1)
 							#if not sequence_id_1 in self.sequences[sequence_id_2].overlaps_in:
-							if compute_insert_distance(s2[l2-self.k_value:], s1[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
+							if meta.compute_insert_distance(s2[l2-self.k_value:], s1[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
 								self.increment_overlap(sequence_id_2, sequence_id_1, -1)
+	'''
 
 	def contract_unique_overlaps(self, verbose = False):
 		# This method contracts all overlaps between adjacent sequences that form an unique path
@@ -398,7 +388,7 @@ class GraphData:
 		ov_counter = 0
 		for ov_index in ov_index_list:
 			if (ov_counter%1000 == 0 or ov_counter == len(ov_index_list)-1):
-				print_progress(ov_counter, len(ov_index_list)-1)
+				meta.print_progress(ov_counter, len(ov_index_list)-1)
 			ov_counter += 1
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
@@ -461,7 +451,7 @@ class GraphData:
 			print (self.sequences[target_id].print_data())
 		
 		
-		if not self.sequences[source_id].sequence == get_inverse_sequence(self.sequences[target_id].sequence, self.alphabet):
+		if not self.sequences[source_id].sequence == meta.get_inverse_sequence(self.sequences[target_id].sequence, self.alphabet):
 			# combine nucleotide sequences:
 			self.sequences[source_id].sequence += self.sequences[target_id].sequence[self.k_value-1:self.sequences[target_id].get_length()]
 			if verbose:
@@ -1158,50 +1148,4 @@ class GraphData:
 		for ov in ov_to_del:
 			self.overlaps.pop(ov)
 		
-def get_inverse_sequence(sequence, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}):
-	n = len(sequence)
-	inv_sequence = [""]*n
-	for char_position in range(len(sequence)):
-		current_char = sequence[char_position]
-		if current_char in alphabet:
-			inv_sequence[n-char_position-1] = alphabet[current_char]
-		else:
-			print (sequence)
-			print (current_char)
-			print ("Error! Incorrect Alphabet!")
-			break
-	return ''.join(inv_sequence)
 
-def compute_insert_distance(sequence_1, sequence_2, maxdist = -1):
-	# algorithm may not work properly for arbitrary large insert-distances,
-	# but is correct if local insert-distace is <= 1
-	# returns insert-distance if insert_distance <= maxdist,
-	# otherwise returns maxdist + x for a x >= 1
-	if not len(sequence_1) == len(sequence_2):
-		return -1
-	index_1 = 0
-	index_2 = 0
-	
-	insert_distance = 0
-	n = len(sequence_1)
-	if maxdist < 0:
-		maxdist = n
-	while (insert_distance < (maxdist+1) and index_1 < n and index_2 < n):
-		t1 = 0
-		t2 = 0
-		
-		while (index_1 + t1 < n and (not sequence_1[index_1+t1] == sequence_2[index_2])):
-			t1 += 1
-		while (index_2 + t2 < n and (not sequence_1[index_1] == sequence_2[index_2+t2])):
-			t2 += 1
-			
-		if t1 <= t2:
-			index_1 += t1
-			insert_distance += t1
-		elif t2 < t1:
-			index_2 += t2
-			insert_distance += t2
-			
-		index_1 += 1
-		index_2 += 1
-	return insert_distance

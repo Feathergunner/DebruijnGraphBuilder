@@ -7,16 +7,17 @@ import gc
 import re
 import sys
 import math
-import numpy as np
-import matplotlib.pyplot as plt
 
 #import debruijn_graph_builder as dgb
 import fast_debruijn_graph_builder as fdgb
 import veryfast_debruijn_graph_builder as vfdgb
 #import parallel_fast_debruijn_graph_builder as pfdgb
 import data_io as dio
+import data_gen as dgen
 import sampleReads as sr
 import manjasDefinitionen as md
+
+import meta
 
 '''
 dna = dio.genereate_dna(length=500)
@@ -673,29 +674,65 @@ def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, fil
 	
 	import reconstruct_from_large_debruijn_graph as recons
 	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
+	
+def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=3000, number_of_variations=5):
+	filename_output = "Output/test/test_clustercut_on_quasispecies"
 
-def get_readlength_distribution(filename, bucketsize=1000):
-	readlengths = sorted([x[0] for x in dio.get_readlengths(filename)])
-	minlength = min(readlengths)
-	maxlength = max(readlengths)
+	dna_partsize_mean = dna_length/3
+	dna_partsize_variation = dna_length/100
+	number_of_reads_per_dna = 3000
+	mean_readlength = 300
+
+	dnas = []
+	reads = []
+	for dna_i in range(number_of_base_dnas):
+		dnas += dgen.generate_set_of_related_dnas(length=dna_length, mean_partsize=dna_partsize_mean, variation_partsize=dna_partsize_variation, number_of_dnas=number_of_variations)
+		
+	print ("Number of generated dnas: "+str(len(dnas)))
 	
-	x = []
-	y = []
-	current_index = 0
-	for b in range(minlength, maxlength, bucketsize):
-		x.append(b)
-		y_val = 0
-		while (current_index < len(readlengths) and readlengths[current_index] < b+bucketsize):
-			y_val += 1
-			current_index += 1
-		#print (str(b)+" : "+str(y_val))
-		y.append(y_val)
-			
-	#plt.plot(x, [math.log10(i+1) for i in y])
-	plt.plot(x, y)
-	plt.show()
-	return x, y
+	for dna_i in range(len(dnas)):
+		meta.print_progress(dna_i, len(dnas)-1, front_string="Generate reads. Progress: ")
+		filename = "Output/test/test_clustercut_on_quasispecies_dna_"+str(dna_i)
+		dgen.write_dna_to_file(filename, dnas[dna_i])
+		reads += dgen.samplereads(dna=dnas[dna_i], number_of_reads=number_of_reads_per_dna, replace_error_percentage=1.0, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=mean_readlength, read_length_stddev=0, readlength_distribution='gaussian')
+		
+	print ("Number of generated reads: "+str(len(reads)))
 	
+	k = 30
+	debruijn = fdgb.GraphData([reads], k)
+	
+	
+	# delete reads and kmers to save ram:
+	debruijn.reads = []
+	debruijn.kmers = []
+	# run garbage collector:
+	gc.collect()
+	
+	debruijn.remove_parallel_sequences(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	
+	debruijn.remove_single_sequence_components()
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+    
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
+	
+	debruijn.partition_graph_into_components_of_clusters(verbose=True)
+	filename_output += "_divided"
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	
+	debruijn.reduce_every_component_to_single_path_max_weight(verbose=True)
+	
+	#debruijn.reduce_to_single_path_max_weight(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.construct_assembly_ordering_labels(verbose = False)
+	filename_output += "_singlepath"
+	debruijn.get_asqg_output(filename = filename_output+".asqg")
+	debruijn.get_csv_output(filename = filename_output+".csv")
+	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
+
 if __name__ == '__main__':
 	#test_reconstruction_4()
 	#test_recons_from_sequences()
@@ -705,9 +742,8 @@ if __name__ == '__main__':
 	
 	#test_assembly_ordering()
 	#exp_construct_consensus_from_specific_part()
-	construct_consensus_from_multiple_parts()
+	#construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	#get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq")
-	#get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode02.fq")
-	#get_readlength_distribution("Data/2017-11-03_ringtrial_v2.1.3_barcode03.fq")
+	
+	test_clustercut_on_quasispecies()
