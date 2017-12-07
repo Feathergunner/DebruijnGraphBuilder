@@ -5,6 +5,7 @@ import random
 from random import randint
 import re
 from numpy import random as nura
+import math
 
 import meta
 
@@ -84,12 +85,12 @@ def genereate_reads(dna, coverage=50, avg_read_length=50, mutation_pct=0.1, muta
 			if variation < 0:
 				variation = 1+avg_read_length/5
 			if readlength_distribution == 'gaussian':
-				read_lengt_variation = int(random.gauss(mu=0, sigma=variation))
+				read_length_variation = int(random.gauss(mu=0, sigma=variation))
 			elif readlength_distribution == 'exponential':
-				read_lengt_variation = int(nura.exponential(scale=variation))
+				read_length_variation = int(nura.exponential(scale=variation))
 			if verbose:
-				print "read_length_variation: "+str(read_lengt_variation)
-			next_index = min(cur_index+avg_read_length+read_lengt_variation, dna_length)
+				print "read_length_variation: "+str(read_length_variation)
+			next_index = min(cur_index+avg_read_length+read_length_variation, dna_length)
 			new_read = dna[cur_index:next_index]
 			for s_i in range(len(new_read)):
 				if random.choice(range(10000)) < mutation_pct*100:
@@ -119,18 +120,22 @@ def samplereads(dna,
 				inverted_reads=False,
 				verbose=False):
 				
-	if verbose:
-		print ("Sample reads from dna ...")
+	print ("Sample reads from dna ...")
 	reads = []
 	# construct reads:
 	for n in range(number_of_reads):
+		meta.print_progress(n, number_of_reads-1)
 		
 		if readlength_distribution == 'gaussian':
 			readlength = int(random.gauss(mu=read_length_mean, sigma=read_length_stddev))
 		elif readlength_distribution == 'exponential':
-			readlength = int(0.5*read_length_mean + 0.5*nura.exponential(scale=1.0/read_length_mean))
+			readlength = int(0.1*read_length_mean + 0.9*nura.exponential(scale=read_length_mean))
+			if readlength > read_length_mean:
+				scalefactor = 1+(1.0*readlength)/len(dna)
+				readlength = int(readlength*scalefactor)
 		else:
 			readlength = read_length_mean
+		readlength = min(readlength, len(dna)-readlength-1)
 		read_start_index = randint(0, len(dna)-readlength)
 		sampleread = ''.join(dna[read_start_index:read_start_index+readlength])
 		

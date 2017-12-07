@@ -12,6 +12,23 @@ def print_progress(part, total):
 	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
 '''
 	
+def get_adaptive_k(readlength):
+	'''
+	if readlength < 100:
+		return 25
+	elif readlength < 200:
+		return 30
+	elif readlength < 500:
+		return 35
+	elif readlength < 1000:
+		return 40
+	elif readlength < 3000:
+		return 45
+	else:
+		return 50
+	'''
+	return int(math.log(readlength, 2)*4)
+
 def print_progress(part, total, front_string="Progress:", end_string=""):
 	if not total == 0:
 		print front_string+" "+str("%6.2f" % ((float(part)/(float(total)/100)))) + "% "+end_string+"\r",
@@ -67,7 +84,7 @@ def compute_insert_distance(sequence_1, sequence_2, maxdist = -1):
 		index_2 += 1
 	return insert_distance
 	
-def get_readlength_distribution(filename, bucketsize=1000):
+def get_readlength_distribution_from_fastq_file(filename, bucketsize=1000):
 	readlengths = sorted([x[0] for x in dio.get_readlengths(filename)])
 	minlength = min(readlengths)
 	maxlength = max(readlengths)
@@ -85,6 +102,38 @@ def get_readlength_distribution(filename, bucketsize=1000):
 		y.append(y_val)
 			
 	#plt.plot(x, [math.log10(i+1) for i in y])
+	plt.plot(x, y)
+	plt.show()
+	return x, y
+
+def get_readlength_distribution(reads, bucketsize=1000):
+	n = len(reads)
+	readlengths = [0]*n
+	for i in range(n):
+		readlengths[i] = [len(reads[i]),i]
+	sorted_readlengths = sorted([x[0] for x in readlengths])
+	minlength = min(sorted_readlengths)
+	maxlength = max(sorted_readlengths)
+	avglength = sum(sorted_readlengths)/n
+	
+	x = []
+	y = []
+	current_index = 0
+	for b in range(minlength, maxlength, bucketsize):
+		x.append(b)
+		y_val = 0
+		while (current_index < n and sorted_readlengths[current_index] < b+bucketsize):
+			y_val += 1
+			current_index += 1
+		#print (str(b)+" : "+str(y_val))
+		y.append(y_val)
+	
+	print ("minlength: "+str(minlength))
+	print ("maxlength: "+str(maxlength))
+	print ("avglength: "+str(avglength))
+
+	plt.plot(x, [math.log10(i+1) for i in y])
+	plt.show()
 	plt.plot(x, y)
 	plt.show()
 	return x, y
