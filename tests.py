@@ -6,6 +6,8 @@ import data_gen as dgen
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
 
+import gc
+
 def test_assembly_ordering():
 	gl = 2000
 	rl = 500
@@ -224,9 +226,9 @@ def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=3000, numb
 
 def test_exponential_readlengths():
 	dna = dgen.generate_dna(length=30000)
-	reads = dgen.samplereads(dna, number_of_reads=5000, read_length_mean=1000, readlength_distribution='exponential')
+	reads = dgen.samplereads(dna, number_of_reads=10000, read_length_mean=1000, readlength_distribution='exponential')
 	meta.get_readlength_distribution(reads, 200)
 
 if __name__ == '__main__':
-	#test_clustercut_on_quasispecies()
-	test_exponential_readlengths()
+	test_clustercut_on_quasispecies()
+	#test_exponential_readlengths()

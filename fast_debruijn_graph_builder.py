@@ -1030,44 +1030,56 @@ class GraphData:
 		return laplacian, seq_id_to_index, index_to_seq_id
 		
 	def construct_spectral_clusters(self, laplacian, index_to_seq_id, verbose=False):
-		[w,v] = la.eigs(laplacian, which='SM', k=2)
-		
-		min_eigenvalue = -1
-		min_eigenvalue_id = -1
-		secmin_eigenvalue = -1
-		secmin_eigenvalue_id = -1
-		
-		for i in range(len(w)):
-			if min_eigenvalue_id < 0 or w[i] < min_eigenvalue:
-				secmin_eigenvalue = min_eigenvalue
-				secmin_eigenvalue_id = min_eigenvalue_id
-				min_eigenvalue = w[i]
-				min_eigenvalue_id = i
-			elif secmin_eigenvalue_id < 0 or w[i] < secmin_eigenvalue:
-				secmin_eigenvalue = w[i]
-				secmin_eigenvalue_id = i
-			
-		secmin_eigenvector = v[:,i]
-		
 		part_a = []
 		part_b = []
 		part_c = []
-		for i in range(len(secmin_eigenvector)):
-			if self.sequences[index_to_seq_id[i]].is_relevant:
-				if secmin_eigenvector[i] < -10e-8:
-					part_a.append(i)
-				elif secmin_eigenvector[i] > 10e-8:
-					part_b.append(i)
-				else:
-					part_c.append(i)
 		
-		if verbose:
-			print ("Number of nodes in first part: "+str(len(part_a)))
-			print ("Number of nodes in second part: "+str(len(part_b)))
-			print ("Number of nodes in neither part: "+str(len(part_c)))
+		try:
+			[w,v] = la.eigs(laplacian, which='SM', k=2)
+		
+			min_eigenvalue = -1
+			min_eigenvalue_id = -1
+			secmin_eigenvalue = -1
+			secmin_eigenvalue_id = -1
+			
+			for i in range(len(w)):
+				if min_eigenvalue_id < 0 or w[i] < min_eigenvalue:
+					secmin_eigenvalue = min_eigenvalue
+					secmin_eigenvalue_id = min_eigenvalue_id
+					min_eigenvalue = w[i]
+					min_eigenvalue_id = i
+				elif secmin_eigenvalue_id < 0 or w[i] < secmin_eigenvalue:
+					secmin_eigenvalue = w[i]
+					secmin_eigenvalue_id = i
+				
+			secmin_eigenvector = v[:,i]
+			
+			for i in range(len(secmin_eigenvector)):
+				if self.sequences[index_to_seq_id[i]].is_relevant:
+					if secmin_eigenvector[i] < -10e-8:
+						part_a.append(i)
+					elif secmin_eigenvector[i] > 10e-8:
+						part_b.append(i)
+					else:
+						part_c.append(i)
+			
+			if verbose:
+				print ("Number of nodes in first part: "+str(len(part_a)))
+				print ("Number of nodes in second part: "+str(len(part_b)))
+				print ("Number of nodes in neither part: "+str(len(part_c)))
+						
+		
+		except (la.ArpackNoConvergence):
+			print ("No convergence during computation of eigenvalues!")
+			print ("No partition computed.")
+			
+			secmin_eigenvalue = -1
+			for i in range(laplacian.shape[0]):
+				part_a.append(i)
 					
 		return secmin_eigenvalue, part_a, part_b, part_c
-					
+		
+		
 	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
 		print ("Do spectral clustering of the nodes into two clusters ...")
 		absoulute_minimum_component_size = 1000
