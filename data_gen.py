@@ -148,7 +148,7 @@ def samplereads(dna,
 				# in/del 50/50:
 				if randint(0,100) < 50:
 					# insert:
-					insertbase = choice(alphabet)
+					insertbase = random.choice(mutation_alphabet)
 					sampleread = sampleread[:i] + insertbase + sampleread[i:]
 				else:
 					sampleread = sampleread[:i] + sampleread[(i+1):]				
