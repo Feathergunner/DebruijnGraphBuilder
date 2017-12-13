@@ -897,9 +897,12 @@ class GraphData:
 	def reduce_every_component_to_single_path_max_weight(self, verbose=False):
 		print ("Reducing every component to a single path with maximum local weight ...")
 		components = self.get_components()
+		n = len(components)
 		if verbose:
-			print ("Number of components: "+str(len(components)))
+			print ("Number of components: "+str(n))
+		c_i = 0
 		for c in components:
+			meta.print_progress(c_i, n-1)
 			if verbose:
 				print ("Size of this component: "+str(len(c)))
 			self.construct_assembly_ordering_labels(start_sequence=c[0], verbose = 0)
@@ -912,6 +915,7 @@ class GraphData:
 			if verbose:
 				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c, verbose=0)
+			c_i += 1
 			
 		self.contract_unique_overlaps(verbose = verbose)
 		self.construct_assembly_ordering_labels(verbose = 0)
@@ -1144,12 +1148,15 @@ class GraphData:
 		components_to_potentially_cut = self.get_components()
 		#number_of_clustered_components = 0
 		while (len(components_to_potentially_cut) > 0):
-			print ("current number of components left to consider: "+str(len(components_to_potentially_cut)))
+			print "current number of components left to consider: " + str("%6d" % len(components_to_potentially_cut)) + "\r",
+			sys.stdout.flush()
 			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0], verbose=verbose)
 			components_to_potentially_cut.pop(0)
 			if res:
 				components_to_potentially_cut.append(part_a)
 				components_to_potentially_cut.append(part_b)
+		
+		print 
 		
 	def cut_graph_into_partitions(self, partitions, seq_id_to_index, verbose=False):
 		if verbose:
