@@ -721,16 +721,18 @@ class GraphData:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
 						
-	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=False):
+	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=1):
 		# constructs a fuzzy partial ordering of all relevant sequences:
 		# algorithm assumes that graph
 		# 	is not empty and
 		#	has only one component and
 		# 	has no cycles, i.e. implies a partial order
-		print "Construct assembly ordering labels..."
+		if verbose > 0:
+			print "Construct assembly ordering labels..."
 		
 		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
-			print ("Error! Start sequence does not exist! Start with first sequence instead.")
+			if verbose > 0:
+				print ("Error! Start sequence does not exist! Start with first sequence instead.")
 			start_sequence = 0
 		while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
 			start_sequence += 1
@@ -750,7 +752,7 @@ class GraphData:
 		self.max_sequence = start_sequence
 		self.sequences[start_sequence].label = 0
 		
-		if verbose:
+		if verbose == 2:
 			print ("Start with sequence " + str(start_sequence))
 				
 		queue = [[self.sequences[start_sequence].id, 0]]
@@ -775,7 +777,7 @@ class GraphData:
 					self.sequences[seq_id].label = start_label
 					queue.append([seq_id, start_label])
 		
-		if verbose:
+		if verbose == 2:
 			for seq in self.sequences:
 				if seq.is_relevant:
 					print str(seq.id) + ": " + str(seq.label)
@@ -786,7 +788,7 @@ class GraphData:
 				next_start = self.max_sequence
 			else:
 				next_start = self.min_sequence
-			if verbose:
+			if verbose == 2:
 				print ("max sequence of first iteration: "+str(self.max_sequence) + " with label "+str(self.max_label))
 				print ("min sequence of first iteration: "+str(self.min_sequence) + " with label "+str(self.min_label))
 				print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
@@ -897,7 +899,7 @@ class GraphData:
 		for c in components:
 			if verbose:
 				print ("Size of this component: "+str(len(c)))
-			self.construct_assembly_ordering_labels(start_sequence=c[0])
+			self.construct_assembly_ordering_labels(start_sequence=c[0], verbose = 0)
 			start_sequence = -1
 			min_label = False
 			for seq_id in c:
@@ -909,7 +911,7 @@ class GraphData:
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c)
 			
 		self.contract_unique_overlaps(verbose = verbose)
-		self.construct_assembly_ordering_labels(verbose = verbose)
+		self.construct_assembly_ordering_labels(verbose = 0)
 		
 	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
@@ -1137,7 +1139,7 @@ class GraphData:
 	def partition_graph_into_components_of_clusters(self, verbose=False):
 		print ("Decompose graph into components of clusters ...")
 		components_to_potentially_cut = self.get_components()
-		number_of_clustered components = 0
+		#number_of_clustered_components = 0
 		while (len(components_to_potentially_cut) > 0):
 			print ("current number of components left to consider: "+str(len(components_to_potentially_cut)))
 			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0], verbose=verbose)

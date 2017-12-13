@@ -153,12 +153,12 @@ def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=5000, numb
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 	
-	debruijn.partition_graph_into_components_of_clusters(verbose=True)
+	debruijn.partition_graph_into_components_of_clusters(verbose=False)
 	filename_output += "_divided"
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	
-	debruijn.reduce_every_component_to_single_path_max_weight(verbose=True)
+	debruijn.reduce_every_component_to_single_path_max_weight(verbose=False)
 	filename_output += "_singlepath"
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
