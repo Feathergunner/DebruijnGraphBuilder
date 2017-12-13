@@ -170,5 +170,5 @@ def test_exponential_readlengths():
 	meta.get_readlength_distribution(reads, 200)
 
 if __name__ == '__main__':
-	test_clustercut_on_quasispecies(number_of_base_dnas=5, dna_length=10000, number_of_variations=1, num_reads_per_dna=3000)
+	test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
