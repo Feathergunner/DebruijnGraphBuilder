@@ -169,7 +169,7 @@ class GraphData:
 				self.remove_single_sequence_components(verbose=verbose)
 				
 			if remove_tips:
-				self.remove_tips(verbose=verbos)
+				self.remove_tips(verbose=verbose)
 				self.remove_single_sequence_components(verbose=verbose)
 			
 			if construct_labels:
@@ -1088,7 +1088,8 @@ class GraphData:
 		
 		
 	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
-		print ("Do spectral clustering of the nodes into two clusters ...")
+		if verbose:
+			print ("Do spectral clustering of the nodes into two clusters ...")
 		absoulute_minimum_component_size = 1000
 		
 		self.remove_irrelevant_overlaps()
@@ -1134,18 +1135,20 @@ class GraphData:
 			return False, component, []
 			
 	def partition_graph_into_components_of_clusters(self, verbose=False):
+		print ("Decompose graph into components of clusters ...")
 		components_to_potentially_cut = self.get_components()
+		number_of_clustered components = 0
 		while (len(components_to_potentially_cut) > 0):
-			if verbose:
-				print ("current number of components to consider: "+str(len(components_to_potentially_cut)))
+			print ("current number of components left to consider: "+str(len(components_to_potentially_cut)))
 			res, part_a, part_b = self.compute_mincut(components_to_potentially_cut[0], verbose=verbose)
 			components_to_potentially_cut.pop(0)
 			if res:
 				components_to_potentially_cut.append(part_a)
 				components_to_potentially_cut.append(part_b)
 		
-	def cut_graph_into_partitions(self, partitions, seq_id_to_index):
-		print ("Delete all overlaps between different parts ...")
+	def cut_graph_into_partitions(self, partitions, seq_id_to_index, verbose=False):
+		if verbose:
+			print ("Delete all overlaps between different parts ...")
 		id_to_part={}
 		for i in range(len(partitions)):
 			for id in partitions[i]:
