@@ -1,4 +1,5 @@
 #!usr/bin/python
+# -*- coding: utf-8 -*-
 
 import random
 import re
@@ -8,6 +9,7 @@ import numpy as np
 import scipy.sparse
 from scipy.sparse import linalg as la
 import math
+import gc
 
 import meta
 	
@@ -123,7 +125,16 @@ class SequenceOverlap:
 			print ("is not relevant")
 	
 class GraphData:
-	def __init__(self, reads=0, k=0, alphabet={"A":"T", "C":"G", "G":"C", "T":"A"}, load_weights=True, verbose=False):
+	def __init__(	self,
+					reads=0,
+					k=0,
+					alphabet={"A":"T", "C":"G", "G":"C", "T":"A"},
+					load_weights=True,
+					reduce_data=True,
+					simplify_graph=True,
+					remove_tips=False,
+					construct_labels=True,
+					verbose=False):
 		print ("Creating empty graph ...")
 		
 		self.k_value = k
@@ -144,6 +155,25 @@ class GraphData:
 		
 		if not reads == 0:
 			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
+			
+			if reduce_data:
+				# delete data to save ram:
+				self.reads = []
+				self.kmers = []
+				# run garbage collector:
+				gc.collect()
+				
+			if simplify_graph:
+				self.remove_parallel_sequences(verbose=verbose)
+				self.contract_unique_overlaps(verbose=verbose)
+				self.remove_single_sequence_components(verbose=verbose)
+				
+			if remove_tips:
+				self.remove_tips(verbose=verbos)
+				self.remove_single_sequence_components(verbose=verbose)
+			
+			if construct_labels:
+				self.construct_assembly_ordering_labels(verbose=verbose)
 
 	def print_memory_usage(self):
 		size_reads = sys.getsizeof(self.reads)
@@ -803,15 +833,6 @@ class GraphData:
 		# and sequences have position- and weight-labels
 		
 		print ("DFS for path with local maximum weight")
-		
-		'''
-		components = self.get_components()
-		if verbose:
-			print ("Number of components: "+str(len(components)))
-		if len(components) > 1:
-			print ("Too many components.")
-			self.reduce_to_single_largest_component()
-		'''
 			
 		# node-labels of the dfs:
 		#	0: not yet visited
@@ -886,6 +907,9 @@ class GraphData:
 			if verbose:
 				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c)
+			
+		self.contract_unique_overlaps(verbose = verbose)
+		self.construct_assembly_ordering_labels(verbose = verbose)
 		
 	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
@@ -903,24 +927,7 @@ class GraphData:
 			if verbose:
 				print ("next component")
 			start_seq_id = self.min_sequence
-			'''
-			min_label = False
-			max_weight = 0
-			if verbose:
-				print ("Searching for start sequence...")
-			for seq_id in c:
-				if verbose:
-					print ("Current min_label is: "+str(min_label))
-					print ("Current weight of min_sequence is: "+str(max_weight))
-					print ("Consider sequence "+str(seq_id)+" with label "+str(self.sequences[seq_id].label)+ " and weight "+str(self.sequences[seq_id].max_weight))
-				#if (start_seq_id < 0) or (self.sequences[seq_id].label < min_label-self.k_value) or (self.sequences[seq_id].label < min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
-				#if (start_seq_id < 0) or (self.sequences[seq_id].label < self.min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
-				if (self.sequences[seq_id].label < self.min_label+self.k_value and self.sequences[seq_id].max_weight > max_weight):
-					if verbose:
-						print ("Set sequence "+str(seq_id)+" as new minimal sequence")
-					start_seq_id = seq_id
-					max_weight = self.sequences[seq_id].max_weight
-			'''
+			
 			current_seq_id = start_seq_id
 			last_seq_id = -1
 			if verbose:

@@ -55,11 +55,7 @@ def measure_runtime():
 	gc.set_debug(gc.DEBUG_STATS & gc.DEBUG_COLLECTABLE & gc.DEBUG_UNCOLLECTABLE)
 	
 	start_fdgb = timeit.default_timer()
-	debruijn = fdgb.GraphData(reads, k, verbose = False)
-	print ("delete uneccesary data ...")
-	debruijn.reads = []
-	#debruijn.kmers = []
-	debruijn.kmer_dict = {}
+	debruijn = fdgb.GraphData(reads, k, reduce_data=True, simplify_graph=False, remove_tips=False, construct_labels=False, verbose = False)
 	debruijn.print_memory_usage()
 	print ("Size of tracked objects pre-collection: " +str(sum(sys.getsizeof(i) for i in gc.get_objects())/1000000.0) + "MB")
 	#print ("All tracked objects: ")
@@ -408,18 +404,6 @@ def construct_consensus_from_multiple_parts():
 		
 		debruijn = fdgb.GraphData([reads], k)
 
-		# delete reads and kmers to save ram:
-		debruijn.reads = []
-		debruijn.kmers = []
-		# run garbage collector:
-		gc.collect()
-	
-		debruijn.remove_parallel_sequences(verbose = False)
-		debruijn.contract_unique_overlaps(verbose = False)
-		
-		debruijn.remove_single_sequence_components()
-		debruijn.construct_assembly_ordering_labels(verbose = False)
-
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
@@ -446,17 +430,6 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 	reads = dio.get_reads_from_fastq_file_by_length(filename = readfile, read_ids = read_ids)
 	
 	debruijn = fdgb.GraphData([reads], k)
-	# delete reads and kmers to save ram:
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
-
-	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	
-	debruijn.remove_single_sequence_components()
-	debruijn.construct_assembly_ordering_labels(verbose = False)
 
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")

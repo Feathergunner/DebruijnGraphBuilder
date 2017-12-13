@@ -33,19 +33,9 @@ def test_assembly_ordering():
 	k = 30
 	
 	debruijn = fdgb.GraphData(reads, k)
-	# delete reads and kmers to save ram:
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
-	
-	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	
-	debruijn.remove_single_sequence_components()
 	#debruijn.reduce_to_single_largest_component()
 	#debruijn.remove_tips()
-	debruijn.construct_assembly_ordering_labels(verbose = False)
+	#debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
@@ -66,18 +56,8 @@ def test_spectral_partitioning():
 	print (len(reads))
 
 	debruijn = fdgb.GraphData([reads], k, alphabet={"A":"U", "C":"G", "G":"C", "U":"A"})
-	# delete reads and kmers to save ram:
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
-
-	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
 	
-	debruijn.remove_single_sequence_components()
 	debruijn.reduce_to_single_largest_component()
-	
 	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_precut.asqg")
@@ -114,19 +94,9 @@ def minimal_test_spectral_partitioning():
 	k = 25
 	
 	debruijn = fdgb.GraphData(reads_1 + reads_2, k)
-	# delete reads and kmers to save ram:
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
 	
-	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	
-	debruijn.remove_single_sequence_components()
 	#debruijn.reduce_to_single_largest_component()
-	
-	debruijn.construct_assembly_ordering_labels(verbose = False)
+	#debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = "Output/test/mincuttest_precut.asqg")
 	debruijn.partition_graph_into_components_of_clusters(verbose=False)
@@ -143,20 +113,8 @@ def test_laplacian_construction():
 	k = 15
 	
 	debruijn = fdgb.GraphData(reads, k)
-	# delete reads and kmers to save ram:
+	# delete reads to save ram:
 	reads = []
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
-	
-	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	
-	#debruijn.remove_single_sequence_components()
-	#debruijn.reduce_to_single_largest_component()
-	
-	debruijn.construct_assembly_ordering_labels(verbose = False)
 	
 	debruijn.get_asqg_output(filename = "Output/test/laplaciantest_precut.asqg")
 	
@@ -166,13 +124,12 @@ def test_laplacian_construction():
 	
 	debruijn.get_asqg_output(filename = "Output/test/laplaciantest_postcut.asqg")
 	
-def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=3000, number_of_variations=5):
+def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=5000, number_of_variations=5, num_reads_per_dna=2000):
 	filename_output = "Output/test/test_clustercut_on_quasispecies"
 
-	dna_partsize_mean = dna_length/3
+	dna_partsize_mean = dna_length/4
 	dna_partsize_variation = dna_length/100
-	number_of_reads_per_dna = 3000
-	mean_readlength = 300
+	mean_readlength = 100
 
 	dnas = []
 	reads = []
@@ -185,25 +142,12 @@ def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=3000, numb
 		meta.print_progress(dna_i, len(dnas)-1, front_string="Generate reads. Progress: ")
 		filename = "Output/test/test_clustercut_on_quasispecies_dna_"+str(dna_i)
 		dgen.write_dna_to_file(filename, dnas[dna_i])
-		reads += dgen.samplereads(dna=dnas[dna_i], number_of_reads=number_of_reads_per_dna, replace_error_percentage=1.0, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=mean_readlength, read_length_stddev=0, readlength_distribution='gaussian')
+		reads += dgen.samplereads(dna=dnas[dna_i], number_of_reads=num_reads_per_dna, replace_error_percentage=0.0, indel_error_percentage=5.0, mutation_alphabet=["A","C","G","T"], read_length_mean=mean_readlength, read_length_stddev=0, readlength_distribution='exponential')
 		
 	print ("Number of generated reads: "+str(len(reads)))
 	
 	k = 30
-	debruijn = fdgb.GraphData([reads], k)
-	
-	
-	# delete reads and kmers to save ram:
-	debruijn.reads = []
-	debruijn.kmers = []
-	# run garbage collector:
-	gc.collect()
-	
-	debruijn.remove_parallel_sequences(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	
-	debruijn.remove_single_sequence_components()
-	debruijn.construct_assembly_ordering_labels(verbose = False)
+	debruijn = fdgb.GraphData([reads], k, remove_tips=True)
     
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
@@ -215,10 +159,6 @@ def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=3000, numb
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	
 	debruijn.reduce_every_component_to_single_path_max_weight(verbose=True)
-	
-	#debruijn.reduce_to_single_path_max_weight(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.construct_assembly_ordering_labels(verbose = False)
 	filename_output += "_singlepath"
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
@@ -230,5 +170,5 @@ def test_exponential_readlengths():
 	meta.get_readlength_distribution(reads, 200)
 
 if __name__ == '__main__':
-	test_clustercut_on_quasispecies()
+	test_clustercut_on_quasispecies(number_of_base_dnas=5, dna_length=10000, number_of_variations=1, num_reads_per_dna=3000)
 	#test_exponential_readlengths()
