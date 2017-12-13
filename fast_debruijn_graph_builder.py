@@ -834,7 +834,8 @@ class GraphData:
 		# method assumes that graph has only one component
 		# and sequences have position- and weight-labels
 		
-		print ("DFS for path with local maximum weight")
+		if verbose > 0:
+			print ("DFS for path with local maximum weight")
 			
 		# node-labels of the dfs:
 		#	0: not yet visited
@@ -867,21 +868,22 @@ class GraphData:
 					current_seq_id = max_seq_id
 					current_label  = self.sequences[current_seq_id].label
 					path.append(current_seq_id)
-				if verbose:
+				if verbose == 2:
 					print ("Next sequence is sequence "+str(max_seq_id)+" with label " + str(current_label) + " and weight "+str(max_seq_weight))
 			else:
 				# backtrack:
 				if len(path) > 1:
 					dfs_labels[current_seq_id] = 2
-					if verbose:
+					if verbose == 2:
 						print ("Dead end! Remove sequence "+str(path[-1])+" from path")
 					path.pop(-1)
 					current_seq_id = path[-1]
 					current_label  = self.sequences[current_seq_id].label
-					if verbose:
+					if verbose == 2:
 						print ("Next sequence is sequence "+str(current_seq_id)+" with label " + str(current_label) + " and weight "+str(self.sequences[current_seq_id].get_total_weight()))
 				else:
-					print ("Error! No path found")
+					if verbose > 0:
+						print ("Error! No path found")
 					path_finding_failed = True
 			#print ("current path: " +str(path))
 		
@@ -889,7 +891,8 @@ class GraphData:
 		for seq in self.sequences:
 			if seq.is_relevant and not dfs_labels[seq.id] == 1 and (not restrict_to_component or seq.id in restrict_to_component):
 				self.delete_sequence(seq.id)
-		print ("Reduction finished")
+		if verbose > 0:
+			print ("Reduction finished")
 		
 	def reduce_every_component_to_single_path_max_weight(self, verbose=False):
 		print ("Reducing every component to a single path with maximum local weight ...")
@@ -908,7 +911,7 @@ class GraphData:
 					min_label = self.sequences[seq_id].label
 			if verbose:
 				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
-			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c)
+			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c, verbose=0)
 			
 		self.contract_unique_overlaps(verbose = verbose)
 		self.construct_assembly_ordering_labels(verbose = 0)
