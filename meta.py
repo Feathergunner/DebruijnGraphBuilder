@@ -137,3 +137,7 @@ def get_readlength_distribution(reads, bucketsize=1000):
 	plt.plot(x, y)
 	plt.show()
 	return x, y
+	
+def merge_sequences(seq_s, seq_t, overlap_length):
+	merged_sequence = seq_s+seq_t[overlap_length:]
+	return merged_sequence

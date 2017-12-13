@@ -147,6 +147,8 @@ class GraphData:
 		
 		# Flag that marks if inverse sequences have been removed
 		self.is_unified = False
+		# Flag that marks if unique overlaps have been contracted
+		self.is_contracted = False
 		# min and max label of all sequences
 		self.min_label = 0
 		self.max_label = 0
@@ -166,7 +168,7 @@ class GraphData:
 			if simplify_graph:
 				self.remove_parallel_sequences(verbose=verbose)
 				self.contract_unique_overlaps(verbose=verbose)
-				self.remove_single_sequence_components(verbose=verbose)
+				#self.remove_single_sequence_components(verbose=verbose)
 				
 			if remove_tips:
 				self.remove_tips(verbose=verbose)
@@ -406,25 +408,28 @@ class GraphData:
 								self.increment_overlap(sequence_id_2, sequence_id_1, -1)
 	'''
 
-	def contract_unique_overlaps(self, verbose = False):
+	def contract_unique_overlaps(self, verbose = 1):
 		# This method contracts all overlaps between adjacent sequences that form an unique path
 		# (i.e., there are no other outgoing or incoming overlaps between the sequences)
 		if not self.is_unified:
 			self.remove_parallel_sequences(verbose)
-		print ("Contract overlaps ...")
+		
+		if verbose > 0:
+			print ("Contract overlaps ...")
 		
 		ov_index_list = [ov_id for ov_id in self.overlaps]
 		num_deleted_overlaps = 0
 		ov_counter = 0
 		for ov_index in ov_index_list:
-			if (ov_counter%1000 == 0 or ov_counter == len(ov_index_list)-1):
-				meta.print_progress(ov_counter, len(ov_index_list)-1)
+			if verbose > 0:
+				if (ov_counter%1000 == 0 or ov_counter == len(ov_index_list)-1):
+					meta.print_progress(ov_counter, len(ov_index_list)-1)
 			ov_counter += 1
 			if ov_index in self.overlaps:
 				source_id = self.overlaps[ov_index].contig_sequence_1
 				target_id = self.overlaps[ov_index].contig_sequence_2
 
-				if verbose:
+				if verbose == 2:
 					print ("consider overlap: ")
 					print (self.overlaps[ov_index].print_data())
 					print ("Source: ")
@@ -435,8 +440,9 @@ class GraphData:
 					# and the target node has exactly one incoming edge, 
 					# then contract edge:
 					ov = self.overlaps[ov_index]
-					self.contract_overlap(ov_index, verbose)
+					self.contract_overlap(ov_index, verbose == 2)
 					num_deleted_overlaps += 1
+		self.is_contracted = True
 	
 	def delete_overlap(self, overlap_id, verbose=False):
 		# removes an overlap from the database and from both incident sequences
@@ -602,7 +608,7 @@ class GraphData:
 					components.append(current_comp)
 		return components				
 		
-	def remove_tips(self, verbose=False):
+	def remove_tips(self, only_simply_connected_tips=True, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
@@ -614,12 +620,20 @@ class GraphData:
 						print ("Consider sequence:")
 						seq.print_data()
 					# check if sequence is a tip and if sequence is shorter than 2k:
-					if (len(seq.overlaps_out) + len(seq.overlaps_in) == 1) and (len(seq.sequence) < 2*self.k_value):
-						if verbose:
-							print ("Sequence is a tip, remove this sequence.")
-						self.delete_sequence(seq.id, verbose)
-						num_of_removed_tips += 1
-			self.contract_unique_overlaps()
+					if (len(seq.sequence) < 2*self.k_value):
+						is_tip = False
+						if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
+							# (sequence is a simply connected tip)
+							is_tip = True
+						elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0):
+							# (sequence is a tip)
+							is_tip =True
+						if is_tip:
+							if verbose:
+								print ("Sequence is a tip, remove this sequence.")
+							self.delete_sequence(seq.id, verbose)
+							num_of_removed_tips += 1
+			self.contract_unique_overlaps(verbose = 0)
 
 	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
 		# removes all sequences with weight less than minimal_weight
@@ -1155,7 +1169,6 @@ class GraphData:
 			if res:
 				components_to_potentially_cut.append(part_a)
 				components_to_potentially_cut.append(part_b)
-		
 		print 
 		
 	def cut_graph_into_partitions(self, partitions, seq_id_to_index, verbose=False):
@@ -1181,5 +1194,51 @@ class GraphData:
 				ov_to_del.append(ov)
 		for ov in ov_to_del:
 			self.overlaps.pop(ov)
-		
-
+			
+	def get_hubread_sequences_by_adjacent_sequences(self, verbose=False):
+		# constructs extended hubreads
+		# these are all directed paths of length three in the contracted debruijn graph.
+		if not self.is_contracted:
+			self.contract_unique_overlaps()
+			
+		if verbose:
+			print ("get hubreads from graph")
+			
+		hubreads = []
+		for seq_id in range(len(self.sequences)):
+			if seq_id % 1000 == 0 or seq_id == len(self.sequences)-1:
+				meta.print_progress(seq_id, len(self.sequences)-1)
+			seq = self.sequences[seq_id]
+			if seq.is_relevant:
+				hp_start = seq.sequence
+				for ov_out_seq_id in seq.overlaps_out.keys():
+					hp_mid = self.sequences[ov_out_seq_id]
+					hp_temp = meta.merge_sequences(hp_start, hp_mid.sequence, self.k_value-1)
+					if len(hp_mid.overlaps_out) > 0:
+						for ov_out_seq_id in seq.overlaps_out.keys():
+							hp_end = self.sequences[ov_out_seq_id]
+							hubread = meta.merge_sequences(hp_temp, hp_end.sequence, self.k_value-1)
+							if verbose:
+								print ("hp_start: "+hp_start)
+								print ("hp_end: "+hp_end.sequence)
+								print ("New hubread: "+hubread)
+							hubreads.append(hubread)
+		return hubreads
+	
+	def get_hubreads_by_overlaps(self, verbose=False):
+		# constructs hubreads as described in spades-paper:
+		# these are all directed paths of length two in the contracted debruijn graph.
+		if not self.is_contracted:
+			self.contract_unique_overlaps()
+			
+		if verbose:
+			print ("get hubreads from graph")
+			
+		hubreads = []
+		for ov_id in self.overlaps:
+			seq_start = self.sequences[self.overlaps[ov_id].contig_sequence_1].sequence
+			seq_end = self.sequences[self.overlaps[ov_id].contig_sequence_2].sequence
+			hubread = meta.merge_sequences(seq_start, seq_end, self.k_value-1)
+			hubreads.append(hubread)
+						
+		return hubreads

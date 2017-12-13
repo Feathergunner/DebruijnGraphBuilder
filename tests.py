@@ -168,7 +168,56 @@ def test_exponential_readlengths():
 	dna = dgen.generate_dna(length=30000)
 	reads = dgen.samplereads(dna, number_of_reads=10000, read_length_mean=1000, readlength_distribution='exponential')
 	meta.get_readlength_distribution(reads, 200)
+	
+def test_hubpaths():
+	dna = dgen.generate_dna(length=3000)
+	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=5.0, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=5, readlength_distribution='gaussian')
+	k = 15
+	filename_output_base = "Output/test/hubpath/test_hubpath"
+	
+	for i in range(10):
+		filename_output = filename_output_base + "_" + str(k)# + "_" + str(i)
+		if i > 0:
+			debruijn = fdgb.GraphData([hubpaths], k, remove_tips = True	, construct_labels = False)
+			debruijn.remove_tips(only_simply_connected_tips=False)
+			#debruijn.get_asqg_output(filename = filename_output+"_hp-based.asqg")
+		
+		else:
+			debruijn = fdgb.GraphData([reads], k, remove_tips = True, construct_labels = False)
+		hubpaths = debruijn.get_hubpath_sequences_by_adjacent_sequences(verbose = False)
+		debruijn.get_asqg_output(filename = filename_output+".asqg")#"_orig.asqg")
+		k += 1
+		
+		#print ("Number of overlaps in "+filename_output+"_orig: "+str(len(debruijn.overlaps)))
+		#print ("Number of hubpaths in "+filename_output+"_orig: "+str(len(hubpaths)))
 
+def test_multsized_debruijn_graph():
+	dna = dgen.generate_dna(length=3000)
+	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=0.0, indel_error_percentage=10.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=5, readlength_distribution='exponentioal')
+	filename_output_base = "Output/test/multisized/test_multisized"
+	
+	hubreads = []
+	
+	for k in range(15,25):
+		print ("Construct hubreads for k="+str(k))
+		debruijn = fdgb.GraphData([reads], k, remove_tips = True, construct_labels = False)
+		hubreads += debruijn.get_hubreads_by_overlaps(verbose = False)
+		
+	print ("Construct debruijn-graph from hubreads:")
+	debruijn = fdgb.GraphData([hubreads], 24, remove_tips = True)
+	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
+	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
+	print ("Construct debruijn-graph from reads for comparision:")
+	debruijn = fdgb.GraphData([reads], 24, remove_tips = True)
+	debruijn.get_asqg_output(filename = filename_output_base+"_reads.asqg")
+	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.get_asqg_output(filename = filename_output_base+"_reads_reduced.asqg")
+		
 if __name__ == '__main__':
-	test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
+	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
+	#test_hubpaths()
+	test_multsized_debruijn_graph()
