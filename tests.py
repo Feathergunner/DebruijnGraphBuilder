@@ -142,7 +142,7 @@ def test_clustercut_on_quasispecies(number_of_base_dnas=1, dna_length=5000, numb
 		meta.print_progress(dna_i, len(dnas)-1, front_string="Generate reads. Progress: ")
 		filename = "Output/test/test_clustercut_on_quasispecies_dna_"+str(dna_i)
 		dgen.write_dna_to_file(filename, dnas[dna_i])
-		reads += dgen.samplereads(dna=dnas[dna_i], number_of_reads=num_reads_per_dna, replace_error_percentage=0.0, indel_error_percentage=5.0, mutation_alphabet=["A","C","G","T"], read_length_mean=mean_readlength, read_length_stddev=0, readlength_distribution='exponential')
+		reads += dgen.samplereads(dna=dnas[dna_i], number_of_reads=num_reads_per_dna, replace_error_percentage=0.0, indel_error_percentage=15.0, mutation_alphabet=["A","C","G","T"], read_length_mean=mean_readlength, read_length_stddev=0, readlength_distribution='exponential')
 		
 	print ("Number of generated reads: "+str(len(reads)))
 	
