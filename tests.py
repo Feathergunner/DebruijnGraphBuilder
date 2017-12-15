@@ -202,7 +202,7 @@ def test_multsized_debruijn_graph(dna_length = 10000, n_reads = 10000, readlengt
 		print ("Construct hubreads for k="+str(k))
 		debruijn = fdgb.GraphData([reads], k, remove_tips = True, construct_labels = False)
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+".asqg")
-		hubreads += debruijn.get_hubreads_by_overlaps(verbose = False)
+		hubreads += debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
 		debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")

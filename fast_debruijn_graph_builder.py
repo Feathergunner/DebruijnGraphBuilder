@@ -1195,7 +1195,7 @@ class GraphData:
 		for ov in ov_to_del:
 			self.overlaps.pop(ov)
 			
-	def get_hubread_sequences_by_adjacent_sequences(self, verbose=False):
+	def get_hubreads_by_adjacent_sequences(self, verbose=False):
 		# constructs extended hubreads
 		# these are all directed paths of length three in the contracted debruijn graph.
 		if not self.is_contracted:
