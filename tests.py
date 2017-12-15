@@ -192,29 +192,30 @@ def test_hubpaths():
 		#print ("Number of hubpaths in "+filename_output+"_orig: "+str(len(hubpaths)))
 
 def test_multsized_debruijn_graph():
-	dna = dgen.generate_dna(length=3000)
-	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=0.0, indel_error_percentage=10.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=5, readlength_distribution='exponentioal')
+	dna = dgen.generate_dna(length=10000)
+	reads = dgen.samplereads(dna, number_of_reads=10000, replace_error_percentage=0.0, indel_error_percentage=10.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=5, readlength_distribution='exponentioal')
 	filename_output_base = "Output/test/multisized/test_multisized"
 	
 	hubreads = []
 	
-	for k in range(15,25):
+	min_k = 20
+	max_k = 30
+	
+	for k in range(min_k, max_k+1):
 		print ("Construct hubreads for k="+str(k))
 		debruijn = fdgb.GraphData([reads], k, remove_tips = True, construct_labels = False)
+		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+".asqg")
 		hubreads += debruijn.get_hubreads_by_overlaps(verbose = False)
+		debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
 		
 	print ("Construct debruijn-graph from hubreads:")
-	debruijn = fdgb.GraphData([hubreads], 24, remove_tips = True)
+	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
 	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
 	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
-	print ("Construct debruijn-graph from reads for comparision:")
-	debruijn = fdgb.GraphData([reads], 24, remove_tips = True)
-	debruijn.get_asqg_output(filename = filename_output_base+"_reads.asqg")
-	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
-	debruijn.get_asqg_output(filename = filename_output_base+"_reads_reduced.asqg")
 		
 if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
