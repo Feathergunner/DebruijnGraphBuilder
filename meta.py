@@ -3,14 +3,10 @@
 
 import sys
 import matplotlib.pyplot as plt
+import re
 import math
 
 import data_io as dio
-
-'''
-def print_progress(part, total):
-	print ("Progress: "+str("%.2f" % ((float(part)/(float(total)/100)))) + "%")
-'''
 	
 def get_adaptive_k(readlength):
 	'''
@@ -84,7 +80,7 @@ def compute_insert_distance(sequence_1, sequence_2, maxdist = -1):
 		index_2 += 1
 	return insert_distance
 	
-def get_readlength_distribution_from_fastq_file(filename, bucketsize=1000):
+def get_readlength_distribution_from_fastq_file(filename, bucketsize=1000, plot=False):
 	readlengths = sorted([x[0] for x in dio.get_readlengths(filename)])
 	minlength = min(readlengths)
 	maxlength = max(readlengths)
@@ -100,13 +96,14 @@ def get_readlength_distribution_from_fastq_file(filename, bucketsize=1000):
 			current_index += 1
 		#print (str(b)+" : "+str(y_val))
 		y.append(y_val)
-			
-	#plt.plot(x, [math.log10(i+1) for i in y])
-	plt.plot(x, y)
-	plt.show()
+
+	if plot:
+		#plt.plot(x, [math.log10(i+1) for i in y])
+		plt.plot(x, y)
+		plt.show()
 	return x, y
 
-def get_readlength_distribution(reads, bucketsize=1000):
+def get_readlength_distribution(reads, bucketsize=1000, plot=False, verbose=False):
 	n = len(reads)
 	readlengths = [0]*n
 	for i in range(n):
@@ -128,16 +125,67 @@ def get_readlength_distribution(reads, bucketsize=1000):
 		#print (str(b)+" : "+str(y_val))
 		y.append(y_val)
 	
-	print ("minlength: "+str(minlength))
-	print ("maxlength: "+str(maxlength))
-	print ("avglength: "+str(avglength))
+	if verbose:
+		print ("minlength: "+str(minlength))
+		print ("maxlength: "+str(maxlength))
+		print ("avglength: "+str(avglength))
 
-	plt.plot(x, [math.log10(i+1) for i in y])
-	plt.show()
-	plt.plot(x, y)
-	plt.show()
+	if plot:
+		plt.plot(x, [math.log10(i+1) for i in y])
+		plt.show()
+		plt.plot(x, y)
+		plt.show()
 	return x, y
 	
 def merge_sequences(seq_s, seq_t, overlap_length):
 	merged_sequence = seq_s+seq_t[overlap_length:]
 	return merged_sequence
+
+def apply_tipremoval_on_asqg(input_filename, output_filename):
+	try:
+		debruijn = fdgb.GraphData()
+		debruijn.load_from_asqg(input_filename, verbose=False)
+		debruijn.remove_tips()
+		debruijn.contract_unique_overlaps()
+		debruijn.get_asqg_output(output_filename+"asqg")
+		debruijn.get_csv_output(output_filename+".csv")
+	except:
+		pass
+
+def compute_weight_distribution(filename_input, num_buckets = 100, logscale=False):
+	with open(filename_input) as inputfile:
+		lines = inputfile.readlines()
+	weights = []
+	minweight = -1
+	maxweight = 0
+	for i in range(len(lines)):
+		if i > 0:
+			data = re.split(r',', lines[i])
+			w = int(data[2])
+			weights.append(w)
+			if minweight < 0 or w < minweight:
+				minweight = w
+			if w > maxweight:
+				maxweight = w
+
+	bucket_size = (maxweight/num_buckets)+1
+	weight_distirbution_buckets = [0]*num_buckets
+	for w in weights:
+		weight_distirbution_buckets[w/bucket_size] += 1
+
+	buckets = [bucket_size*i for i in range(num_buckets)]
+	if logscale:
+		return [buckets, [math.log10(k+1) for k in weight_distirbution_buckets]]
+	else:
+		return [buckets, weight_distirbution_buckets]
+
+def plot_weight_distribution(filename_input, num_buckets = 100, logscale=False):
+	wd = compute_weight_distribution(filename_input, num_buckets, logscale)
+
+	plt.plot(wd[0], wd[1])
+	if logscale:
+		plt.ylabel("log(#sequences)")
+	else:
+		plt.ylabel("#sequences")
+	plt.xlabel("weight of sequence")
+	plt.show()
