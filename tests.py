@@ -191,7 +191,7 @@ def test_hubpaths():
 		#print ("Number of overlaps in "+filename_output+"_orig: "+str(len(debruijn.overlaps)))
 		#print ("Number of hubpaths in "+filename_output+"_orig: "+str(len(hubpaths)))
 
-def test_multsized_debruijn_graph(dna_length = 10000, n_reads = 10000, readlength = 100, indel_error = 15.0, min_k = 20, max_k = 30):
+def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readlength = 100, indel_error = 15.0, min_k = 20, max_k = 30, verbose=False):
 	dna = dgen.generate_dna(length=dna_length)
 	reads = dgen.samplereads(dna, number_of_reads=n_reads, replace_error_percentage=0.0, indel_error_percentage=indel_error, mutation_alphabet=["A","C","G","T"], read_length_mean=readlength, read_length_stddev=5, readlength_distribution='exponentioal')
 	filename_output_base = "Output/test/multisized/hubreadbased_dna_"+str(dna_length)+"_nr"+str(n_reads)+"_nl"+str(readlength)+"_ir"+str(indel_error)+"_mink"+str(min_k)+"_maxk"+str(max_k)
@@ -208,7 +208,9 @@ def test_multsized_debruijn_graph(dna_length = 10000, n_reads = 10000, readlengt
 		debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
 		debruijn.contract_unique_overlaps(verbose = False)
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
-		
+		if verbose:
+			print hubreads	
+	
 	print ("Construct debruijn-graph from hubreads:")
 	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
