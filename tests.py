@@ -227,8 +227,9 @@ def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readleng
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
 
 def test_multisized_on_corona_reads():
-	reads = dio.get_reads_from_fastq_file("Data/hcov229e_only.fq")
-	filename_output_base = "Output/test/multisized_corona/cm_"
+	read_id_partition_by_size = dio.get_read_partition_by_readlength(filename="Data/hcov229e_only.fq", number_of_parts=3)
+	reads = dio.get_reads_from_fastq_file(read_ids = read_id_partition_by_size[-1], filename="Data/hcov229e_only.fq")
+	filename_output_base = "Output/test/multisized_corona/cm_largestthird_"
 	
 	min_k = 20
 	max_k = 50
@@ -264,5 +265,5 @@ if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
-	test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
-	
+	#test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
+	test_multisized_on_corona_reads()
