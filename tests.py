@@ -234,21 +234,30 @@ def test_multisized_on_corona_reads():
 	max_k = 50
 	
 	hubreads = []
-	new_hubreads = reads
+	remaining_reads = reads
 	
 	for k in range(min_k, max_k+1):
 		print ("Construct hubreads for k="+str(k))
-		debruijn = fdgb.GraphData([new_hubreads], k, remove_tips = True, construct_labels = False)
+		this_iterations_reads = hubreads + remaining_reads
+		debruijn = fdgb.GraphData([this_iterations_reads], k, reduce_data=False, remove_tips = True, construct_labels = False)
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+".asqg")
-		new_hubreads = debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
-		hubreads += new_hubreads
+		
+		hubreads = debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
+		
+		debruijn.remove_insignificant_sequences(minimal_weight=2)
+		remaining_reads_ids = debruijn.get_relevant_reads(verbose = True)
+		remaining_reads = [this_iterations_reads[i] for i in remaining_reads_ids]
+		
 		debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+		debruijn.remove_single_sequence_loops()
+		debruijn.reduce_to_single_largest_component()
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
 		
 	print ("Construct debruijn-graph from hubreads:")
 	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
 	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+	debruijn.remove_single_sequence_loops()
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
 	
 if __name__ == '__main__':
