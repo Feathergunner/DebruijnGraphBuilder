@@ -208,11 +208,13 @@ def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readleng
 		hubreads = debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
 		#hubreads += new_hubreads
 		
-		remaining_reads_ids = debruijn.get_reads_not_covered_by_hubreads(verbose = True)
+		debruijn.remove_insignificant_sequences(minimal_weight=2)
+		remaining_reads_ids = debruijn.get_relevant_reads(verbose = True)
 		remaining_reads = [this_iterations_reads[i] for i in remaining_reads_ids]
 		
 		debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
-		debruijn.contract_unique_overlaps(verbose = False)
+		debruijn.remove_single_sequence_loops()
+		debruijn.reduce_to_single_largest_component()
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
 		if verbose:
 			print hubreads	
@@ -221,7 +223,7 @@ def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readleng
 	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
 	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
+	debruijn.remove_single_sequence_loops()
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
 
 def test_multisized_on_corona_reads():
@@ -241,19 +243,17 @@ def test_multisized_on_corona_reads():
 		new_hubreads = debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
 		hubreads += new_hubreads
 		debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
-		debruijn.contract_unique_overlaps(verbose = False)
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
 		
 	print ("Construct debruijn-graph from hubreads:")
 	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
 	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
-	debruijn.contract_unique_overlaps(verbose = False)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
 	
 if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
-	test_multisized_debruijn_graph(dna_length = 3000, n_reads = 3000, readlength = 100, indel_error = 1.0)
+	test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
 	

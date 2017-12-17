@@ -153,6 +153,8 @@ class GraphData:
 		self.min_sequence = -1
 		self.max_sequence = -1
 		
+		self.removed_reads = []
+		
 		if not reads == 0:
 			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
 			
@@ -167,9 +169,9 @@ class GraphData:
 				self.remove_parallel_sequences(verbose=verbose)
 				self.contract_unique_overlaps(verbose=verbose)
 				
-			if remove_tips:
-				self.remove_tips(verbose=verbose)
-				self.remove_single_sequence_components(verbose=verbose)
+				if remove_tips:
+					self.remove_tips(verbose=verbose)
+					self.remove_single_sequence_components(verbose=verbose)
 			
 			if construct_labels:
 				self.construct_assembly_ordering_labels(verbose=verbose)
@@ -447,7 +449,7 @@ class GraphData:
 			print ("Delete overlap "+str(overlap_id))
 			self.overlaps[overlap_id].print_data()
 		if overlap_id not in self.overlaps:
-			print ("Error! Overlap doesn't exist!")
+			print ("Error! Overlap does not exist!")
 		else:
 			source_id = self.overlaps[overlap_id].contig_sequence_1
 			target_id = self.overlaps[overlap_id].contig_sequence_2
@@ -482,7 +484,6 @@ class GraphData:
 			print (self.sequences[source_id].print_data())
 			print ("Target: ")
 			print (self.sequences[target_id].print_data())
-		
 		
 		if not self.sequences[source_id].sequence == meta.get_inverse_sequence(self.sequences[target_id].sequence, self.alphabet):
 			# combine nucleotide sequences:
@@ -628,15 +629,22 @@ class GraphData:
 						if is_tip:
 							if verbose:
 								print ("Sequence is a tip, remove this sequence.")
+							# remove sequence:
 							self.delete_sequence(seq.id, verbose)
 							num_of_removed_tips += 1
+							# mark reads of tip:
+							tip_reads = self.get_read_of_sequences([seq])
+							self.removed_reads += tip_reads
+							
 			self.contract_unique_overlaps(verbose = 0)
 
 	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
 		# removes all sequences with weight less than minimal_weight
+		print ("Removing sequences with evidence_weight < "+str(minimal_weight)+" ...")
 		for seq in self.sequences:
 			if seq.get_total_weight() < minimal_weight:
 				self.delete_sequence(seq.id, verbose)
+				self.removed_reads += self.get_read_of_sequences([seq])
 	
 	def remove_single_sequence_components(self, verbose=False):
 		# removes all components that consist only of a single sequence,
@@ -646,6 +654,15 @@ class GraphData:
 			for seq_id in range(len(self.sequences)):
 				if self.sequences[seq_id].is_relevant and len(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
 					self.sequences[seq_id].is_relevant = False
+					self.removed_reads += self.get_read_of_sequences([self.sequences[seq_id]])
+					
+	def remove_single_sequence_loops(self, do_contraction=True, verbose=False):
+		for ov_id in self.overlaps:
+			ov = self.overlaps[ov_id]
+			if ov.contig_sequence_1 == ov.contig_sequence_2:
+				self.delete_overlap(ov.id)
+		if do_contraction:
+			self.contract_unique_overlaps()
 
 	def get_asqg_output(self, filename="asqg_file"):
 		print ("Writing asqg-file ...")
@@ -829,33 +846,46 @@ class GraphData:
 	
 	def get_read_of_sequences(self, sequences, verbose=False):
 		# returns all reads that contain a specific sequence
-		kmers = []
-		for seq in sequences:
-			kmers += seq.kmers
 		reads = []
-		for kmer_id in kmers:
-			reads += self.kmers[kmer_id].evidence_reads
-		reads = list(set(reads))
+		if len(self.kmers) > 0:
+			kmers = []
+			for seq in sequences:
+				kmers += seq.kmers
+			for kmer_id in kmers:
+				reads += self.kmers[kmer_id].evidence_reads
+			reads = list(set(reads))
 		return reads
 		
-	def get_reads_not_covered_by_hubreads(self, verbose=False):
-		# get all reads that are evidence for at least four sequences.
-		# All other reads (that are evidence for at most three sequences) are subsequences of hubreads
+	def get_relevant_reads(self, consider_hubread_length=3, verbose=False):
+		# get all reads that are not marked as removed
+		#  (because they induced a removed tip or a removed low-weight-sequence))
+		# and are also evidence for a specified minimum number of sequences (at least four be default)
+		#  (all other reads (that are evidence for at most three sequences) are subsequences of hubreads)
 		
+		print ("Get relevant reads:")
+		print ("* Checking sequences ...")
 		read_appearances = {}
-		
+		i = 0
 		for s in self.sequences:
+			if i%100 == 0 or i == len(self.sequences)-1:
+				meta.print_progress(i, len(self.sequences)-1)
 			evidence_reads = self.get_read_of_sequences([s])
 			for r in evidence_reads:
 				if r not in read_appearances:
 					read_appearances[r] = 0
 				read_appearances[r] += 1
+			i += 1
 				
+		print ("* Grabbing relevant reads ...")
 		list_of_relevant_reads = []
+		i = 0
 		for r in read_appearances:
-			if read_appearances[r] > 3:
+			if i%100 == 0 or i == len(read_appearances)-1:
+				meta.print_progress(i, len(read_appearances)-1)
+			if read_appearances[r] > 3 and r not in self.removed_reads:
 				list_of_relevant_reads.append(r)
-				
+			i += 1
+			
 		if verbose:
 			print ("The original set of "+str(len(self.reads))+" reads was reduced to "+str(len(list_of_relevant_reads))+" relevant reads")
 		return list_of_relevant_reads
@@ -927,7 +957,7 @@ class GraphData:
 		if verbose > 0:
 			print ("Reduction finished")
 		
-	def reduce_every_component_to_single_path_max_weight(self, verbose=False):
+	def reduce_every_component_to_single_path_max_weight(self, do_contraction=True, verbose=False):
 		print ("Reducing every component to a single path with maximum local weight ...")
 		components = self.get_components()
 		n = len(components)
@@ -949,8 +979,9 @@ class GraphData:
 				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c, verbose=0)
 			c_i += 1
-			
-		self.contract_unique_overlaps(verbose = verbose)
+		
+		if do_contraction:
+			self.contract_unique_overlaps(verbose = verbose)
 		self.construct_assembly_ordering_labels(verbose = 0)
 		
 	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
