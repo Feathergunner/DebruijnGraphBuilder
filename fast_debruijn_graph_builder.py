@@ -54,7 +54,6 @@ class ContigSequence:
 		self.sequence = sequence
 		self.kmers = kmers
 		# the maximal read eavidence this sequence has for any subsequence
-		# self.max_evidence_weight = len(kmers)
 		self.max_weight = weight
 		# overlaps (i.e. edges) are stored in dictionaries
 		# self.overlap[other_sequence_id] = overlap_id
@@ -107,7 +106,6 @@ class SequenceOverlap:
 		self.evidence_reads = evidence_reads
 		# Flag that checks whether a sequence is relevant for the graph or if it has been deleted
 		self.is_relevant = True
-		self.bla = 0
 	
 	def add_evidence(self, read_id):
 		if read_id >= 0:
@@ -168,7 +166,6 @@ class GraphData:
 			if simplify_graph:
 				self.remove_parallel_sequences(verbose=verbose)
 				self.contract_unique_overlaps(verbose=verbose)
-				#self.remove_single_sequence_components(verbose=verbose)
 				
 			if remove_tips:
 				self.remove_tips(verbose=verbose)
@@ -840,6 +837,28 @@ class GraphData:
 			reads += self.kmers[kmer_id].evidence_reads
 		reads = list(set(reads))
 		return reads
+		
+	def get_reads_not_covered_by_hubreads(self, verbose=False):
+		# get all reads that are evidence for at least four sequences.
+		# All other reads (that are evidence for at most three sequences) are subsequences of hubreads
+		
+		read_appearances = {}
+		
+		for s in self.sequences:
+			evidence_reads = self.get_read_of_sequences([s])
+			for r in evidence_reads:
+				if r not in read_appearances:
+					read_appearances[r] = 0
+				read_appearances[r] += 1
+				
+		list_of_relevant_reads = []
+		for r in read_appearances:
+			if read_appearances[r] > 3:
+				list_of_relevant_reads.append(r)
+				
+		if verbose:
+			print ("The original set of "+str(len(self.reads))+" reads was reduced to "+str(len(list_of_relevant_reads))+" relevant reads")
+		return list_of_relevant_reads
 		
 	def reduce_to_single_path_max_weight(self, start_sequence=False, restrict_to_component=False, verbose=False):
 		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
