@@ -657,10 +657,13 @@ class GraphData:
 					self.removed_reads += self.get_read_of_sequences([self.sequences[seq_id]])
 					
 	def remove_single_sequence_loops(self, do_contraction=True, verbose=False):
+		ov_ids_to_delete = []
 		for ov_id in self.overlaps:
 			ov = self.overlaps[ov_id]
 			if ov.contig_sequence_1 == ov.contig_sequence_2:
-				self.delete_overlap(ov.id)
+				ov_ids_to_delete.append(ov_id)
+		for ov_id in ov_ids_to_delete:
+			self.delete_overlap(ov_id)
 		if do_contraction:
 			self.contract_unique_overlaps()
 
