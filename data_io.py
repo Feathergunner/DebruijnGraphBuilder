@@ -10,7 +10,7 @@ def get_reads_from_file(filename="samplereads.txt"):
 		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
 	return reads
 	
-def get_reads_from_fastq_file_by_length(read_ids, filename="fastqreads.fq"):
+def get_reads_from_fastq_file(read_ids, filename="fastqreads.fq"):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
@@ -27,7 +27,7 @@ def get_reads_from_fastq_file_by_length(read_ids, filename="fastqreads.fq"):
 				status = 1
 	return reads
 
-def get_reads_from_fastq_file(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
+def get_reads_from_fastq_file_by_length(filename="fastqreads.fq", num_of_reads=-1, first_read=1):
 	# if num_of_reads > 0, only the specified number of reads will be read from the file.
 	status = 0
 	reads = []
