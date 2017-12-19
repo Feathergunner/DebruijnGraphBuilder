@@ -191,6 +191,14 @@ def test_hubpaths():
 		#print ("Number of overlaps in "+filename_output+"_orig: "+str(len(debruijn.overlaps)))
 		#print ("Number of hubpaths in "+filename_output+"_orig: "+str(len(hubpaths)))
 
+def test_position_labels():
+	dna = dgen.generate_dna(length=1000)
+	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=0.0, indel_error_percentage=0.1, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=5, readlength_distribution='gaussian')
+	k = 20
+	debruijn = fdgb.GraphData([reads], k, construct_labels=False)
+	print len(debruijn.sequences)
+	debruijn.construct_assembly_ordering_labels(compute_position_labels=False, verbose=2);
+
 def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readlength = 100, indel_error = 15.0, min_k = 20, max_k = 30, verbose=False):
 	dna = dgen.generate_dna(length=dna_length)
 	reads = dgen.samplereads(dna, number_of_reads=n_reads, replace_error_percentage=0.0, indel_error_percentage=indel_error, mutation_alphabet=["A","C","G","T"], read_length_mean=readlength, read_length_stddev=5, readlength_distribution='exponentioal')
@@ -266,4 +274,5 @@ if __name__ == '__main__':
 	#test_exponential_readlengths()
 	#test_hubpaths()
 	#test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
-	test_multisized_on_corona_reads()
+	#test_multisized_on_corona_reads()
+	test_position_labels()

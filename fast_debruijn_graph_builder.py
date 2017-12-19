@@ -62,7 +62,8 @@ class ContigSequence:
 		# deleted sequences will have the following flag set to False
 		self.is_relevant = is_relevant
 		# used for estimation of position within assembly
-		self.label = False
+		self.label_p = False
+		self.label_n = False
 		
 	def get_evidence_weight(self):
 		return len(self.kmers)
@@ -148,10 +149,15 @@ class GraphData:
 		# Flag that marks if unique overlaps have been contracted
 		self.is_contracted = False
 		# min and max label of all sequences
-		self.min_label = 0
-		self.max_label = 0
-		self.min_sequence = -1
-		self.max_sequence = -1
+		self.min_label_p = 0
+		self.max_label_p = 0
+		self.min_sequence_p = -1
+		self.max_sequence_p = -1
+
+		self.min_label_n = 0
+		self.max_label_n = 0
+		self.min_sequence_n = -1
+		self.max_sequence_n = -1
 		
 		self.removed_reads = []
 		
@@ -752,8 +758,8 @@ class GraphData:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
 						
-	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=1):
-		# constructs a fuzzy partial ordering of all relevant sequences:
+	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
+		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
 		# algorithm assumes that graph
 		# 	is not empty and
 		#	has only one component and
@@ -775,14 +781,21 @@ class GraphData:
 		# reset labels
 		for seq in self.sequences:
 			if seq.is_relevant:
-				seq.label = False
+				seq.label_p = False
 		# init for start sequence
-		self.min_label = 0
-		self.max_label = 0
-		self.min_sequence = start_sequence
-		self.max_sequence = start_sequence
-		self.sequences[start_sequence].label = 0
-		
+		if compute_position_labels:
+			self.min_label_p = 0
+			self.max_label_p = 0
+			self.min_sequence_p = start_sequence
+			self.max_sequence_p = start_sequence
+			self.sequences[start_sequence].label_p = 0
+		else:
+			self.min_label_n = 0
+			self.max_label_n = 0
+			self.min_sequence_n = start_sequence
+			self.max_sequence_n = start_sequence
+			self.sequences[start_sequence].label_n = 0
+
 		if verbose == 2:
 			print ("Start with sequence " + str(start_sequence))
 				
@@ -791,44 +804,77 @@ class GraphData:
 			current_data = queue[0]
 			queue.pop(0)
 			current_node_id = current_data[0]
+
 			for seq_id in self.sequences[current_node_id].overlaps_out:
-				if self.sequences[seq_id].label == False:
-					start_label = current_data[1] + self.sequences[current_node_id].get_length()
-					if start_label > self.max_label:
-						self.max_label = start_label
-						self.max_sequence = seq_id
-					self.sequences[seq_id].label = start_label
-					queue.append([seq_id, start_label])
+				if compute_position_labels:
+					if self.sequences[seq_id].label_p == False:
+						start_label = current_data[1] + self.sequences[current_node_id].get_length()
+						if start_label > self.max_label_p:
+							self.max_label_p = start_label
+							self.max_sequence_p = seq_id
+						self.sequences[seq_id].label_p = start_label
+						queue.append([seq_id, start_label])
+				else:
+					if self.sequences[seq_id].label_n == False:
+						start_label = current_data[1] + 1
+						if start_label > self.max_label_n:
+							self.max_label_n = start_label
+							self.max_sequence_n = seq_id
+						self.sequences[seq_id].label_n = start_label
+						queue.append([seq_id, start_label])
 			for seq_id in self.sequences[current_node_id].overlaps_in:
-				if self.sequences[seq_id].label == False:
-					start_label = current_data[1] - self.sequences[seq_id].get_length()
-					if start_label < self.min_label:
-						self.min_label = start_label
-						self.min_sequence = seq_id
-					self.sequences[seq_id].label = start_label
-					queue.append([seq_id, start_label])
+				if compute_position_labels:
+					if self.sequences[seq_id].label_p == False:
+						start_label = current_data[1] - self.sequences[seq_id].get_length()
+						if start_label < self.min_label_p:
+							self.min_label_p = start_label
+							self.min_sequence_p = seq_id
+						self.sequences[seq_id].label_p = start_label
+						queue.append([seq_id, start_label])
+				else:
+					if self.sequences[seq_id].label_n == False:
+						start_label = current_data[1] - 1
+						if start_label < self.min_label_n:
+							self.min_label_n = start_label
+							self.min_sequence_n = seq_id
+						self.sequences[seq_id].label_n = start_label
+						queue.append([seq_id, start_label])
 		
 		if verbose == 2:
 			for seq in self.sequences:
 				if seq.is_relevant:
-					print str(seq.id) + ": " + str(seq.label)
+					if compute_position_labels:
+						print str(seq.id) + ": " + str(seq.label_p)
+					else:
+						print str(seq.id) + ": " + str(seq.label_n)
 		
 		if do_second_iteration:
 			next_start = 0
-			if abs(self.max_label) > abs(self.min_label):
-				next_start = self.max_sequence
+			if compute_position_labels:
+				if abs(self.max_label_p) > abs(self.min_label_p):
+					next_start = self.max_sequence_p
+				else:
+					next_start = self.min_sequence_p
+				if verbose == 2:
+					print ("max sequence of first iteration: "+str(self.max_sequence_p) + " with label "+str(self.max_label_p))
+					print ("min sequence of first iteration: "+str(self.min_sequence_p) + " with label "+str(self.min_label_p))
+					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
 			else:
-				next_start = self.min_sequence
-			if verbose == 2:
-				print ("max sequence of first iteration: "+str(self.max_sequence) + " with label "+str(self.max_label))
-				print ("min sequence of first iteration: "+str(self.min_sequence) + " with label "+str(self.min_label))
-				print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
-			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
+				if abs(self.max_label_n) > abs(self.min_label_n):
+					next_start = self.max_sequence_n
+				else:
+					next_start = self.min_sequence_n
+				if verbose == 2:
+					print ("max sequence of first iteration: "+str(self.max_sequence_n) + " with label "+str(self.max_label_n))
+					print ("min sequence of first iteration: "+str(self.min_sequence_n) + " with label "+str(self.min_label_n))
+					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
+
+			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
 		sorted_nodes = sorted([seq for seq in self.sequences if seq.label], key=lambda x: x.label)
-		label_div = self.max_label-self.min_label
+		label_div = self.max_label_p-self.min_label_p
 		part_start_difference = label_div/(number_of_parts+overlap-1)
 		part_size = part_start_difference*overlap
 		
@@ -838,11 +884,11 @@ class GraphData:
 		
 		parts_seq = []
 		for i in range(number_of_parts):
-			current_start = self.min_label+(i*part_start_difference)
+			current_start = self.min_label_p+(i*part_start_difference)
 			if i == number_of_parts-1:
-				current_end = self.max_label
+				current_end = self.max_label_p
 			else:
-				current_end = current_start + part_size #self.min_label+(i+2)*(part_size)
+				current_end = current_start + part_size #self.min_label_p+(i+2)*(part_size)
 			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
 			parts_seq.append(this_part_sequences)
 		return parts_seq
@@ -911,12 +957,12 @@ class GraphData:
 		path = []
 		
 		if not start_sequence:
-			current_seq_id = self.min_sequence
+			current_seq_id = self.min_sequence_p
 		else:
 			current_seq_id = start_sequence
 		current_label = self.sequences[current_seq_id].label
 		path_finding_failed = False
-		while (not path_finding_failed) and current_label < self.max_label-2*self.k_value:
+		while (not path_finding_failed) and current_label < self.max_label_p-2*self.k_value:
 			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
 			dfs_labels[current_seq_id] = 1
 			next_sequences = [target_id for target_id in self.sequences[current_seq_id].overlaps_out if dfs_labels[target_id] == 0]
@@ -973,13 +1019,13 @@ class GraphData:
 				print ("Size of this component: "+str(len(c)))
 			self.construct_assembly_ordering_labels(start_sequence=c[0], verbose = 0)
 			start_sequence = -1
-			min_label = False
+			min_label_p = False
 			for seq_id in c:
-				if not min_label or self.sequences[seq_id].label < min_label:
+				if not min_label_p or self.sequences[seq_id].label < min_label_p:
 					start_sequence = seq_id
-					min_label = self.sequences[seq_id].label
+					min_label_p = self.sequences[seq_id].label
 			if verbose:
-				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label))
+				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label_p))
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c, verbose=0)
 			c_i += 1
 		
@@ -1002,7 +1048,7 @@ class GraphData:
 			component_id += 1
 			if verbose:
 				print ("next component")
-			start_seq_id = self.min_sequence
+			start_seq_id = self.min_sequence_p
 			
 			current_seq_id = start_seq_id
 			last_seq_id = -1
@@ -1069,7 +1115,7 @@ class GraphData:
 					self.delete_sequence(seq.id)
 	
 	def get_label_span(self):
-		return self.max_label - self.min_label
+		return self.max_label_p - self.min_label_p
 		
 	def construct_laplacian(self, list_of_nodes, verbose=False):
 		# this method constructs the laplacian for a specific subset of nodes
