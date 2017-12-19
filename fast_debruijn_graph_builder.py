@@ -1341,3 +1341,23 @@ class GraphData:
 			hubreads.append(hubread)
 						
 		return hubreads
+
+	def compute_common_genome_evidence(self, verbose=False):
+		common_genome_evidence = {}
+
+		sequences_by_node_labels = {}
+		for seq in self.sequences:
+			if seq.label_n not in sequences_by_node_labels:
+				sequences_by_node_labels[seq.label_n] = []
+			sequences_by_node_labels[seq.label_n].append(seq.id)
+
+		for seq in self.sequences:
+			seq_read_ids = self.get_read_of_sequences([seq])
+			for other_seq_id in sequences_by_node_labels[seq.label_n]:
+				other_seq_read_ids = self.get_read_of_sequences([self.sequences[other_seq_id]])
+				for r_id in seq_read_ids:
+					if r_id not in common_genome_evidence:
+						common_genome_evidence[r_id] = {}
+					for or_id in other_seq_read_ids:
+						common_genome_evidence[r_id][or_id] = -1
+
