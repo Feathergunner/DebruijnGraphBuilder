@@ -270,16 +270,32 @@ def test_multisized_on_corona_reads():
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
 	
 def test_read_parttition_by_length_distribution():
-	read_id_partition_by_size = dio.get_read_partition_by_lengthdistribution(filename="Data/hcov229e_only.fq", size_of_parts=500, verbose=True)
-	reads_1 = dio.get_reads_from_fastq_file(read_ids = [r[1] for r in read_id_partition_by_size[0]], filename="Data/hcov229e_only.fq")
+	read_id_partition_by_distribution = dio.get_read_partition_by_lengthdistribution(filename="Data/hcov229e_only.fq", size_of_parts=500, verbose=True)
+	reads_1 = dio.get_reads_from_fastq_file(read_ids = [r[1] for r in read_id_partition_by_distribution[-1]], filename="Data/hcov229e_only.fq")
 	print ("first set of reads: total number of reads: "+str(len(reads_1)))
 	print ("lengths of reads:")
 	print (sorted([len(r) for r in reads_1]))
-	reads_2 = dio.get_reads_from_fastq_file(read_ids = [r[1] for r in read_id_partition_by_size[1]], filename="Data/hcov229e_only.fq")
+	reads_2 = dio.get_reads_from_fastq_file(read_ids = [r[1] for r in read_id_partition_by_distribution[-2]], filename="Data/hcov229e_only.fq")
 	print ("second set of reads: total number of reads: "+str(len(reads_2)))
 	print ("lengths of reads:")
 	print (sorted([len(r) for r in reads_2]))
 	
+def compare_different_read_partitions():
+	k = 50
+	filename_output_base = "Output/test/compare_read_partitions_"
+	read_id_partition_by_size = dio.get_read_partition_by_readlength(filename="Data/hcov229e_only.fq", size_of_parts=50)
+	read_id_partition_by_distribution = dio.get_read_partition_by_lengthdistribution(filename="Data/hcov229e_only.fq", size_of_parts=500, verbose=True)
+	
+	read_parts_by_size_ids = [x[1] for x in read_id_partition_by_size[-1]]
+	reads_by_size = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_parts_by_size_ids)
+	debruijn_by_size = fdgb.GraphData([reads_by_size], k)
+	debruijn_by_size.get_asqg_output(filename = filename_output+"by_size.asqg")
+	
+	read_parts_by_distribution_ids = [x[1] for x in read_id_partition_by_distribution[-1]]
+	reads_by_distribution = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_parts_by_distribution_ids)
+	debruijn_by_distribution = fdgb.GraphData([reads_by_distribution], k)
+	debruijn_by_size.get_asqg_output(filename = filename_output+"by_distribution.asqg")
+
 if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()

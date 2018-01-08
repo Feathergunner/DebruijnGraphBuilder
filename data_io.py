@@ -135,6 +135,7 @@ def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts
 def get_read_partition_by_lengthdistribution(filename, number_of_parts=-1, size_of_parts=-1, verbose=False):
 	readlengths = get_readlengths(filename)
 	readlengths_sorted = sorted(readlengths, key=lambda x: x[0])
+	n = len(readlengths_sorted)
 	
 	if number_of_parts*size_of_parts>0:
 		print ("Error! Exactly one of the parameters number_of_parts and size_of_parts has to be specified!")
@@ -142,21 +143,19 @@ def get_read_partition_by_lengthdistribution(filename, number_of_parts=-1, size_
 		
 	tmp_parts = []
 	if number_of_parts > 0:
-		size_of_parts = int(math.ceil(len(readlengths_sorted)/float(number_of_parts)))
+		size_of_parts = int(math.ceil(n/float(number_of_parts)))
 	elif size_of_parts > 0:
-		number_of_parts = int(math.ceil(len(readlengths_sorted)/float(size_of_parts)))
+		number_of_parts = int(math.ceil(n/float(size_of_parts)))
 
 	if verbose:
 		print ("size_of_parts = "+str(size_of_parts))
 		print ("number_of_parts = "+str(number_of_parts))
 	
-	parts = []
+	parts = [[] for i in range(number_of_parts)]
 	for i in range(size_of_parts):
 		for j in range(number_of_parts):
-			if j >= len(parts):
-				parts.append([])
 			k = j + (i*number_of_parts)
-			if k < len(readlengths_sorted):
-				parts[j].append(readlengths_sorted[k])
+			if k < n:
+				parts[number_of_parts-j-1].append(readlengths_sorted[n-k-1])
 	return parts
 		
