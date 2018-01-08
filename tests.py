@@ -289,12 +289,12 @@ def compare_different_read_partitions():
 	read_parts_by_size_ids = [x[1] for x in read_id_partition_by_size[-1]]
 	reads_by_size = dio.get_reads_from_fastq_file(filename = "Data/hcov229e_only.fq", read_ids = read_parts_by_size_ids)
 	debruijn_by_size = fdgb.GraphData([reads_by_size], k)
-	debruijn_by_size.get_asqg_output(filename = filename_output+"by_size.asqg")
+	debruijn_by_size.get_asqg_output(filename = filename_output_base+"by_size.asqg")
 	
 	read_parts_by_distribution_ids = [x[1] for x in read_id_partition_by_distribution[-1]]
 	reads_by_distribution = dio.get_reads_from_fastq_file(filename = "Data/hcov229e_only.fq", read_ids = read_parts_by_distribution_ids)
 	debruijn_by_distribution = fdgb.GraphData([reads_by_distribution], k)
-	debruijn_by_size.get_asqg_output(filename = filename_output+"by_distribution.asqg")
+	debruijn_by_size.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
 
 if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
@@ -302,5 +302,6 @@ if __name__ == '__main__':
 	#test_hubpaths()
 	#test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
 	#test_multisized_on_corona_reads()
-	test_read_parttition_by_length_distribution()
+	#test_read_parttition_by_length_distribution()
 	#test_position_labels()
+	compare_different_read_partitions()
