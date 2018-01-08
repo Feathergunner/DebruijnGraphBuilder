@@ -269,10 +269,22 @@ def test_multisized_on_corona_reads():
 	debruijn.remove_single_sequence_loops()
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
 	
+def test_read_parttition_by_length_distribution():
+	read_id_partition_by_size = dio.get_read_partition_by_lengthdistribution(filename="Data/hcov229e_only.fq", size_of_parts=500, verbose=True)
+	reads_1 = dio.get_reads_from_fastq_file(read_ids = [r[1] for r in read_id_partition_by_size[0]], filename="Data/hcov229e_only.fq")
+	print ("first set of reads: total number of reads: "+str(len(reads_1)))
+	print ("lengths of reads:")
+	print (sorted([len(r) for r in reads_1]))
+	reads_2 = dio.get_reads_from_fastq_file(read_ids = [r[1] for r in read_id_partition_by_size[1]], filename="Data/hcov229e_only.fq")
+	print ("second set of reads: total number of reads: "+str(len(reads_2)))
+	print ("lengths of reads:")
+	print (sorted([len(r) for r in reads_2]))
+	
 if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
 	#test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
 	#test_multisized_on_corona_reads()
-	test_position_labels()
+	test_read_parttition_by_length_distribution()
+	#test_position_labels()
