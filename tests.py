@@ -287,12 +287,12 @@ def compare_different_read_partitions():
 	read_id_partition_by_distribution = dio.get_read_partition_by_lengthdistribution(filename="Data/hcov229e_only.fq", size_of_parts=500, verbose=True)
 	
 	read_parts_by_size_ids = [x[1] for x in read_id_partition_by_size[-1]]
-	reads_by_size = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_parts_by_size_ids)
+	reads_by_size = dio.get_reads_from_fastq_file(filename = "Data/hcov229e_only.fq", read_ids = read_parts_by_size_ids)
 	debruijn_by_size = fdgb.GraphData([reads_by_size], k)
 	debruijn_by_size.get_asqg_output(filename = filename_output+"by_size.asqg")
 	
 	read_parts_by_distribution_ids = [x[1] for x in read_id_partition_by_distribution[-1]]
-	reads_by_distribution = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_parts_by_distribution_ids)
+	reads_by_distribution = dio.get_reads_from_fastq_file(filename = "Data/hcov229e_only.fq", read_ids = read_parts_by_distribution_ids)
 	debruijn_by_distribution = fdgb.GraphData([reads_by_distribution], k)
 	debruijn_by_size.get_asqg_output(filename = filename_output+"by_distribution.asqg")
 
