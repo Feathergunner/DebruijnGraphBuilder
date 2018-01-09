@@ -294,7 +294,7 @@ def compare_different_read_partitions():
 	read_parts_by_distribution_ids = [x[1] for x in read_id_partition_by_distribution[-1]]
 	reads_by_distribution = dio.get_reads_from_fastq_file(filename = "Data/hcov229e_only.fq", read_ids = read_parts_by_distribution_ids)
 	debruijn_by_distribution = fdgb.GraphData([reads_by_distribution], k)
-	debruijn_by_size.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
+	debruijn_by_distribution.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
 
 if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
