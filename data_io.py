@@ -8,7 +8,7 @@ def get_reads_from_file(filename="samplereads.txt"):
 	with open(filename) as fh:
 		reads = fh.readlines()
 	for read_index in range(len(reads)):
-		reads[read_index] = [re.sub(r"\s", '', reads[read_index])]
+		reads[read_index] = re.sub(r"\s", '', reads[read_index])
 	return reads
 	
 def get_reads_from_fastq_file(filename, read_ids=-1):

@@ -128,6 +128,7 @@ class GraphData:
 					reads=0,
 					k=0,
 					alphabet={"A":"T", "C":"G", "G":"C", "T":"A"},
+					directed_reads=False,
 					load_weights=True,
 					reduce_data=True,
 					simplify_graph=True,
@@ -143,9 +144,13 @@ class GraphData:
 		self.sequences = []
 		self.overlaps = {}
 		self.alphabet = alphabet
+		self.directed_reads = directed_reads
 		
 		# Flag that marks if inverse sequences have been removed
-		self.is_unified = False
+		if not self.directed_reads:
+			self.is_unified = False
+		else:
+			self.is_unified = True
 		# Flag that marks if unique overlaps have been contracted
 		self.is_contracted = False
 		# min and max label of all sequences
@@ -172,7 +177,8 @@ class GraphData:
 				gc.collect()
 				
 			if simplify_graph:
-				self.remove_parallel_sequences(verbose=verbose)
+				if not self.directed_reads:
+					self.remove_parallel_sequences(verbose=verbose)
 				self.contract_unique_overlaps(verbose=verbose)
 				
 				if remove_tips:
@@ -204,20 +210,23 @@ class GraphData:
 			print ("Number of reads: "+str(number_of_reads))
 		for r in reads:
 			for read in r:
+				is_correct = True
 				if (read_id%1000 == 0 or read_id == number_of_reads-1):
 					meta.print_progress(read_id, number_of_reads-1)
-				readdata = re.split(r',',read)
-				readseq = readdata[0]
-				if load_weights and len(readdata) > 1:
-					readweight = int(readdata[1])
+				if len(read) > 0:
+					readdata = re.split(r',',read)
+					readseq = readdata[0]
+					if load_weights and len(readdata) > 1:
+						readweight = int(readdata[1])
+					else:
+						readweight = 1
+					# check if read has correct alphabet:
+					for c in readseq:
+						if c not in self.alphabet:
+							is_correct = False
+							print ("Error! Character "+str(c)+" not in alphabet "+str(self.alphabet.keys()))
 				else:
-					readweight = 1
-				# check if read has correct alphabet:
-				is_correct = True
-				for c in readseq:
-					if c not in self.alphabet:
-						is_correct = False
-						print ("Error! Character "+str(c)+" not in alphabet "+str(self.alphabet.keys()))
+					is_correct = False
 				if is_correct:
 					self.reads.append(Read(read_id, readseq, readweight))
 				read_id += 1
@@ -290,7 +299,7 @@ class GraphData:
 		return sequences
 		
 	def get_kmerdata_from_reads(self, verbose = False):
-		# checks all reads and constructs kmers and inverse kmers
+		# checks all reads and constructs kmers and inverse kmers (if not self.directed_reads)
 		print ("Get kmer-data from reads ...")
 		read_index = 0
 		kmer_counter = 0
@@ -318,9 +327,10 @@ class GraphData:
 					this_kmer_id = self.kmer_dict[new_kmer_sequence]
 					self.kmers[this_kmer_id].add_evidence(read_index)
 					self.kmers[this_kmer_id].update_baseweight(current_read_weight)
-					inv_kmer_id = self.kmers[this_kmer_id].id_of_inverse_kmer
-					self.kmers[inv_kmer_id].add_evidence(read_index)
-					self.kmers[inv_kmer_id].update_baseweight(current_read_weight)
+					if not self.directed_reads:
+						inv_kmer_id = self.kmers[this_kmer_id].id_of_inverse_kmer
+						self.kmers[inv_kmer_id].add_evidence(read_index)
+						self.kmers[inv_kmer_id].update_baseweight(current_read_weight)
 					if verbose:
 						print ("Kmer already exists")
 						print ("Add read ("+str(read_index)+") evidence to kmer "+str(this_kmer_id))
@@ -328,22 +338,24 @@ class GraphData:
 					if verbose:
 						print ("Kmer does not exist in database. Add new kmer ...")
 					
-					inv_kmer_seq = meta.get_inverse_sequence(new_kmer_sequence, self.alphabet)
-					if not inv_kmer_seq == new_kmer_sequence:
-						# add kmer:
-						self.kmers.append(Kmer(kmer_counter, kmer_counter+1, new_kmer_sequence, [read_index], baseweight=current_read_weight))
-						self.kmer_dict[new_kmer_sequence] = kmer_counter
-						this_kmer_id = kmer_counter
-						kmer_counter += 1
+					if not self.directed_reads:
+						inv_kmer_seq = meta.get_inverse_sequence(new_kmer_sequence, self.alphabet)
+						if not inv_kmer_seq == new_kmer_sequence:
+							id_of_inv_kmer = kmer_counter+1
+						else:
+							id_of_inv_kmer = kmer_counter
+					else:
+						id_of_inv_kmer = -1
+						
+					# add kmer:
+					self.kmers.append(Kmer(kmer_counter, id_of_inv_kmer, new_kmer_sequence, [read_index], baseweight=current_read_weight))
+					self.kmer_dict[new_kmer_sequence] = kmer_counter
+					this_kmer_id = kmer_counter
+					kmer_counter += 1
+					if not self.directed_reads:
 						# add inverse kmer:
 						self.kmers.append(Kmer(kmer_counter, kmer_counter-1, inv_kmer_seq, [read_index], baseweight=current_read_weight))
 						self.kmer_dict[inv_kmer_seq] = kmer_counter
-						kmer_counter += 1
-					else:
-						# add kmer:
-						self.kmers.append(Kmer(kmer_counter, kmer_counter, new_kmer_sequence, [read_index], baseweight=current_read_weight))
-						self.kmer_dict[new_kmer_sequence] = kmer_counter
-						this_kmer_id = kmer_counter
 						kmer_counter += 1
 					
 				if verbose:
@@ -366,7 +378,7 @@ class GraphData:
 			self.sequences[source_seq_id].overlaps_out[target_seq_id] = ov_id
 			self.sequences[target_seq_id].overlaps_in[source_seq_id] = ov_id
 			
-			if consider_inverse:
+			if not self.directed_reads and consider_inverse:
 				# add inverse overlap:
 				rev_ov_id = ov_id + 1
 				source_rev_seq_id = self.sequences[target_seq_id].id_of_inverse_seq
@@ -733,6 +745,7 @@ class GraphData:
 		# reconstructs a graph from a asqg-file
 		print ("Loading from asqg-file ...")
 		self.is_unified = True
+		self.directed_reads = True
 		with open(filename) as asqg_source:
 			for line in asqg_source:
 				linedata = re.split(r'\t', line)

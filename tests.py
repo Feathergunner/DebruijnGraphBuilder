@@ -6,26 +6,49 @@ import data_gen as dgen
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
 
+import timeit
+import sys
 import gc
 import os
 
-def test_basic_functionality(verbose=False):
+def test_basic_functionality(new_dataset=False, data_dir="Output/test", verbose=False):
 	print ("Starting basic test of de bruijn graph construction")
-	print ("Generate dna ...")
-	dna = dgen.generate_dna(length=5000)
-	print ("Sample reads ...")
-	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=0.2, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=0, readlength_distribution='gaussian')
-	k = 30
+	if not os.path.exists(data_dir):
+		os.mkdir(data_dir)
+	if new_dataset or not os.path.isfile(data_dir+"/test_dna.txt"):
+		dna = dgen.generate_dna(length=3000)
+		dgen.write_dna_to_file(data_dir+"/test_dna.txt", dna)
+	else:
+		with open(data_dir+"/test_dna.txt") as inputfile:
+			lines = inputfile.readlines()
+		dna = lines[0]
+	
+	if new_dataset or not os.path.isfile(data_dir+"/test_reads.txt"):
+		reads = dgen.samplereads(dna, number_of_reads=2000, replace_error_percentage=0.0, indel_error_percentage=5.0, mutation_alphabet=["A","C","G","T"], read_length_mean=200, read_length_stddev=0, readlength_distribution='exponential')
+		with open(data_dir+"/test_reads.txt", 'w') as outf:
+			for read in reads:
+				outf.write(read + '\n')
+	else:
+		reads = dio.get_reads_from_file(filename=data_dir+"/test_reads.txt")
+	k = 20
+	
+	start_fdgb = 0
+	stop_fdgb = 0
 	
 	print ("Construct de bruijn graph")
-	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=False, verbose=verbose)
 	
-	if not os.path.exists("Output/test"):
-		os.mkdir("Output/test")
+	start_fdgb = timeit.default_timer()
+	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=True, construct_labels=False, directed_reads=False, verbose=verbose)
+	stop_fdgb = timeit.default_timer()
+	debruijn.print_memory_usage()
+	print ("Size of tracked objects: " +str(sum(sys.getsizeof(i) for i in gc.get_objects())/1000000.0) + "MB")
+	print ("Running time of fdgb: " + str("%.2f" % (stop_fdgb - start_fdgb)))
 	
+	debruijn.get_asqg_output(filename = data_dir+"/test_basic.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_basic.csv")
 	
-	debruijn.get_asqg_output(filename = "Output/test/test_basic.asqg")
-	debruijn.get_csv_output(filename = "Output/test/test_basic.csv")
+	print ("Number of sequences: "+str(len([seq for seq in debruijn.sequences if seq.is_relevant])))
+	print ("Number of overlaps: "+str(len(debruijn.overlaps)))
 
 def test_assembly_ordering():
 	gl = 2000
