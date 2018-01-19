@@ -381,16 +381,17 @@ def test_recons_merge():
 '''
 
 def construct_consensus_from_multiple_parts():
-	size_of_parts = 1000
+	size_of_parts = 5000
 	k = 50
-	#filename = "Data/hcov229e_only.fq"
-	filename = "Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq"
-	filepath_output = "Output/ringtrial"
-	filename_output_base = filepath_output+"/rt_partsize"+str(size_of_parts)
+	filename = "Data/hcov229e_only.fq"
+	#filename = "Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq"
+	#filepath_output = "Output/ringtrial"
+	filepath_output = "Output/corona_recons_multiparts"
+	filename_output_base = filepath_output+"/crm_partsize"+str(size_of_parts)
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
 
-	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts, max_readlength=5000)
+	readpartition = dio.get_read_partition_by_readlength(filename = filename, size_of_parts=size_of_parts, max_readlength=30000)
 	n = len(readpartition)
 	p = n-1#3*(n/4)
 	# consider only second half of partition (parts with longer reads)
@@ -400,7 +401,7 @@ def construct_consensus_from_multiple_parts():
 		p += 1
 		filename_output = filename_output_base+"_k"+str(k)+"_p"+str(p)
 		read_ids = [x[1] for x in rp]
-		reads = dio.get_reads_from_fastq_file_by_length(filename = filename, read_ids = read_ids)
+		reads = dio.get_reads_from_fastq_file(filename = filename, read_ids = read_ids)
 		
 		debruijn = fdgb.GraphData([reads], k)
 
@@ -446,6 +447,7 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 def exp_construct_consensus_from_specific_part(size_of_parts=50, k=40, readfilename="Data/hcov229e_only.fq", filepath_output="Output/consensus_from_readsubset"):
 	#filepath_output = "Output/corona_recons_multiparts"
 	readpartition = dio.get_read_partition_by_readlength(filename = readfilename, size_of_parts=size_of_parts)
+	#readpartition = dio.get_read_partition_by_lengthdistribution(filename=readfilename, size_of_parts=size_of_parts, verbose=True)
 	# get read ids of 50 largest reads:
 	read_ids = [x[1] for x in readpartition[-1]]
 	filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)+"_k"+str(k)+"_p"+str(len(readpartition))
@@ -471,10 +473,7 @@ def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, fil
 	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
 	
 if __name__ == '__main__':
-	#measure_runtime()
-	
-	#exp_construct_consensus_from_specific_part()
-	#construct_consensus_from_multiple_parts()
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	exp_construct_consensus_from_specific_part()
+	exp_construct_consensus_from_specific_part(size_of_parts=2000, k=50)
+	
