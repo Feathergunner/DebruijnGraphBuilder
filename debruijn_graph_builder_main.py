@@ -427,7 +427,7 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
 
-	reads = dio.get_reads_from_fastq_file_by_length(filename = readfile, read_ids = read_ids)
+	reads = dio.get_reads_from_fastq_file(filename = readfile, read_ids = read_ids)
 	
 	debruijn = fdgb.GraphData([reads], k, directed_reads=True, remove_tips=True, construct_labels=True)
 
