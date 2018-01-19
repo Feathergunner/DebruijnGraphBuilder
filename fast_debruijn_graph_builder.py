@@ -973,7 +973,7 @@ class GraphData:
 			current_seq_id = self.min_sequence_p
 		else:
 			current_seq_id = start_sequence
-		current_label = self.sequences[current_seq_id].label
+		current_label = self.sequences[current_seq_id].label_p
 		path_finding_failed = False
 		while (not path_finding_failed) and current_label < self.max_label_p-2*self.k_value:
 			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
@@ -991,7 +991,7 @@ class GraphData:
 							max_seq_id = seq_id
 				
 					current_seq_id = max_seq_id
-					current_label  = self.sequences[current_seq_id].label
+					current_label  = self.sequences[current_seq_id].label_p
 					path.append(current_seq_id)
 				if verbose == 2:
 					print ("Next sequence is sequence "+str(max_seq_id)+" with label " + str(current_label) + " and weight "+str(max_seq_weight))
@@ -1003,7 +1003,7 @@ class GraphData:
 						print ("Dead end! Remove sequence "+str(path[-1])+" from path")
 					path.pop(-1)
 					current_seq_id = path[-1]
-					current_label  = self.sequences[current_seq_id].label
+					current_label  = self.sequences[current_seq_id].label_p
 					if verbose == 2:
 						print ("Next sequence is sequence "+str(current_seq_id)+" with label " + str(current_label) + " and weight "+str(self.sequences[current_seq_id].get_total_weight()))
 				else:
@@ -1034,9 +1034,9 @@ class GraphData:
 			start_sequence = -1
 			min_label_p = False
 			for seq_id in c:
-				if not min_label_p or self.sequences[seq_id].label < min_label_p:
+				if not min_label_p or self.sequences[seq_id].label_p < min_label_p:
 					start_sequence = seq_id
-					min_label_p = self.sequences[seq_id].label
+					min_label_p = self.sequences[seq_id].label_p
 			if verbose:
 				print ("start_sequence for reduction: "+str(start_sequence)+" with label: "+str(min_label_p))
 			self.reduce_to_single_path_max_weight(start_sequence = start_sequence, restrict_to_component=c, verbose=0)
