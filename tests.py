@@ -7,6 +7,25 @@ import data_io as dio
 import fast_debruijn_graph_builder as fdgb
 
 import gc
+import os
+
+def test_basic_functionality(verbose=False):
+	print ("Starting basic test of de bruijn graph construction")
+	print ("Generate dna ...")
+	dna = dgen.generate_dna(length=5000)
+	print ("Sample reads ...")
+	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=0.2, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=0, readlength_distribution='gaussian')
+	k = 30
+	
+	print ("Construct de bruijn graph")
+	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=False, verbose=verbose)
+	
+	if not os.path.exists("Output/test"):
+		os.mkdir("Output/test")
+	
+	
+	debruijn.get_asqg_output(filename = "Output/test/test_basic.asqg")
+	debruijn.get_csv_output(filename = "Output/test/test_basic.csv")
 
 def test_assembly_ordering():
 	gl = 2000
@@ -297,6 +316,7 @@ def compare_different_read_partitions():
 	debruijn_by_distribution.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
 
 if __name__ == '__main__':
+	test_basic_functionality()
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
@@ -304,4 +324,5 @@ if __name__ == '__main__':
 	#test_multisized_on_corona_reads()
 	#test_read_parttition_by_length_distribution()
 	#test_position_labels()
-	compare_different_read_partitions()
+	#compare_different_read_partitions()
+	

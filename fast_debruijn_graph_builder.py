@@ -709,7 +709,7 @@ class GraphData:
 					for k_id in seq.kmers:
 						source_reads += [r for r in self.kmers[k_id].evidence_reads]
 					source_reads = set(source_reads)
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.get_total_weight())+","+str(seq.label)+","+str(source_reads)+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.get_total_weight())+","+str(seq.label_p)+","+str(source_reads)+"\n"
 				#for r in source_reads:
 				#	data += str(r)+" "
 				#data += "\n"
@@ -873,7 +873,7 @@ class GraphData:
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a partition of all read-ids based on intervals of labels
-		sorted_nodes = sorted([seq for seq in self.sequences if seq.label], key=lambda x: x.label)
+		sorted_nodes = sorted([seq for seq in self.sequences if seq.label_p], key=lambda x: x.label_p)
 		label_div = self.max_label_p-self.min_label_p
 		part_start_difference = label_div/(number_of_parts+overlap-1)
 		part_size = part_start_difference*overlap
@@ -889,7 +889,7 @@ class GraphData:
 				current_end = self.max_label_p
 			else:
 				current_end = current_start + part_size #self.min_label_p+(i+2)*(part_size)
-			this_part_sequences = [seq for seq in sorted_nodes if seq.label >= current_start and seq.label <= current_end]
+			this_part_sequences = [seq for seq in sorted_nodes if seq.label_p >= current_start and seq.label_p <= current_end]
 			parts_seq.append(this_part_sequences)
 		return parts_seq
 	
@@ -1360,4 +1360,13 @@ class GraphData:
 						common_genome_evidence[r_id] = {}
 					for or_id in other_seq_read_ids:
 						common_genome_evidence[r_id][or_id] = -1
+		return common_genome_evidence
 
+	def split_sequences_with_contradicting_genome_evidence(self, common_genome_evidence, verbose=False):
+		# # use common_genome_evidence as computed by compute_common_genome_evidence()
+		# for each sequence:
+			# get all read_ids from all kmers of sequence
+			# # 1) partition read_ids into minimal number of sets such that there are no pairs of read_ids with negative common_genome_evidence within any set:
+			# # 2) split sequence into multiple sequences, one for each set. split incident edges accordingly.
+		# # remove all edges without read_evidence (i.e. if source and target edge have no read_ids in common)
+		return
