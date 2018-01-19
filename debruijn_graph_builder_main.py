@@ -429,7 +429,7 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 
 	reads = dio.get_reads_from_fastq_file_by_length(filename = readfile, read_ids = read_ids)
 	
-	debruijn = fdgb.GraphData([reads], k)
+	debruijn = fdgb.GraphData([reads], k, directed_reads=True, remove_tips=True, construct_labels=True)
 
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
@@ -443,14 +443,11 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
 	
-def exp_construct_consensus_from_specific_part():
-	size_of_parts = 50
-	k=60
-	readfilename = "Data/hcov229e_only.fq"
+def exp_construct_consensus_from_specific_part(size_of_parts=50, k=40, readfilename="Data/hcov229e_only.fq", filepath_output="Output/consensus_from_readsubset"):
+	#filepath_output = "Output/corona_recons_multiparts"
 	readpartition = dio.get_read_partition_by_readlength(filename = readfilename, size_of_parts=size_of_parts)
 	# get read ids of 50 largest reads:
 	read_ids = [x[1] for x in readpartition[-1]]
-	filepath_output = "Output/corona_recons_multiparts"
 	filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)+"_k"+str(k)+"_p"+str(len(readpartition))
 	
 	construct_consensus_from_part(k=k, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
@@ -478,6 +475,6 @@ if __name__ == '__main__':
 	
 	#exp_construct_consensus_from_specific_part()
 	#construct_consensus_from_multiple_parts()
-	merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
+	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	
+	exp_construct_consensus_from_specific_part()
