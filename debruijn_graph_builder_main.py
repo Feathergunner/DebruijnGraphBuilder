@@ -476,6 +476,6 @@ if __name__ == '__main__':
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
 	#exp_construct_consensus_from_specific_part(size_of_parts=2000, k=50)
-	for k in range[30,35,40,45]:
+	for k in [30,35,40,45]:
 		construct_consensus_from_multiple_parts(size_of_parts=500, k=k, do_partition=False)
 	
