@@ -477,5 +477,5 @@ if __name__ == '__main__':
 	#minimal_test_spectral_partitioning()
 	#exp_construct_consensus_from_specific_part(size_of_parts=2000, k=50)
 	for k in range[30,35,40,45]:
-		construct_consensus_from_multiple_parts(size_of_parts = 500, k, do_partition=False)
+		construct_consensus_from_multiple_parts(size_of_parts=500, k=k, do_partition=False)
 	
