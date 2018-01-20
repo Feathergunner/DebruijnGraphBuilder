@@ -386,7 +386,7 @@ def construct_consensus_from_multiple_parts(size_of_parts = 5000, k = 50, do_par
 	filename = "Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq"
 	filepath_output = "Output/ringtrial"
 	#filename_output_base = filepath_output+"/crm_partsize"+str(size_of_parts)
-	filmename_output_base = filepath_output+"/rtrm_partsize"+str(size_of_parts)
+	filename_output_base = filepath_output+"/rtrm_partsize"+str(size_of_parts)
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
 
