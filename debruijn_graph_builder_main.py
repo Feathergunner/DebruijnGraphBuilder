@@ -380,14 +380,13 @@ def test_recons_merge():
 	
 '''
 
-def construct_consensus_from_multiple_parts():
-	size_of_parts = 5000
-	k = 50
-	filename = "Data/hcov229e_only.fq"
-	#filename = "Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq"
-	#filepath_output = "Output/ringtrial"
-	filepath_output = "Output/corona_recons_multiparts"
-	filename_output_base = filepath_output+"/crm_partsize"+str(size_of_parts)
+def construct_consensus_from_multiple_parts(size_of_parts = 5000, k = 50, do_partition=True):
+	#filename = "Data/hcov229e_only.fq"
+	#filepath_output = "Output/corona_recons_multiparts"
+	filename = "Data/2017-11-03_ringtrial_v2.1.3_barcode01.fq"
+	filepath_output = "Output/ringtrial"
+	#filename_output_base = filepath_output+"/crm_partsize"+str(size_of_parts)
+	filmename_output_base = filepath_output+"/rtrm_partsize"+str(size_of_parts)
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
 
@@ -409,10 +408,11 @@ def construct_consensus_from_multiple_parts():
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt", addweights=True)
 		
-		debruijn.partition_graph_into_components_of_clusters(verbose=True)
-		filename_output += "_divided"
-		debruijn.get_asqg_output(filename = filename_output+".asqg")
-		debruijn.get_csv_output(filename = filename_output+".csv")
+		if do_partition:
+			debruijn.partition_graph_into_components_of_clusters(verbose=True)
+			filename_output += "_divided"
+			debruijn.get_asqg_output(filename = filename_output+".asqg")
+			debruijn.get_csv_output(filename = filename_output+".csv")
 		
 		debruijn.reduce_every_component_to_single_path_max_weight(verbose=True)
 		
@@ -475,5 +475,7 @@ def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, fil
 if __name__ == '__main__':
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	exp_construct_consensus_from_specific_part(size_of_parts=2000, k=50)
+	#exp_construct_consensus_from_specific_part(size_of_parts=2000, k=50)
+	for k in range[30,35,40,45]:
+		construct_consensus_from_multiple_parts(size_of_parts = 500, k, do_partition=False)
 	
