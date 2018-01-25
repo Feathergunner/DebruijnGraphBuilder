@@ -476,7 +476,8 @@ def exp_construct_consensus_from_specific_part(number_of_reads=50, k=40, readfil
 if __name__ == '__main__':
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	#exp_construct_consensus_from_specific_part(number_of_reads=2000, k=50)
-	for k in [30,35,40,45]:
-		construct_consensus_from_multiple_parts(size_of_parts=500, k=k, do_partition=False)
+	#for k in [30,35,40,45]:
+	#	construct_consensus_from_multiple_parts(size_of_parts=500, k=k, do_partition=False)
+
+	exp_construct_consensus_from_specific_part(number_of_reads=100, k=50)
 	
