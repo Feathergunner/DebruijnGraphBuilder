@@ -885,7 +885,7 @@ class GraphData:
 			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
-		# returns a partition of all read-ids based on intervals of labels
+		# returns a partition of all sequence-ids based on intervals of labels
 		sorted_nodes = sorted([seq for seq in self.sequences if seq.label_p], key=lambda x: x.label_p)
 		label_div = self.max_label_p-self.min_label_p
 		part_start_difference = label_div/(number_of_parts+overlap-1)
