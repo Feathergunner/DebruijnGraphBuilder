@@ -125,7 +125,7 @@ class SequenceOverlap:
 	
 class GraphData:
 	def __init__(	self,
-					reads=0,
+					reads=[],
 					k=0,
 					alphabet={"A":"T", "C":"G", "G":"C", "T":"A"},
 					directed_reads=False,
@@ -166,7 +166,7 @@ class GraphData:
 		
 		self.removed_reads = []
 		
-		if not reads == 0:
+		if not reads == []:
 			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
 			
 			if reduce_data:
@@ -919,9 +919,9 @@ class GraphData:
 		return reads
 		
 	def get_relevant_reads(self, consider_hubread_length=3, verbose=False):
-		# get all reads that are not marked as removed
+		# get all reads of sequences that are not marked as removed
 		#  (because they induced a removed tip or a removed low-weight-sequence))
-		# and are also evidence for a specified minimum number of sequences (at least four be default)
+		# and reads have also to be evidence for a specified minimum number of sequences (at least four be default)
 		#  (all other reads (that are evidence for at most three sequences) are subsequences of hubreads)
 		
 		print ("Get relevant reads:")
@@ -944,7 +944,7 @@ class GraphData:
 		for r in read_appearances:
 			if i%100 == 0 or i == len(read_appearances)-1:
 				meta.print_progress(i, len(read_appearances)-1)
-			if read_appearances[r] > 3 and r not in self.removed_reads:
+			if read_appearances[r] > consider_hubread_length and r not in self.removed_reads:
 				list_of_relevant_reads.append(r)
 			i += 1
 			
@@ -1281,7 +1281,7 @@ class GraphData:
 			if res:
 				components_to_potentially_cut.append(part_a)
 				components_to_potentially_cut.append(part_b)
-		print 
+		#print 
 		
 	def cut_graph_into_partitions(self, partitions, seq_id_to_index, verbose=False):
 		if verbose:
