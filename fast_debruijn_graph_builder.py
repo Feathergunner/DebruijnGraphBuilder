@@ -158,6 +158,7 @@ class GraphData:
 		self.max_label_p = 0
 		self.min_sequence_p = -1
 		self.max_sequence_p = -1
+		self.max_path_length_p = 0
 
 		self.min_label_n = 0
 		self.max_label_n = 0
@@ -801,6 +802,7 @@ class GraphData:
 			self.max_label_p = 0
 			self.min_sequence_p = start_sequence
 			self.max_sequence_p = start_sequence
+			self.max_path_length_p = self.sequences[start_sequence].get_length()
 			self.sequences[start_sequence].label_p = 0
 		else:
 			self.min_label_n = 0
@@ -817,19 +819,23 @@ class GraphData:
 			current_data = queue[0]
 			queue.pop(0)
 			current_node_id = current_data[0]
+			current_position = current_data[1]
 
 			for seq_id in self.sequences[current_node_id].overlaps_out:
 				if compute_position_labels:
 					if self.sequences[seq_id].label_p == False:
-						start_label = current_data[1] + self.sequences[current_node_id].get_length()
+						start_label = current_position + self.sequences[current_node_id].get_length()
 						if start_label > self.max_label_p:
 							self.max_label_p = start_label
 							self.max_sequence_p = seq_id
+						end_label = start_label + self.sequences[seq_id].get_length()
+						if end_label > self.max_path_length_p:
+							self.max_path_length_p = end_label
 						self.sequences[seq_id].label_p = start_label
 						queue.append([seq_id, start_label])
 				else:
 					if self.sequences[seq_id].label_n == False:
-						start_label = current_data[1] + 1
+						start_label = current_position + 1
 						if start_label > self.max_label_n:
 							self.max_label_n = start_label
 							self.max_sequence_n = seq_id
@@ -838,7 +844,7 @@ class GraphData:
 			for seq_id in self.sequences[current_node_id].overlaps_in:
 				if compute_position_labels:
 					if self.sequences[seq_id].label_p == False:
-						start_label = current_data[1] - self.sequences[seq_id].get_length()
+						start_label = current_position - self.sequences[seq_id].get_length()
 						if start_label < self.min_label_p:
 							self.min_label_p = start_label
 							self.min_sequence_p = seq_id
@@ -846,7 +852,7 @@ class GraphData:
 						queue.append([seq_id, start_label])
 				else:
 					if self.sequences[seq_id].label_n == False:
-						start_label = current_data[1] - 1
+						start_label = current_position - 1
 						if start_label < self.min_label_n:
 							self.min_label_n = start_label
 							self.min_sequence_n = seq_id
@@ -973,12 +979,21 @@ class GraphData:
 			current_seq_id = self.min_sequence_p
 		else:
 			current_seq_id = start_sequence
+		
+		if verbose == 2:
+			print ("Initial sequence is "+str(current_seq_id))
+			
 		current_label = self.sequences[current_seq_id].label_p
+		if verbose == 2:
+			print ("maximum possible path length is: "+str(self.max_path_length_p-current_label))
+			
 		path_finding_failed = False
-		while (not path_finding_failed) and current_label < self.max_label_p-2*self.k_value:
+		while (not path_finding_failed) and current_label+self.sequences[current_seq_id].get_length() < self.max_path_length_p - 2*self.k_value:
 			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
 			dfs_labels[current_seq_id] = 1
 			next_sequences = [target_id for target_id in self.sequences[current_seq_id].overlaps_out if dfs_labels[target_id] == 0]
+			if verbose == 2:
+				print ("Possible next sequences are: "+str(next_sequences))
 			#self.sequences[current_seq_id].print_data()
 			if len(next_sequences) > 0:
 				# go to next node:
@@ -1011,6 +1026,8 @@ class GraphData:
 						print ("Error! No path found")
 					path_finding_failed = True
 			#print ("current path: " +str(path))
+	
+		dfs_labels[current_seq_id] = 1
 		
 		# delete unused sequences:
 		for seq in self.sequences:
