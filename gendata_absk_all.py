@@ -102,4 +102,4 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 #gendata(ds.bvdv_absk_4)
 
 #gendata(ds.reads_for_sebastian_corona, onlyreads=True)
-gendata(ds.bvdv_large_absk_2_clustercut, clustercut=True)
+gendata(ds.bvdv_absk_2_clustercut, clustercut=True)
