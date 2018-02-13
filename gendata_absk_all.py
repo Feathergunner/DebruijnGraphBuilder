@@ -12,7 +12,7 @@ import dataset_settings as ds
 
 sampleReads.read_genomes()
 
-def gendata(setting, onlyreads=False, reconstruct=False):
+def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 	k_absolute_settings = setting["k_absolute_settings"]
 	coverage_factors = setting["coverage_factors"]
 	readlength_settings = setting["readlength_settings"]
@@ -82,6 +82,12 @@ def gendata(setting, onlyreads=False, reconstruct=False):
 								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
 								
+								if clustercut:
+									debruijn.partition_graph_into_components_of_clusters(verbose=False)
+									casename += "_divided"
+									debruijn.get_asqg_output(filename = output_dir+"/"+casename++".asqg")
+									debruijn.get_csv_output(filename = output_dir+"/"+casename++".csv")
+								
 								if reconstruct:
 									debruijn.remove_insignificant_sequences()
 									debruijn.remove_single_sequence_components()
@@ -102,4 +108,5 @@ def gendata(setting, onlyreads=False, reconstruct=False):
 #gendata(ds.bvdv_absk_2)
 #gendata(ds.bvdv_absk_4)
 
-gendata(ds.reads_for_sebastian_corona, onlyreads=True)
+#gendata(ds.reads_for_sebastian_corona, onlyreads=True)
+gendata(ds.bvdv_large_absk_2, clustercut=True)
