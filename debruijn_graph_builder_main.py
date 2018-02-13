@@ -423,7 +423,25 @@ def construct_consensus_from_multiple_parts(size_of_parts = 5000, k = 50, do_par
 		debruijn.get_asqg_output(filename = filename_output+".asqg")
 		debruijn.get_csv_output(filename = filename_output+".csv")
 		debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
-
+	
+def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, filename_parts_base, first_part_id, last_part_id):
+	readpartition = dio.get_read_partition_by_readlength(filename = filename_source_data, size_of_parts=size_of_parts)
+	n = len(readpartition)
+	files_to_merge = []
+	
+	last_part_id = min(last_part_id, n)
+	
+	for i in range(first_part_id, last_part_id+1):
+		rp = readpartition[i-1]
+		minreadlength = min([x[0] for x in rp])
+		k = 50#meta.get_adaptive_k(minreadlength)
+		readfilename = filename_parts_base+"_k"+str(k)+"_p"+str(i)+"_singlepath_sequences.txt"
+		files_to_merge.append(readfilename)
+	merge_k = 35
+	
+	import reconstruct_from_large_debruijn_graph as recons
+	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
+	
 def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filename_output):
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
@@ -444,38 +462,22 @@ def construct_consensus_from_part(k, read_ids, readfile, filepath_output, filena
 	debruijn.get_csv_output(filename = filename_output+".csv")
 	debruijn.write_sequences_to_file(filename = filename_output+"_sequences.txt")
 	
-def exp_construct_consensus_from_specific_part(size_of_parts=50, k=40, readfilename="Data/hcov229e_only.fq", filepath_output="Output/consensus_from_readsubset"):
-	#filepath_output = "Output/corona_recons_multiparts"
-	readpartition = dio.get_read_partition_by_readlength(filename = readfilename, size_of_parts=size_of_parts)
-	#readpartition = dio.get_read_partition_by_lengthdistribution(filename=readfilename, size_of_parts=size_of_parts, verbose=True)
-	# get read ids of 50 largest reads:
+def exp_construct_consensus_from_specific_part(number_of_reads=50, k=40, readfilename="Data/hcov229e_only.fq", filepath_output="Output/consensus_from_readsubset"):
+	# gets the longest reads from file specified by readfilename and constructs a debruijn graph and a consensus from the debruijn-graph
+
+	readpartition = dio.get_read_partition_by_readlength(filename = readfilename, size_of_parts=number_of_reads)
+	# get read ids of largest reads:
 	read_ids = [x[1] for x in readpartition[-1]]
-	filename_output = filepath_output+"/crm_partsize"+str(size_of_parts)+"_k"+str(k)+"_p"+str(len(readpartition))
+	filename_output = filepath_output+"/consensus_numreads"+str(number_of_reads)+"_k"+str(k)+"_p"
 	
+	# use the method above to construct consensus
 	construct_consensus_from_part(k=k, read_ids = read_ids, readfile = readfilename, filepath_output = filepath_output, filename_output = filename_output)
-	
-def merge_consensus_from_multiple_parts(size_of_parts, filename_source_data, filename_parts_base, first_part_id, last_part_id):
-	readpartition = dio.get_read_partition_by_readlength(filename = filename_source_data, size_of_parts=size_of_parts)
-	n = len(readpartition)
-	files_to_merge = []
-	
-	last_part_id = min(last_part_id, n)
-	
-	for i in range(first_part_id, last_part_id+1):
-		rp = readpartition[i-1]
-		minreadlength = min([x[0] for x in rp])
-		k = 50#meta.get_adaptive_k(minreadlength)
-		readfilename = filename_parts_base+"_k"+str(k)+"_p"+str(i)+"_singlepath_sequences.txt"
-		files_to_merge.append(readfilename)
-	merge_k = 35
-	
-	import reconstruct_from_large_debruijn_graph as recons
-	recons.reconstruct_merge(filename_output_base=filename_parts_base+"_"+str(first_part_id)+"-"+str(last_part_id), files_to_merge=files_to_merge, merge_k=merge_k, number_of_parts=n, delete_parts=False)
-	
+
 if __name__ == '__main__':
 	#merge_consensus_from_multiple_parts(50, "Data/hcov229e_only.fq", "Output/corona_recons_multiparts/crm_partsize50", 1440, 1446)
 	#minimal_test_spectral_partitioning()
-	#exp_construct_consensus_from_specific_part(size_of_parts=2000, k=50)
-	for k in [30,35,40,45]:
-		construct_consensus_from_multiple_parts(size_of_parts=500, k=k, do_partition=False)
+	#for k in [30,35,40,45]:
+	#	construct_consensus_from_multiple_parts(size_of_parts=500, k=k, do_partition=False)
+
+	exp_construct_consensus_from_specific_part(number_of_reads=100, k=50)
 	

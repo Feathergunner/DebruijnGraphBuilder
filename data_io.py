@@ -115,8 +115,10 @@ def get_read_partition_by_readlength(filename, number_of_parts=-1, size_of_parts
 
 	parts = []
 	if number_of_parts > 0:
+		number_of_parts = min(number_of_parts, len(readlengths_sorted_reduced))
 		size_of_parts = len(readlengths_sorted_reduced)/number_of_parts
 	elif size_of_parts > 0:
+		size_of_parts = min(size_of_parts, len(readlengths_sorted_reduced))
 		number_of_parts = len(readlengths_sorted_reduced)/size_of_parts
 
 	if verbose:
