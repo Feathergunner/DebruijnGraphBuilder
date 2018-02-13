@@ -224,3 +224,14 @@ reads_for_sebastian_bvdv = {
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
 	"name" : "largereads-largeamount-bvdv"}
+
+bvdv_large_absk_2_clustercut = {
+	"k_absolute_settings" : [30],
+	"readlength_settings" : [1000, 2000],
+    "number_of_reads_settings" : [200, 200],
+    "coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [10.0, 15.0],
+	"num_different_viruses" : 2,
+	"set_of_viruses" : set_bvdv_2,
+	"name" : "bvdv-largereads-absk-2-cuttest"}

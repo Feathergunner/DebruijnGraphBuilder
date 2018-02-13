@@ -102,11 +102,11 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 								pass
 							
 						else:
-							print ("Data already exists!")
+							print ("Data on case "+casename+" already exists!")
 
 #gendata(ds.bvdv_absk_1)
 #gendata(ds.bvdv_absk_2)
 #gendata(ds.bvdv_absk_4)
 
 #gendata(ds.reads_for_sebastian_corona, onlyreads=True)
-gendata(ds.bvdv_large_absk_2, clustercut=True)
+gendata(ds.bvdv_large_absk_2_clustercut, clustercut=True)
