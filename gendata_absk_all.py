@@ -70,7 +70,7 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 							print ("Working on case "+casename)
 							try:
 								reads = dio.get_reads_from_file(filename = readfilename)
-								debruijn = fdgb.GraphData(reads, k, directed_reads=True, load_weights=False, remove_tips=False)
+								debruijn = fdgb.GraphData([reads], k, directed_reads=True, load_weights=False, remove_tips=False)
 								
 								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
@@ -102,4 +102,4 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 #gendata(ds.bvdv_absk_4)
 
 #gendata(ds.reads_for_sebastian_corona, onlyreads=True)
-gendata(ds.bvdv_absk_2_clustercut, clustercut=True)
+gendata(ds.bvdv_large_absk_2_clustercut, clustercut=True)

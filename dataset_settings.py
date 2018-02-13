@@ -227,8 +227,8 @@ reads_for_sebastian_bvdv = {
 
 bvdv_large_absk_2_clustercut = {
 	"k_absolute_settings" : [30],
-	"readlength_settings" : [500],
-    "number_of_reads_settings" : [200, 200],
+	"readlength_settings" : [1000,2000,4000,6000],
+    "number_of_reads_settings" : [100,100],
     "coverage_factors" : [1],
 	"error_type" : "indel",
 	"error_percentages" : [10.0, 15.0],
@@ -236,13 +236,3 @@ bvdv_large_absk_2_clustercut = {
 	"set_of_viruses" : set_bvdv_2,
 	"name" : "bvdv-largereads-absk-2-cuttest"}
 	
-bvdv_absk_2_clustercut = {
-	"k_absolute_settings" : [30],
-	"readlength_settings" : [100],
-    "number_of_reads_settings" : [2000, 2000],
-    "coverage_factors" : [1],
-	"error_type" : "indel",
-	"error_percentages" : [5.0],
-	"num_different_viruses" : 2,
-	"set_of_viruses" : set_bvdv_2,
-	"name" : "bvdv-absk-2-cuttest"}
