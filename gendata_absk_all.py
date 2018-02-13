@@ -76,7 +76,7 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
 								
 								if clustercut:
-									debruijn.partition_graph_into_components_of_clusters(verbose=False)
+									debruijn.partition_graph_into_components_of_clusters(verbose=True)
 									casename += "_divided"
 									debruijn.get_asqg_output(filename = output_dir+"/"+casename++".asqg")
 									debruijn.get_csv_output(filename = output_dir+"/"+casename++".csv")
