@@ -55,7 +55,7 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 					epi = error_percentage
 				
 				if not os.path.isfile(readfilename):
-					sampleReads.samplereads(output_filename	= readfilename,	read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
+					sampleReads.samplereads(output_filename = readfilename, read_length = readlength, set_of_viruses = set_of_viruses[:num_different_viruses], number_of_reads = num_reads,	replace_error_percentage = epr, indel_error_percentage = epi)
 				else:
 					print ("Reads already exist!")
 
@@ -70,14 +70,7 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 							print ("Working on case "+casename)
 							try:
 								reads = dio.get_reads_from_file(filename = readfilename)
-								debruijn = fdgb.GraphData(reads, k)
-								# delete reads and kmers to save ram:
-								debruijn.reads = []
-								debruijn.kmers = []
-								# run garbage collector:
-								gc.collect()
-								debruijn.contract_unique_overlaps(verbose=False)
-								debruijn.remove_parallel_sequences()
+								debruijn = fdgb.GraphData(reads, k, directed_reads=True, load_weights=False)
 								
 								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
