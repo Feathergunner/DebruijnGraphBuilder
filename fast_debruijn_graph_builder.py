@@ -722,7 +722,7 @@ class GraphData:
 					for k_id in seq.kmers:
 						source_reads += [r for r in self.kmers[k_id].evidence_reads]
 					source_reads = set(source_reads)
-				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.get_total_weight())+","+str(seq.label_p)+","+str(source_reads)+"\n"
+				data += "k_"+str(seq.id)+","+seq.sequence+","+str(seq.get_total_weight())+","+str(seq.label_p)+","+str(source_reads).replace(",",";")+"\n"
 				#for r in source_reads:
 				#	data += str(r)+" "
 				#data += "\n"
