@@ -79,15 +79,27 @@ def test_with_artificial_data(genome_length, read_length, read_number, error_per
 		outf.write("".join(dna) + '\n')
 	construct_consensus_from_multiple_parts(reads, filepath_output=filepath_output, filename_output_base=name, k_full=k_full, k_part=k_part, number_of_parts=30, overlap=4, save_parts=False, verbose=False)
 
-def test_with_artificial_reads_from_genome(genome_source, genome_name, read_length, read_number, error_percentage, k_full, k_part, filepath_output):
-	name = str(genome_name)+"_r"+str(read_number)+"_l"+str(read_length)+"_e"+str(int(error_percentage))+"_k1"+str(k_full)+"_k2"+str(k_part)
+def test_with_artificial_reads_from_genome(genome_source, genome_name, read_length, read_number, error_percentage, error_type, k_full, k_part, filepath_output):
 	if not os.path.exists(filepath_output):
 		os.makedirs(filepath_output)
-		
-	dna = dio.get_genome_from_file(genome_source)
-	print dna
+
+	name = str(genome_name)+"_r"+str(read_number)+"_l"+str(read_length)+"_e"+str(int(error_percentage))
 	
-	reads = dgen.samplereads(dna, number_of_reads=read_number, replace_error_percentage=error_percentage, read_length_mean=read_length, read_length_stddev=0, readlength_distribution='gaussian', inverted_reads=False, verbose=False)
+	if error_type == "indel":
+		iep = error_percentage
+		rep = 0.0
+		name += "i"
+	elif error_type == "replace":
+		iep = 0.0
+		rep = errpr_percentage
+		name += "r"
+	
+	name += "_k1"+str(k_full)+"_k2"+str(k_part)
+	
+	dna = dio.get_genome_from_file(genome_source)
+	#print dna
+	
+	reads = dgen.samplereads(dna, number_of_reads=read_number, replace_error_percentage=rep, indel_error_percentage=iep, read_length_mean=read_length, read_length_stddev=0, readlength_distribution='gaussian', inverted_reads=False, verbose=False)
 	with open(filepath_output+"/"+name+"_reads.txt", 'w') as outf:
 		for r in reads:
 			outf.write(r + '\n')
@@ -96,4 +108,6 @@ def test_with_artificial_reads_from_genome(genome_source, genome_name, read_leng
 	
 if __name__ == "__main__":
 	# test:
-	test_with_artificial_reads_from_genome("Data/human_coronavirus_229e.txt", "hcov229e", 1000, 500, 1.0, 30, 15, "Output/test_recursive_recons_corona")
+	for k1 in [30,35,40]:
+		test_with_artificial_reads_from_genome("Data/human_coronavirus_229e.txt", "hcov229e", 1000, 5000, 15.0, "indel", k1, 15, "Output/test_recursive_recons_corona")
+
