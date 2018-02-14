@@ -4,6 +4,16 @@
 import re
 import math
 
+def get_genome_from_file(filename):
+	# assumes that every line starting with an uppercase alphabetic character contains a section of a single genome, with all lines in order of the genome.
+	with open(filename) as fh:
+		lines = fh.readlines()
+	dna = []
+	for line in lines:
+		if re.match(r'[A-Z]', line[0]):
+			dna+=line.strip()
+	return ''.join(dna)
+
 def get_reads_from_file(filename="samplereads.txt"):
 	with open(filename) as fh:
 		reads = fh.readlines()
