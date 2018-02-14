@@ -1120,7 +1120,7 @@ class GraphData:
 					if not seq_id == last_seq_id:
 						self.delete_sequence(seq_id, verbose=False)
 		
-	def reduce_to_single_largest_component(self):
+	def reduce_to_single_largest_component(self, verbose=False):
 		# deletes all sequences that are not part of the largest (by number of sequences) component
 		print ("Reducing graph to largest component...")
 		components = self.get_components()
@@ -1132,6 +1132,11 @@ class GraphData:
 				if len(c) > max_size:
 					max_size = len(c)
 					max_comp_id = i
+				if verbose:
+					print ("Component "+str(i)+" consists of "+str(len(c))+" sequences.")
+					
+			if verbose:
+				print ("Largest component is "+str(max_comp_id)+" with "+str(max_size)+" sequences.")
 			for i in range(len(components)):
 				if not i == max_comp_id:
 					for seq_id in components[i]:
