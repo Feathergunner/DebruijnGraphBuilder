@@ -91,7 +91,7 @@ def test_with_artificial_reads_from_genome(genome_source, genome_name, read_leng
 		name += "i"
 	elif error_type == "replace":
 		iep = 0.0
-		rep = errpr_percentage
+		rep = error_percentage
 		name += "r"
 	
 	name += "_k1"+str(k_full)+"_k2"+str(k_part)
@@ -109,5 +109,5 @@ def test_with_artificial_reads_from_genome(genome_source, genome_name, read_leng
 if __name__ == "__main__":
 	# test:
 	for k1 in [30,35,40]:
-		test_with_artificial_reads_from_genome("Data/human_coronavirus_229e.txt", "hcov229e", 1000, 5000, 15.0, "indel", k1, 15, "Output/test_recursive_recons_corona")
+		test_with_artificial_reads_from_genome("Data/human_coronavirus_229e.txt", "hcov229e", 1000, 5000, 15.0, "replace", k1, 15, "Output/test_recursive_recons_corona")
 
