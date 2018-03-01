@@ -68,38 +68,53 @@ def gendata(setting, onlyreads=False, reconstruct=False, clustercut=False):
 						
 						if not os.path.isfile(output_dir+"/"+casename+".asqg"):
 							print ("Working on case "+casename)
-							try:
-								reads = dio.get_reads_from_file(filename = readfilename)
-								debruijn = fdgb.GraphData([reads], k, directed_reads=True, load_weights=False, remove_tips=False)
-								
+							#try:
+							reads = dio.get_reads_from_file(filename = readfilename)
+							debruijn = fdgb.GraphData([reads], k, directed_reads=True, load_weights=False, remove_tips=False)
+							
+							debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
+							debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
+							
+							if clustercut:
+								debruijn.partition_graph_into_components_of_clusters(verbose=True)
+								casename += "_divided"
 								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
 								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
-								
-								if clustercut:
-									debruijn.partition_graph_into_components_of_clusters(verbose=True)
-									casename += "_divided"
-									debruijn.get_asqg_output(filename = output_dir+"/"+casename++".asqg")
-									debruijn.get_csv_output(filename = output_dir+"/"+casename++".csv")
-								
-								if reconstruct:
-									debruijn.remove_insignificant_sequences()
-									debruijn.remove_single_sequence_components()
-									debruijn.construct_assembly_ordering_labels(verbose = True)
-									debruijn.reduce_to_single_path_max_weight()
-									debruijn.contract_unique_overlaps(verbose = False)
-									casename+="_reconstructed"
-									debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
-									debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
 							
-							except:
-								pass
+							if reconstruct:
+								debruijn.remove_insignificant_sequences()
+								debruijn.remove_single_sequence_components()
+								debruijn.construct_assembly_ordering_labels(verbose = True)
+								debruijn.reduce_to_single_path_max_weight()
+								debruijn.contract_unique_overlaps(verbose = False)
+								casename+="_reconstructed"
+								debruijn.get_asqg_output(filename = output_dir+"/"+casename+".asqg")
+								debruijn.get_csv_output(filename = output_dir+"/"+casename+".csv")
+						
+							#except:
+							#	pass
 							
 						else:
 							print ("Data on case "+casename+" already exists!")
 
-#gendata(ds.bvdv_absk_1)
-#gendata(ds.bvdv_absk_2)
-#gendata(ds.bvdv_absk_4)
-
-#gendata(ds.reads_for_sebastian_corona, onlyreads=True)
-gendata(ds.bvdv_large_absk_2_clustercut, clustercut=True)
+							
+if __name__ == "__main__":
+	#gendata(ds.bvdv_absk_1)
+	#gendata(ds.bvdv_absk_2)
+	#gendata(ds.bvdv_absk_4)
+	
+	#gendata(ds.reads_for_sebastian_corona, onlyreads=True)
+	
+	#gendata(ds.bvdv_large_absk_2_clustercut, clustercut=True)
+	bvdv_large_absk_2_cuttest = {
+		"k_absolute_settings" : [30],
+		"readlength_settings" : [6000],
+		"number_of_reads_settings" : [100],
+		"coverage_factors" : [1],
+		"error_type" : "indel",
+		"error_percentages" : [10.0],
+		"num_different_viruses" : 2,
+		"set_of_viruses" : ds.set_bvdv_2,
+		"name" : "bvdv-largereads-absk-2_a"}
+	
+	gendata(bvdv_large_absk_2_cuttest, clustercut=True)

@@ -235,4 +235,3 @@ bvdv_large_absk_2_clustercut = {
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
 	"name" : "bvdv-largereads-absk-2-cuttest"}
-	

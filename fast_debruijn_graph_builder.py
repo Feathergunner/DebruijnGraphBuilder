@@ -202,6 +202,7 @@ class GraphData:
 		print ("\toverlaps: " + str(size_overlaps/1000000.0) + "MB")
 		
 	def init_graph_database(self, reads, load_weights, verbose=False):
+		# note that reads is a list of lists of reads, since reads can have different sources.
 		if verbose:
 			print ("Construct read database")
 			
@@ -215,6 +216,7 @@ class GraphData:
 				if (read_id%1000 == 0 or read_id == number_of_reads-1):
 					meta.print_progress(read_id, number_of_reads-1)
 				if len(read) > 0:
+					# a read can be a comma-seperated tuple of (read, readweight):
 					readdata = re.split(r',',read)
 					readseq = readdata[0]
 					if load_weights and len(readdata) > 1:
@@ -552,7 +554,8 @@ class GraphData:
 				print (self.sequences[target_id].print_data())
 	
 	def remove_parallel_sequences(self, verbose=False):
-		# For every pair of sequence and its inverse, this method removes one if both are not in the same component of the graph
+		# For every pair of sequence and its inverse, this method removes one s.t. of each pair of isomorphic components, one component remains intact.
+		# note: only works correct if there is no sequence that is its own inverse!
 		if not self.is_unified:
 			print ("Remove parallel sequences ...")
 			checked_sequences = [False for seq in self.sequences]
@@ -1279,7 +1282,9 @@ class GraphData:
 				divide_clusters = False
 			
 			# only cut if decomposition significantly increases clustering-coefficient:
-			if divide_clusters and (secmin_eigenvalue*10 < secmin_eigenvalue_a or secmin_eigenvalue*10 < secmin_eigenvalue_b):
+			# one of the second smallest eigenvalues has to decrese by a factor
+			decreasing_factor_bound = 5
+			if divide_clusters and (secmin_eigenvalue*decreasing_factor_bound < secmin_eigenvalue_a or secmin_eigenvalue*decreasing_factor_bound < secmin_eigenvalue_b):
 				if verbose:
 					print ("Cut graph according to partitions.")
 				self.cut_graph_into_partitions([part_a, part_b] ,seq_id_to_index)
