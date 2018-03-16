@@ -4,6 +4,15 @@
 import re
 import math
 
+def write_genome_to_file(dna, filename):
+	outputfile = file(filename, 'w')
+	outputfile.write("".join(dna))
+	
+def write_reads_to_file(reads, filename):
+	outputfile = file(filename, 'w')
+	for r in reads:
+		outputfile.write(r+"\n")
+
 def get_genome_from_file(filename):
 	# assumes that every line starting with an uppercase alphabetic character contains a section of a single genome, with all lines in order of the genome.
 	with open(filename) as fh:
@@ -73,6 +82,21 @@ def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
 	outputfile.write(headline)
 	outputfile.write(asqg_vertices)
 	outputfile.write(asqg_edges)
+	
+def write_sequences_to_fasta(sequences, filename="fasta.fasta"):
+	# this method assumes that the parameter "sequences" is a list
+	# if it is a single string, every character will be interpreted as a unique sequence!
+	print ("Writing fasta-file ...")
+	fasta_string = ""
+	seq_counter = 0
+	for seq in sequences:
+		seq_counter += 1
+		fasta_string += ">SEQUENCE_"+str(seq_counter)+"\n"
+		fasta_string += seq
+		fasta_string += "\n\n"
+		
+	outputfile = file(filename, 'w')
+	outputfile.write(fasta_string)
 
 def print_alignment(dna, alignments):
 	print ("Alignment of reads:")

@@ -3,6 +3,7 @@
 
 import meta
 import data_gen as dgen
+import sampleReads as sr
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
 
@@ -10,6 +11,8 @@ import timeit
 import sys
 import gc
 import os
+import re
+import copy
 
 def test_basic_functionality(new_dataset=False, data_dir="Output/test", verbose=False):
 	print ("Starting basic test of de bruijn graph construction")
@@ -322,6 +325,42 @@ def test_read_parttition_by_length_distribution():
 	print ("lengths of reads:")
 	print (sorted([len(r) for r in reads_2]))
 	
+def test_removal_of_insignificant_nodes_and_edges():
+	filename_output_base = "Output/test/test_deconvolute_"
+	
+	dna = dgen.generate_dna(2000)
+	
+	k = 15
+	readlength = 300
+	num_of_reads = 1000
+	error_percentage = 15.0
+	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_percentage)))
+	casename = "_rl"+str(readlength)+"_nr"+str(num_of_reads)+"_er"+ep_string+"_k"+str(k)
+	
+	reads = dgen.samplereads(dna, number_of_reads=num_of_reads, replace_error_percentage=error_percentage, read_length_mean=readlength)
+	debruijn = fdgb.GraphData([reads], k, directed_reads = True, load_weights=False, construct_labels=False, remove_tips=True)
+	
+	debruijn.get_asqg_output(filename = filename_output_base+casename+"_base.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+casename+"_base.csv")
+	
+	debruijn2 = copy.deepcopy(debruijn)
+	
+	debruijn.remove_insignificant_overlaps()
+	debruijn.get_asqg_output(filename = filename_output_base+casename+"_r-ov.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+casename+"_r-ov.csv")
+	
+	debruijn.remove_single_sequence_components()
+	debruijn.get_asqg_output(filename = filename_output_base+casename+"_r-ov_r-ssc.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+casename+"_r-ov_r-ssc.csv")
+	
+	debruijn2.remove_insignificant_sequences()
+	debruijn2.get_asqg_output(filename = filename_output_base+casename+"_r-s.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+casename+"_r-s.csv")
+	
+	debruijn2.remove_single_sequence_components()
+	debruijn2.get_asqg_output(filename = filename_output_base+casename+"_r-s_r-ssc.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+casename+"_r-s_r-ssc.csv")
+	
 def compare_different_read_partitions():
 	k = 50
 	filename_output_base = "Output/test/compare_read_partitions_"
@@ -337,9 +376,10 @@ def compare_different_read_partitions():
 	reads_by_distribution = dio.get_reads_from_fastq_file(filename = "Data/hcov229e_only.fq", read_ids = read_parts_by_distribution_ids)
 	debruijn_by_distribution = fdgb.GraphData([reads_by_distribution], k)
 	debruijn_by_distribution.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
-
+	
 if __name__ == '__main__':
-	test_basic_functionality()
+	#test_basic_functionality()
+	
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
@@ -348,4 +388,6 @@ if __name__ == '__main__':
 	#test_read_parttition_by_length_distribution()
 	#test_position_labels()
 	#compare_different_read_partitions()
+	
+	test_removal_of_insignificant_nodes_and_edges()
 	

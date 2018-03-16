@@ -75,20 +75,47 @@ class CaseRestriction:
 		return casename
 
 class GraphData:
-	def __init__(self):
-		self.dirname = ""
-		self.casename = ""
-		self.error_percentage = -1
-		self.readlength = -1
-		self.num_of_reads = -1
-		self.k_value = -1
-		self.nodes = []
-		self.num_of_nodes = 0
+	def __init__(self,
+				 dirname = "",
+				 casename = "",
+				 error_percentage = -1,
+				 readlength = -1,
+				 num_of_reads = -1,
+				 k_value = -1,
+				 nodes = []):
+				 
+		self.dirname = dirname
+		self.casename = casename
+		self.error_percentage = error_percentage
+		self.readlength = readlength
+		self.num_of_reads = num_of_reads
+		self.k_value = k_value
+		self.nodes = nodes
+		self.num_of_nodes = len(self.nodes)
 		self.num_of_edges = 0
 		self.node_sequence_lengths = []
 		self.node_adjacencies = {}
 		self.node_reverse_adjacencies = {}
 		self.node_name_dictionary = {}
+		self.coverage_depths = []
+		self.number_of_components = 0
+		self.component_sizes = []
+		
+	def get_data_from_file(self, filename):
+		with open(filename, 'r') as datafile:
+			for line in datafile:
+				data = re.split(r'\s', line)
+				if data[0] == "VT":
+					self.add_node(data[1], data[2])
+				if data[0] == "ED":
+					self.add_edge(data[1], data[2])
+					
+	def get_data_from_csv(self, csvfilename):
+		with open(csvfilename, 'r') as datafile:
+			for line in datafile:
+				data = re.split(r',', line)
+				if not data[0] == "Node_Label":
+					self.coverage_depths.append(int(data[2]))		
 		
 	def add_node(self, node_name, node_seq):
 		self.nodes.append(node_seq)
@@ -97,6 +124,8 @@ class GraphData:
 		self.node_reverse_adjacencies[self.num_of_nodes] = []
 		self.node_name_dictionary[node_name] = self.num_of_nodes
 		self.num_of_nodes += 1
+		# reset number of components:
+		self.number_of_components = 0
 	
 	def add_edge(self, node_s, node_t):
 		if node_s in self.node_name_dictionary and node_t in self.node_name_dictionary:
@@ -107,6 +136,8 @@ class GraphData:
 			
 			self.node_adjacencies[node_s_id].append(node_t_id)
 			self.node_reverse_adjacencies[node_t_id].append(node_s_id)
+		# reset number of components:
+		self.number_of_components = 0
 			
 	def get_degree_distribution(self):
 		node_degrees = {}
@@ -129,9 +160,23 @@ class GraphData:
 		
 	def get_avg_seq_length(self):
 		return float(sum(self.node_sequence_lengths))/float(self.num_of_nodes)
-	
+		
+	def get_avg_coverage_depth(self):
+		return float(sum(self.coverage_depths))/float(self.num_of_nodes)
+		
+	def get_avg_component_size(self):
+		num_comps = self.get_number_of_components()
+		return float(sum(self.component_sizes))/float(num_comps)
+		
+	def get_maximum_component_size(self):
+		num_comps = self.get_number_of_components()
+		return max(self.component_sizes)
+		
 	def get_number_of_components(self):
-		number_of_components = 0
+		if self.number_of_components > 0:
+			return self.number_of_components
+		
+		self.number_of_components = 0
 		queue = []
 		visited_nodes = [False]*self.num_of_nodes
 		
@@ -143,11 +188,13 @@ class GraphData:
 			if node_index == self.num_of_nodes:
 				all_nodes_visited = True
 			else:
-				number_of_components += 1
+				self.number_of_components += 1
 				queue.append(node_index)
 				visited_nodes[node_index] = True
+				current_component_size = 0
 				while len(queue) > 0:
 					current_node = queue.pop(0)
+					current_component_size += 1
 					for adj_node_id in self.node_adjacencies[current_node]:
 						if not visited_nodes[adj_node_id]:
 							queue.append(adj_node_id)
@@ -156,8 +203,8 @@ class GraphData:
 						if not visited_nodes[adj_node_id]:
 							queue.append(adj_node_id)
 							visited_nodes[adj_node_id] = True
-							
-		return number_of_components
+				self.component_sizes.append(current_component_size)
+		return self.number_of_components
 
 class GraphAnalyzer:
 	def __init__(self, sourcedir):
@@ -204,7 +251,39 @@ class GraphAnalyzer:
 							if data[0] == "ED":
 								gd.add_edge(data[1], data[2])
 						
-					self.graphdatas.append(gd)
+						self.graphdatas.append(gd)
+					
+	def get_data_from_specific_filenames(self, filenames, num_of_reads, readlengths, error_percentages, k_values, verbose=False):
+		# the lists:
+		#	filenames
+		#	num_of_reads
+		#	readlengths
+		#	error_percentages
+		#	k_values
+		# have to contain the respective data in the order of the files defined by the list filenames
+		datapath = "Output/"+self.sourcedir
+		
+		for i in range(len(filenames)):
+			if verbose:
+				print ("Open file "+datapath+"/"+filenames[i])
+			with open(datapath+"/"+filenames[i]+".asqg", 'r') as datafile:
+				gd = GraphData()
+				gd.k_value = k_values[i]
+				gd.readlength = readlengths[i]
+				gd.num_of_reads = num_of_reads[i]
+				gd.error_percentage = error_percentages[i]
+				
+				gd.casename = filenames[i]	
+				gd.dirname = datapath
+				
+				for line in datafile:
+					data = re.split(r'\s', line)
+					if data[0] == "VT":
+						gd.add_node(data[1], data[2])
+					if data[0] == "ED":
+						gd.add_edge(data[1], data[2])
+				
+				self.graphdatas.append(gd)
 					
 	def lineplot(self, data, x_axis, style='-', axis=0, legend_pos=0, verbose=False):
 		if not (data in ["num_of_nodes", "num_of_edges", "num_of_components", "avg_seq_lengths"] and x_axis in ["k_value", "rel_k_value", "readlength", "error_percentage"]):

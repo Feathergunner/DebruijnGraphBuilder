@@ -235,3 +235,66 @@ bvdv_large_absk_2_clustercut = {
 	"num_different_viruses" : 2,
 	"set_of_viruses" : set_bvdv_2,
 	"name" : "bvdv-largereads-absk-2-cuttest"}
+
+examples_random_reads_1_smallreads_r = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [50,100,250],
+    "number_of_reads_settings" : [50,100,250,500,1000,2000],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "examples_random_reads_1"}
+	
+examples_random_reads_1_smallreads_r_smallset = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [100],
+    "number_of_reads_settings" : [2000],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "examples_random_reads_1"}
+	
+examples_random_reads_1_largereads_r = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [500,1000,2000],
+    "number_of_reads_settings" : [5,10,25,50,100,200],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
+	"name" : "examples_random_reads_1"}
+	
+examples_random_reads_1_largereads_r_smallset = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [1000],
+    "number_of_reads_settings" : [200],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [5.0, 10.0, 15.0],
+	"name" : "examples_random_reads_1"}
+	
+examples_random_reads_1_largereads_i_smallset = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [1000],
+    "number_of_reads_settings" : [200],
+    "coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [5.0, 10.0, 15.0],
+	"name" : "examples_random_reads_1"}
+	
+examples_random_reads_1_largereads_i = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [500,1000],
+    "number_of_reads_settings" : [100,200],
+    "coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
+	"name" : "examples_random_reads_1i"}
+	
+examples_random_reads_1_smallreads_hc_r = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [50],
+    "number_of_reads_settings" : [5000,10000],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "examples_random_reads_1"}

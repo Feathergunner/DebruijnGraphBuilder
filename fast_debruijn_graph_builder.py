@@ -12,6 +12,7 @@ import math
 import gc
 
 import meta
+import data_io as dio
 	
 class Read:
 	def __init__(self, read_id, sequence, weight=1):
@@ -668,6 +669,21 @@ class GraphData:
 				self.delete_sequence(seq.id, verbose)
 				self.removed_reads += self.get_read_of_sequences([seq])
 	
+	def remove_insignificant_overlaps(self, minimal_evidence=2, do_contraction=True, verbose=False):
+		# remove all overlaps with evidence_weight less than minimal_evidence
+		print ("Removing overlaps with evidence_weight < "+str(minimal_evidence)+" ...")
+		ov_ids_to_delete = []
+		for ov_id in self.overlaps:
+			if self.overlaps[ov_id].get_evidence_weight() < minimal_evidence:
+				if verbose:
+					print ("Removing overap "+str(ov_id))
+				ov_ids_to_delete.append(ov_id)
+		for ov_id in ov_ids_to_delete:
+			self.delete_overlap(ov_id)
+			
+		if do_contraction:
+			self.contract_unique_overlaps()
+	
 	def remove_single_sequence_components(self, verbose=False):
 		# removes all components that consist only of a single sequence,
 		# i.e. all sequences without adjacencies
@@ -733,17 +749,25 @@ class GraphData:
 		outputfile.write(headline)
 		outputfile.write(data)
 		
-	def write_sequences_to_file(self, filename, addweights=False):
+	def write_sequences_to_file(self, filename, addweights=False, asfasta=False):
 		# writes only the sequence-string of relevant sequences to a file
-		data = ""
+		# if asfasta=True, writes sequences to file in fasta format, this ignores(!) the option addweights
+		allseqs = []
 		for seq in self.sequences:
 			if seq.is_relevant:
-				data += seq.sequence
+				allseqs.append(seq.sequence)
+		if asfasta:
+			dio.write_sequences_to_fasta(allseqs, filename)
+		else:
+			data = ""
+			for seq in allseqs:
+				data += seq
 				if addweights:
 					data += ","+str(seq.get_total_weight())
 				data += "\n"
-		outputfile = file(filename, 'w')
-		outputfile.write(data)
+				
+			outputfile = file(filename, 'w')
+			outputfile.write(data)
 		
 	def load_from_asqg(self, filename="asqg_file", verbose=False):
 		# reconstructs a graph from a asqg-file
@@ -989,7 +1013,8 @@ class GraphData:
 		current_label = self.sequences[current_seq_id].label_p
 		if verbose == 2:
 			print ("maximum possible path length is: "+str(self.max_path_length_p-current_label))
-			
+		
+		path.append(current_seq_id)
 		path_finding_failed = False
 		while (not path_finding_failed) and current_label+self.sequences[current_seq_id].get_length() < self.max_path_length_p - 2*self.k_value:
 			# go as far as possible, and if no successor, backtrack if not at least 95% of longest path is covered
@@ -1320,7 +1345,11 @@ class GraphData:
 		
 		overlaps_to_delete = []
 		for ov in self.overlaps:
-			if not id_to_part[seq_id_to_index[self.overlaps[ov].contig_sequence_1]] == id_to_part[seq_id_to_index[self.overlaps[ov].contig_sequence_2]]:
+			s1_id = self.overlaps[ov].contig_sequence_1
+			s2_id = self.overlaps[ov].contig_sequence_2
+			s1_index = seq_id_to_index[s1_id]
+			s2_index = seq_id_to_index[s2_id]
+			if not id_to_part[s1_index] == id_to_part[s2_index]:
 				overlaps_to_delete.append(ov)
 		
 		for ov_id in set(overlaps_to_delete):
@@ -1334,9 +1363,10 @@ class GraphData:
 		for ov in ov_to_del:
 			self.overlaps.pop(ov)
 			
-	def get_hubreads_by_adjacent_sequences(self, verbose=False):
+	def get_hubreads_by_adjacent_sequences(self, id_restriction=[], verbose=False):
 		# constructs extended hubreads
-		# these are all directed paths of length three in the contracted debruijn graph.
+		# these are all directed paths of length three in the contracted (simplified) debruijn graph.
+		# if id_restriction is not empty, only hubreads are considered for which the id of the first sequence is in id_restriction
 		if not self.is_contracted:
 			self.contract_unique_overlaps()
 			
@@ -1349,24 +1379,25 @@ class GraphData:
 				meta.print_progress(seq_id, len(self.sequences)-1)
 			seq = self.sequences[seq_id]
 			if seq.is_relevant:
-				hp_start = seq.sequence
-				for ov_out_seq_id in seq.overlaps_out.keys():
-					hp_mid = self.sequences[ov_out_seq_id]
-					hp_temp = meta.merge_sequences(hp_start, hp_mid.sequence, self.k_value-1)
-					if len(hp_mid.overlaps_out) > 0:
-						for ov_out_seq_id in seq.overlaps_out.keys():
-							hp_end = self.sequences[ov_out_seq_id]
-							hubread = meta.merge_sequences(hp_temp, hp_end.sequence, self.k_value-1)
-							if verbose:
-								print ("hp_start: "+hp_start)
-								print ("hp_end: "+hp_end.sequence)
-								print ("New hubread: "+hubread)
-							hubreads.append(hubread)
+				if len(id_restriction) == 0 or seq.id in id_restriction:
+					hp_start = seq.sequence
+					for ov_out_seq_id in seq.overlaps_out.keys():
+						hp_mid = self.sequences[ov_out_seq_id]
+						hp_temp = meta.merge_sequences(hp_start, hp_mid.sequence, self.k_value-1)
+						if len(hp_mid.overlaps_out) > 0:
+							for ov_out_seq_id in seq.overlaps_out.keys():
+								hp_end = self.sequences[ov_out_seq_id]
+								hubread = meta.merge_sequences(hp_temp, hp_end.sequence, self.k_value-1)
+								if verbose:
+									print ("hp_start: "+hp_start)
+									print ("hp_end: "+hp_end.sequence)
+									print ("New hubread: "+hubread)
+								hubreads.append(hubread)
 		return hubreads
 	
 	def get_hubreads_by_overlaps(self, verbose=False):
 		# constructs hubreads as described in spades-paper:
-		# these are all directed paths of length two in the contracted debruijn graph.
+		# these are all directed paths of length two in the contracted (simplified) debruijn graph.
 		if not self.is_contracted:
 			self.contract_unique_overlaps()
 			

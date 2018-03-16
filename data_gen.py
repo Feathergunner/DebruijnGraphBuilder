@@ -121,6 +121,8 @@ def samplereads(dna,
 				verbose=False):
 				
 	print ("Sample reads from dna ...")
+	
+	print "read_length_mean: "+str(read_length_mean)
 	reads = []
 	# construct reads:
 	for n in range(number_of_reads):
@@ -135,27 +137,43 @@ def samplereads(dna,
 				readlength = int(readlength*scalefactor)
 		else:
 			readlength = read_length_mean
-		readlength = min(readlength, len(dna)-readlength-1)
-		read_start_index = randint(0, len(dna)-readlength)
-		sampleread = ''.join(dna[read_start_index:read_start_index+readlength])
 		
-		for i in range(len(sampleread)):
+		# ensure that reads are not longer than dna:
+		readlength = min(readlength, len(dna))
+		# choose a random start position of read:
+		read_start_index = randint(0, len(dna)-readlength)
+		
+		sampleread_base = dna[read_start_index:read_start_index+readlength]
+		sampleread_errors = sampleread_base
+		
+		j = 0
+		for i in range(len(sampleread_base)):
 			# replacement error:
 			if randint(0,10000) < int(100*replace_error_percentage):
-				sampleread = sampleread[:i]+get_random_mutation(sampleread[i], mutation_alphabet)+sampleread[(i+1):]
+				sampleread_errors[j] = get_random_mutation(sampleread_base[i], mutation_alphabet)
 			# indel error:
 			if randint(0,10000) < int(100*indel_error_percentage):
 				# in/del 50/50:
 				if randint(0,100) < 50:
 					# insert:
 					insertbase = random.choice(mutation_alphabet)
-					sampleread = sampleread[:i] + insertbase + sampleread[i:]
+					sampleread_errors = sampleread_errors[:j] + [insertbase] + sampleread_errors[j:]
+					j += 1
 				else:
-					sampleread = sampleread[:i] + sampleread[(i+1):]				
-				
+					sampleread_errors = sampleread_errors[:j] + sampleread_errors[(j+1):]
+					j -= 1
+			j += 1
+
+		sampleread = ''.join(sampleread_errors)
+		
 		if (inverted_reads and randint(0,100) < 50):
 			reads.append(get_inverse_sequence(sampleread.upper()))
 		else:
 			reads.append(sampleread.upper())
 			
 	return reads
+	
+if __name__ == "__main__":
+	# test:
+	dna = generate_dna()
+	reads = samplereads(dna, 1000, 1.0, 1.0)
