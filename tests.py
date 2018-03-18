@@ -214,6 +214,35 @@ def test_exponential_readlengths():
 	reads = dgen.samplereads(dna, number_of_reads=10000, read_length_mean=1000, readlength_distribution='exponential')
 	meta.get_readlength_distribution(reads, 200)
 	
+def test_hubreads():
+	outdir = "./Output/test/hubreads"
+	
+	if not os.path.exists(outdir):
+		os.mkdir(outdir)
+
+	dna = dgen.generate_dna(length=300)
+	reads = dgen.samplereads(dna, number_of_reads=150, replace_error_percentage=0.1, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=50, read_length_stddev=0, readlength_distribution='gaussian')
+	
+	debruijn_master = fdgb.GraphData([reads], k=17, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=False)
+	
+	debruijn_master.get_asqg_output(filename = outdir+"/base.asqg")
+	debruijn_master.get_csv_output(filename = outdir+"/base.csv")
+	debruijn_master.write_sequences_to_file(filename = outdir+"/base_seqs.txt", asfasta = False)
+	
+	hubreads = debruijn_master.get_hubreads_by_adjacent_sequences(verbose=False)
+	
+	dio.write_reads_to_file(hubreads, outdir+"/hubreads.txt")
+	
+	debruijn_hubreads_basic = fdgb.GraphData([hubreads], k=17, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=False)
+	#debruijn_hubreads_basic.print_all_reads()
+	debruijn_hubreads_basic.get_asqg_output(filename = outdir+"/hubreads_basic.asqg")
+	debruijn_hubreads_basic.get_csv_output(filename = outdir+"/hubreads_basic.csv")
+	
+	debruijn_hubreads_weights = fdgb.GraphData([hubreads], k=17, directed_reads=True, load_weights=True, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=False)
+	#debruijn_hubreads_weights.print_all_reads()
+	debruijn_hubreads_weights.get_asqg_output(filename = outdir+"/hubreads_weights.asqg")
+	debruijn_hubreads_weights.get_csv_output(filename = outdir+"/hubreads_weights.csv")
+	
 def test_hubpaths():
 	dna = dgen.generate_dna(length=3000)
 	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=5.0, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=100, read_length_stddev=5, readlength_distribution='gaussian')
@@ -389,5 +418,6 @@ if __name__ == '__main__':
 	#test_position_labels()
 	#compare_different_read_partitions()
 	
-	test_removal_of_insignificant_nodes_and_edges()
+	#test_removal_of_insignificant_nodes_and_edges()
+	test_hubreads()
 	
