@@ -44,8 +44,7 @@ class Kmer:
 		return self.baseweight + len(self.evidence_reads) - 1
 		
 	def update_baseweight(self, weight):
-		if self.baseweight < weight:
-			self.baseweight = weight
+		self.baseweight += weight
 
 class ContigSequence:
 	# Nodes in the Debruijn-Graph
@@ -272,7 +271,7 @@ class GraphData:
 	def print_all_reads(self):
 		print ("Reads:")
 		for read in self.reads:
-			print (str(read.id) + ": "+read.sequence)
+			print (str(read.id) + ": "+read.sequence+ ", "+str(read.weight))
 			kmer_string = "kmers: "
 			for kmer_id in read.kmers:
 				kmer_string += str(kmer_id) + " "
@@ -330,11 +329,11 @@ class GraphData:
 					kmer_already_existing = True
 					this_kmer_id = self.kmer_dict[new_kmer_sequence]
 					self.kmers[this_kmer_id].add_evidence(read_index)
-					self.kmers[this_kmer_id].update_baseweight(current_read_weight)
+					self.kmers[this_kmer_id].update_baseweight(current_read_weight-1)
 					if not self.directed_reads:
 						inv_kmer_id = self.kmers[this_kmer_id].id_of_inverse_kmer
 						self.kmers[inv_kmer_id].add_evidence(read_index)
-						self.kmers[inv_kmer_id].update_baseweight(current_read_weight)
+						self.kmers[inv_kmer_id].update_baseweight(current_read_weight-1)
 					if verbose:
 						print ("Kmer already exists")
 						print ("Add read ("+str(read_index)+") evidence to kmer "+str(this_kmer_id))
@@ -1367,6 +1366,7 @@ class GraphData:
 		# constructs extended hubreads
 		# these are all directed paths of length three in the contracted (simplified) debruijn graph.
 		# if id_restriction is not empty, only hubreads are considered for which the id of the first sequence is in id_restriction
+		# hubread gets weight = minimum of the weigths of all contained sequences
 		if not self.is_contracted:
 			self.contract_unique_overlaps()
 			
@@ -1381,23 +1381,32 @@ class GraphData:
 			if seq.is_relevant:
 				if len(id_restriction) == 0 or seq.id in id_restriction:
 					hp_start = seq.sequence
+					hp_start_id = seq.id
+					hp_start_weight = seq.max_weight
 					for ov_out_seq_id in seq.overlaps_out.keys():
 						hp_mid = self.sequences[ov_out_seq_id]
+						hp_mid_id = hp_mid.id
+						hp_mid_weight = hp_mid.max_weight
 						hp_temp = meta.merge_sequences(hp_start, hp_mid.sequence, self.k_value-1)
 						if len(hp_mid.overlaps_out) > 0:
-							for ov_out_seq_id in seq.overlaps_out.keys():
+							for ov_out_seq_id in hp_mid.overlaps_out.keys():
 								hp_end = self.sequences[ov_out_seq_id]
+								hp_end_weight = hp_end.max_weight
+								hp_end_id = hp_end.id
 								hubread = meta.merge_sequences(hp_temp, hp_end.sequence, self.k_value-1)
+								hubread_weight = min(hp_start_weight, hp_mid_weight, hp_end_weight)
 								if verbose:
-									print ("hp_start: "+hp_start)
-									print ("hp_end: "+hp_end.sequence)
+									print ("hp_start: "+hp_start+"("+str(hp_start_id)+")")
+									print ("hp_mid: "+hp_mid.sequence+"("+str(hp_mid_id)+")")
+									print ("hp_end: "+hp_end.sequence+"("+str(hp_end_id)+")")
 									print ("New hubread: "+hubread)
-								hubreads.append(hubread)
+								hubreads.append(hubread+","+str(hubread_weight))
 		return hubreads
 	
 	def get_hubreads_by_overlaps(self, verbose=False):
 		# constructs hubreads as described in spades-paper:
 		# these are all directed paths of length two in the contracted (simplified) debruijn graph.
+		# hubread gets weight = minimum of the weigths of all contained sequences
 		if not self.is_contracted:
 			self.contract_unique_overlaps()
 			
@@ -1409,7 +1418,8 @@ class GraphData:
 			seq_start = self.sequences[self.overlaps[ov_id].contig_sequence_1].sequence
 			seq_end = self.sequences[self.overlaps[ov_id].contig_sequence_2].sequence
 			hubread = meta.merge_sequences(seq_start, seq_end, self.k_value-1)
-			hubreads.append(hubread)
+			hubread_weight = min(self.sequences[self.overlaps[ov_id].contig_sequence_1].max_weight, self.sequences[self.overlaps[ov_id].contig_sequence_2].max_weight)
+			hubreads.append(hubread+","+hubread_weight)
 						
 		return hubreads
 
