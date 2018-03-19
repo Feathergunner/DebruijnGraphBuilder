@@ -273,10 +273,17 @@ def test_position_labels():
 	print len(debruijn.sequences)
 	debruijn.construct_assembly_ordering_labels(compute_position_labels=False, verbose=2);
 
-def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readlength = 100, indel_error = 15.0, min_k = 20, max_k = 30, verbose=False):
+def test_multisized_debruijn_graph(dna_length = 5000, n_reads = 1000, readlength = 1000, indel_error = 15.0, min_k = 15, max_k = 25, verbose=False):
 	dna = dgen.generate_dna(length=dna_length)
 	reads = dgen.samplereads(dna, number_of_reads=n_reads, replace_error_percentage=0.0, indel_error_percentage=indel_error, mutation_alphabet=["A","C","G","T"], read_length_mean=readlength, read_length_stddev=5, readlength_distribution='exponentioal')
-	filename_output_base = "Output/test/multisized/hubreadbased_dna_"+str(dna_length)+"_nr"+str(n_reads)+"_nl"+str(readlength)+"_ir"+str(indel_error)+"_mink"+str(min_k)+"_maxk"+str(max_k)
+	filename_output_base = "/hubreadbased_dna_"+str(dna_length)+"_nr"+str(n_reads)+"_nl"+str(readlength)+"_ir"+str(indel_error)+"_mink"+str(min_k)+"_maxk"+str(max_k)
+	
+	data_dir_base = "Output/test/multisized"
+	if not os.path.exists(data_dir_base):
+		os.mkdir(data_dir_base)
+		
+	dio.write_sequences_to_fasta([''.join(dna)], data_dir_base+"/dna.fasta")
+	filename_output_base = data_dir_base + filename_output_base
 	
 	hubreads = []
 	remaining_reads = reads
@@ -298,15 +305,21 @@ def test_multisized_debruijn_graph(dna_length = 10000, n_reads = 10000, readleng
 		debruijn.remove_single_sequence_loops()
 		debruijn.reduce_to_single_largest_component()
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
+		debruijn.get_csv_output(filename = filename_output_base+"_k"+str(k)+"_reduced.csv")
+		debruijn.write_sequences_to_file(filename = filename_output_base+"_k"+str(k)+"s_reduced.fasta", asfasta = True)
 		if verbose:
 			print hubreads	
 	
 	print ("Construct debruijn-graph from hubreads:")
 	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
-	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+	debruijn.remove_insignificant_overlaps(minimal_evidence=2)
 	debruijn.remove_single_sequence_loops()
+	debruijn.construct_assembly_ordering_labels()
+	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+"_hubreads_reduced.csv")
+	debruijn.write_sequences_to_file(filename = filename_output_base+"_hubreads_reduced.fasta", asfasta = True)
 
 def test_multisized_on_corona_reads():
 	read_id_partition_by_size = dio.get_read_partition_by_readlength(filename="Data/hcov229e_only.fq", size_of_parts=100)
@@ -327,7 +340,7 @@ def test_multisized_on_corona_reads():
 		
 		hubreads = debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
 		
-		debruijn.remove_insignificant_sequences(minimal_weight=2)
+		debruijn.remove_insignificant_overlaps(minimal_evidence=2)
 		remaining_reads_ids = debruijn.get_relevant_reads(verbose = True)
 		remaining_reads = [this_iterations_reads[i] for i in remaining_reads_ids]
 		
@@ -335,13 +348,18 @@ def test_multisized_on_corona_reads():
 		debruijn.remove_single_sequence_loops()
 		debruijn.reduce_to_single_largest_component()
 		debruijn.get_asqg_output(filename = filename_output_base+"_k"+str(k)+"_reduced.asqg")
+		debruijn.get_csv_output(filename = filename_output_base+"_k"+str(k)+"_reduced.csv")
 		
 	print ("Construct debruijn-graph from hubreads:")
 	debruijn = fdgb.GraphData([hubreads], max_k, remove_tips = True)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads.asqg")
-	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
+	debruijn.remove_insignificant_overlaps(minimal_evidence=2)
 	debruijn.remove_single_sequence_loops()
+	debruijn.construct_assembly_ordering_labels()
+	debruijn.reduce_every_component_to_single_path_max_weight(verbose = False)
 	debruijn.get_asqg_output(filename = filename_output_base+"_hubreads_reduced.asqg")
+	debruijn.get_csv_output(filename = filename_output_base+"_hubreads_reduced.csv")
+	debruijn.write_sequences_to_file(filename = filename_output_base+"_hubreads_reduced.fasta", asfasta = True)
 	
 def test_read_parttition_by_length_distribution():
 	read_id_partition_by_distribution = dio.get_read_partition_by_lengthdistribution(filename="Data/hcov229e_only.fq", size_of_parts=500, verbose=True)
@@ -412,12 +430,14 @@ if __name__ == '__main__':
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
-	#test_multisized_debruijn_graph(dna_length = 1000, n_reads = 3000, readlength = 100, indel_error = 5.0)
+	test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 5.0)
+	test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 10.0)
+	test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 15.0)
 	#test_multisized_on_corona_reads()
 	#test_read_parttition_by_length_distribution()
 	#test_position_labels()
 	#compare_different_read_partitions()
 	
 	#test_removal_of_insignificant_nodes_and_edges()
-	test_hubreads()
+	#test_hubreads()
 	
