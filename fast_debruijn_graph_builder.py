@@ -10,6 +10,7 @@ import scipy.sparse
 from scipy.sparse import linalg as la
 import math
 import gc
+import Queue
 
 import meta
 import data_io as dio
@@ -798,7 +799,115 @@ class GraphData:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
 						
-	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
+	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=1):
+		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
+		# algorithm assumes that graph
+		# 	is not empty and
+		#	has only one component
+		# edges that induce a cycle are ignored when they are encountered.
+		
+		if verbose > 0:
+			print "Construct longest assembly ordering labels..."
+	
+		# initialize:
+		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
+			if verbose > 0:
+				print ("Error! Start sequence does not exist! Start with first sequence instead.")
+			start_sequence = 0
+		while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
+			start_sequence += 1
+		
+		if not start_sequence < len(self.sequences):
+			print("Error! No sequence found!")
+			return
+		
+		# reset labels
+		for seq in self.sequences:
+			if seq.is_relevant:
+				seq.label_p = 0
+		# init for start sequence
+		self.min_label_p = 0
+		self.max_label_p = 0
+		self.min_sequence_p = start_sequence
+		self.max_sequence_p = start_sequence
+		self.max_path_length_p = self.sequences[start_sequence].get_length()
+		self.sequences[start_sequence].label_p = 0
+
+		if verbose >= 2:
+			print ("Start with sequence " + str(start_sequence))
+		
+		predecessor = [-1 for seq in self.sequences]
+		was_visited = [False for seq in self.sequences]
+		priority_queue = Queue.PriorityQueue()
+		priority_queue.put((0,self.sequences[start_sequence].id))
+		while not priority_queue.empty():
+			current_data = priority_queue.get()
+			current_node_id = current_data[1]
+			current_position = -current_data[0]
+			was_visited[current_node_id] = True
+			
+			successor_label = current_position + self.sequences[current_node_id].get_length() - (self.k_value-1)
+			
+			if verbose == 2:
+				print ("Next sequence: " + str(current_node_id) + ", current label: " + str(current_position))
+				
+			for seq_id in self.sequences[current_node_id].overlaps_out:
+				if not was_visited[seq_id] or self.sequences[seq_id].label_p < current_position:
+					# check for cycle:
+					is_cycle = False
+					current_pred = current_node_id
+					while self.sequences[current_pred].label_p > self.sequences[seq_id].label_p and not predecessor[current_pred] < 0:
+						current_pred = predecessor[current_pred]
+						if current_pred == seq_id:
+							is_cycle = True
+							if verbose >= 2:
+								print ("Cycle Found! Ignore path to sequence "+str(seq_id))
+							
+					# if no cycle found, update labels:
+					if not is_cycle:
+						if successor_label > self.max_label_p:
+							self.max_label_p = successor_label
+							self.max_sequence_p = seq_id
+						self.sequences[seq_id].label_p = successor_label
+						if verbose >= 2:
+							print ("updated label of node "+str(seq_id)+": "+str(successor_label))
+						predecessor[seq_id] = current_node_id
+						end_label = successor_label + self.sequences[seq_id].get_length()
+						if end_label > self.max_path_length_p:
+							self.max_path_length_p = end_label
+						priority_queue.put((-successor_label, seq_id))
+			
+			# going backwards: only set labels for previously unvisited nodes
+			for seq_id in self.sequences[current_node_id].overlaps_in:
+				predecessor_label = current_position - self.sequences[seq_id].get_length() + (self.k_value-1)
+				if not was_visited[seq_id] and not seq_id == predecessor[current_node_id]:
+					if predecessor_label < self.min_label_p:
+						self.min_label_p = predecessor_label
+						self.min_sequence_p = seq_id
+					self.sequences[seq_id].label_p = predecessor_label
+					if verbose >= 2:
+						print ("updated label of node "+str(seq_id)+": "+str(predecessor_label))
+					priority_queue.put((-predecessor_label, seq_id))
+		
+		if verbose == 2:
+			for seq in self.sequences:
+				if seq.is_relevant:
+					print str(seq.id) + ": " + str(seq.label_p)
+		
+		if do_second_iteration:
+			next_start = 0
+			if abs(self.max_label_p) > abs(self.min_label_p):
+				next_start = self.max_sequence_p
+			else:
+				next_start = self.min_sequence_p
+			if verbose == 2:
+				print ("max sequence of first iteration: "+str(self.max_sequence_p) + " with label "+str(self.max_label_p))
+				print ("min sequence of first iteration: "+str(self.min_sequence_p) + " with label "+str(self.min_label_p))
+				print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
+			
+			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
+		
+	def greedy_construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
 		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
 		# algorithm assumes that graph
 		# 	is not empty and
@@ -914,7 +1023,7 @@ class GraphData:
 					print ("min sequence of first iteration: "+str(self.min_sequence_n) + " with label "+str(self.min_label_n))
 					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
 
-			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
+			self.greedy_construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a partition of all sequence-ids based on intervals of labels
