@@ -495,6 +495,30 @@ def test_overlap_weight_distribution():
 	debruijn.remove_tips()
 	print debruijn.compute_overlap_evidence_distribution()
 
+def test_check_if_graph_decomposes():
+	data_dir="Output/test"
+	dna = dgen.generate_dna(length=5000)
+	reads = dgen.samplereads(dna, number_of_reads=1000, indel_error_percentage=15.0, read_length_mean=1000)
+	debruijn = fdgb.GraphData([reads], 15, reduce_data=True, simplify_graph=True, remove_tips=True, construct_labels=False, directed_reads=True)
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_check_decomp_1.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_check_decomp_1.csv")
+	
+	print debruijn.compute_overlap_evidence_distribution()
+	debruijn.remove_insignificant_overlaps(2)
+	debruijn.remove_tips()
+	debruijn.contract_unique_overlaps()
+	debruijn.remove_single_sequence_components()
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_check_decomp_2.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_check_decomp_2.csv")
+	
+	print debruijn.compute_overlap_evidence_distribution()
+	debruijn.remove_low_evidence_overlaps_until_graph_decomposes(verbose=False)
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_check_decomp_3.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_check_decomp_3.csv")
+	
 if __name__ == '__main__':
 	#test_basic_functionality(new_dataset=True)
 	#test_assembly_ordering_cycle()
@@ -512,4 +536,4 @@ if __name__ == '__main__':
 	
 	#test_removal_of_insignificant_nodes_and_edges()
 	#test_hubreads()
-	test_overlap_weight_distribution()
+	test_check_if_graph_decomposes()

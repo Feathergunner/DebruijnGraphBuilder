@@ -1619,7 +1619,7 @@ class GraphData:
 		else:
 			return 2
 			
-	def check_if_graph_decomposes(self, overlaps_to_remove, relative_component_size_bound=0.95):
+	def check_if_graph_decomposes(self, overlaps_to_remove, relative_component_size_bound=0.6, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
 		
 		# same code as in get_components, but ignores overlaps that are defined by overlaps_to_remove:
@@ -1647,23 +1647,40 @@ class GraphData:
 		
 		# check if largest component has siginificant size:
 		max_comp_size = max([len(c) for c in components])
-		if max_comp_size > relative_component_size_bound*len(self.get_relevant_sequences()):
+		
+		if verbose:
+			print ("Components after overlaps have been removed:")
+			print components
+			print ("Max component size: "+str(max_comp_size))
+			print ("Bound on comp size: "+str(relative_component_size_bound)+" * "+str(len(self.get_relevant_sequences()))+" = "+str(relative_component_size_bound*len(self.get_relevant_sequences())))
+		
+		if max_comp_size < relative_component_size_bound*len(self.get_relevant_sequences()):
 			return True
 		else:
 			return False
 		
-	def remove_low_evidence_overlaps_until_graph_decomposes(self):
+	def remove_low_evidence_overlaps_until_graph_decomposes(self, relative_component_size_bound=0.6, verbose=False):
+		# remove overlaps with low evidence until graph decomposes
+		# leave at least 10% of the initial overlaps
+		
 		min_cov_evidence = 2
+		min_overlap_number = len(self.overlaps)/10
+		
 		overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
-		graph_decomposees = self.check_if_graph_decomposes(overlaps_with_small_evidence)
-		while not graph_decomposees:
+		graph_decomposees = self.check_if_graph_decomposes(overlaps_with_small_evidence, relative_component_size_bound, verbose=verbose)
+		while not graph_decomposees and (len(self.overlaps)-len(overlaps_with_small_evidence)) > min_overlap_number:
+			if verbose:
+				print ("Next set of overlaps to remove:")
+				for ov in overlaps_with_small_evidence:
+					self.overlaps[ov].print_data()
+				
 			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence)
 			self.reduce_to_single_largest_component()
 			self.contract_unique_overlaps()
 			self.remove_tips()
 			self.contract_unique_overlaps()
 			self.remove_single_sequence_components()
-			
+	
 			min_cov_evidence += 1
 			overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
-			graph_decomposees = self.check_if_graph_decomposes(overlaps_with_small_evidence)
+			graph_decomposees = self.check_if_graph_decomposes(overlaps_with_small_evidence, verbose=verbose)
