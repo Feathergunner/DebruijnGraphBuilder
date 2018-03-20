@@ -484,9 +484,20 @@ def compare_different_read_partitions():
 	debruijn_by_distribution = fdgb.GraphData([reads_by_distribution], k)
 	debruijn_by_distribution.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
 	
+def test_overlap_weight_distribution():
+	dna = dgen.generate_dna(length=5000)
+	
+	reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=2.0, read_length_mean=100)
+
+	debruijn = fdgb.GraphData([reads], 17, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=True, directed_reads=True)
+	print debruijn.compute_overlap_evidence_distribution()
+	
+	debruijn.remove_tips()
+	print debruijn.compute_overlap_evidence_distribution()
+
 if __name__ == '__main__':
 	#test_basic_functionality(new_dataset=True)
-	test_assembly_ordering_cycle()
+	#test_assembly_ordering_cycle()
 	
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
@@ -501,4 +512,4 @@ if __name__ == '__main__':
 	
 	#test_removal_of_insignificant_nodes_and_edges()
 	#test_hubreads()
-	
+	test_overlap_weight_distribution()

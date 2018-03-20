@@ -1605,3 +1605,17 @@ class GraphData:
 			overlap_weight_distribution[ovw] += 1
 		
 		return overlap_weight_distribution
+		
+	def get_bound_on_erroneous_overlap_weights(self):
+		# computes the most-likely divider between the evidence weights of erroneous overlaps and correct overlaps:
+		
+		ovw = self.compute_overlap_evidence_distribution()
+		div = 2
+		while ovw[div] > ovw[div+1]:
+			div += 1
+			
+		if div < len(ovw)/2:
+			return div
+		else:
+			return 2
+			
