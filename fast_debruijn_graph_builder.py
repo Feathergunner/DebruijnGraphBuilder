@@ -99,22 +99,27 @@ class ContigSequence:
 
 class SequenceOverlap:
 	# Edges in the Debruijn-Graph
-	def __init__(self, ov_id, length, seq_1, seq_2, evidence_reads):
+	def __init__(self, ov_id, length, seq_1, seq_2, evidence_reads, evidence_weights = []):
 		self.id = ov_id
 		self.length = length
 		# the incident sequences of this overlap. sequence_1 is the source, sequence_2 is the target.
 		self.contig_sequence_1 = seq_1
 		self.contig_sequence_2 = seq_2
 		self.evidence_reads = evidence_reads
+		if not len(evidence_weights) == len(evidence_reads):
+			self.evidence_weights = len(evidence_reads)
+		else:
+			self.evidence_weights = sum(evidence_weights)
 		# Flag that checks whether a sequence is relevant for the graph or if it has been deleted
 		self.is_relevant = True
 	
-	def add_evidence(self, read_id):
+	def add_evidence(self, read_id, read_weight=1):
 		if read_id >= 0:
 			self.evidence_reads.append(read_id)
+			self.evidence_weights += read_weight
 		
 	def get_evidence_weight(self):
-		return len(self.evidence_reads)
+		return self.evidence_weights
 
 	def print_data(self):
 		print ("Overlap "+str(self.id))
@@ -263,12 +268,12 @@ class GraphData:
 		print ("Construct overlaps ...")
 		read_number = 0
 		for read in self.reads:
-			if (read.id%1000 == 0 or read_number == len(self.reads)-1):
+			if (read.id%100 == 0 or read_number == len(self.reads)-1):
 				meta.print_progress(read_number, len(self.reads)-1)
 			for kmer_index in range(len(read.kmers)-1):
 				source_kmer_id = read.kmers[kmer_index]
 				target_kmer_id = read.kmers[kmer_index+1]
-				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, verbose=False)
+				self.increment_overlap(source_kmer_id, target_kmer_id, read.id, read.weight, verbose=False)
 			read_number += 1
 		if verbose:
 			self.print_memory_usage()
@@ -373,7 +378,7 @@ class GraphData:
 				kmer_start += 1
 			read_index += 1
 			
-	def increment_overlap(self, source_seq_id, target_seq_id, read_evidence, consider_inverse = True, verbose = False):
+	def increment_overlap(self, source_seq_id, target_seq_id, read_evidence, read_weight=1, consider_inverse = True, verbose = False):
 		# This method adds an overlap to the database. If overlap already exists, only read-evidence is added.
 		if target_seq_id not in self.sequences[source_seq_id].overlaps_out:
 			if verbose:
@@ -401,7 +406,8 @@ class GraphData:
 			
 		else:
 			ov_id = self.sequences[source_seq_id].overlaps_out[target_seq_id]
-		self.overlaps[ov_id].add_evidence(read_evidence)
+			
+		self.overlaps[ov_id].add_evidence(read_evidence, read_weight)
 	
 	'''
 	def add_overlaps_for_sequences_with_small_insert_distance(self, max_insert_distance=1, verbose = False):
