@@ -41,7 +41,7 @@ def test_basic_functionality(new_dataset=False, data_dir="Output/test", verbose=
 	print ("Construct de bruijn graph")
 	
 	start_fdgb = timeit.default_timer()
-	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=True, construct_labels=False, directed_reads=False, verbose=verbose)
+	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=True, directed_reads=False, verbose=verbose)
 	stop_fdgb = timeit.default_timer()
 	debruijn.print_memory_usage()
 	print ("Size of tracked objects: " +str(sum(sys.getsizeof(i) for i in gc.get_objects())/1000000.0) + "MB")
@@ -52,7 +52,51 @@ def test_basic_functionality(new_dataset=False, data_dir="Output/test", verbose=
 	
 	print ("Number of sequences: "+str(len([seq for seq in debruijn.sequences if seq.is_relevant])))
 	print ("Number of overlaps: "+str(len(debruijn.overlaps)))
-
+	
+def test_basic_functionality_small(new_dataset=False, data_dir="Output/test", verbose=False):
+	print ("Starting basic test of de bruijn graph construction")
+	if not os.path.exists(data_dir):
+		os.mkdir(data_dir)
+	if new_dataset or not os.path.isfile(data_dir+"/test_dna.txt"):
+		dna = dgen.generate_dna(length=200)
+		dgen.write_dna_to_file(data_dir+"/test_dna.txt", dna)
+	else:
+		with open(data_dir+"/test_dna.txt") as inputfile:
+			lines = inputfile.readlines()
+		dna = lines[0]
+	
+	if new_dataset or not os.path.isfile(data_dir+"/test_reads.txt"):
+		reads = dgen.samplereads(dna, number_of_reads=100, replace_error_percentage=0.5, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=50, read_length_stddev=0)
+		with open(data_dir+"/test_reads.txt", 'w') as outf:
+			for read in reads:
+				outf.write(read + '\n')
+	else:
+		reads = dio.get_reads_from_file(filename=data_dir+"/test_reads.txt")
+	k = 17
+	
+	start_fdgb = 0
+	stop_fdgb = 0
+	
+	print ("Construct de bruijn graph")
+	
+	start_fdgb = timeit.default_timer()
+	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=True, directed_reads=False, verbose=verbose)
+	stop_fdgb = timeit.default_timer()
+	debruijn.print_memory_usage()
+	print ("Size of tracked objects: " +str(sum(sys.getsizeof(i) for i in gc.get_objects())/1000000.0) + "MB")
+	print ("Running time of fdgb: " + str("%.2f" % (stop_fdgb - start_fdgb)))
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_basic.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_basic.csv")
+	
+	print ("Number of sequences: "+str(len([seq for seq in debruijn.sequences if seq.is_relevant])))
+	print ("Number of overlaps: "+str(len(debruijn.overlaps)))
+	
+	
+	#for seq in debruijn.sequences:
+	#	if seq.is_relevant:
+	#		print seq.label_p
+	
 def test_assembly_ordering():
 	gl = 2000
 	rl = 500
@@ -91,6 +135,22 @@ def test_assembly_ordering():
 	filename_output += "_singlepath"
 	debruijn.get_asqg_output(filename = filename_output+".asqg")
 	debruijn.get_csv_output(filename = filename_output+".csv")
+
+def test_assembly_ordering_cycle(data_dir="Output/test"):
+	if not os.path.exists(data_dir):
+		os.mkdir(data_dir)
+	dnastring ="TAATGGGGAATGTAGCCGTCAGTCTTAGACTGTAAAGCTAAAACACACAGAAGAATCTTTTTCAAAGCCGAACTCACTGTCGGCGGTTAGGTTGCCGCGTCTTACCAAGTTGCTGTCTACACGCGCACAATACCGAGTGATCATGGCCGGATTCGCATGCCAACTTCACTAGCGCATGAGTAACATGATGGCGTAGCGTGGGCGAAGCACTCCGTGGCGGGACGGGCACCATGGCACATAAGAGAAACGGACATCGGAAGCAGGACCCCCTAATGGGGAATGTAGCCGTCAGTCTTAGAC"
+	dna = [c for c in dnastring]
+	reads = dgen.samplereads(dna, 100, replace_error_percentage=0.5, read_length_mean=100)
+	debruijn = fdgb.GraphData([reads], k=19, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_labels_cycle_1.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_labels_cycle_1.csv")
+	
+	debruijn.construct_assembly_ordering_labels(do_second_iteration = False, verbose=2)
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_labels_cycle_2.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_labels_cycle_2.csv")
 
 def test_spectral_partitioning():
 	#readpartition = dio.get_read_partition_by_readlength(filename = "Data/2017-09-05_coronavirus.fq", size_of_parts=500)
@@ -297,7 +357,7 @@ def test_multisized_debruijn_graph(dna_length = 5000, n_reads = 1000, readlength
 		hubreads = debruijn.get_hubreads_by_adjacent_sequences(verbose = False)
 		#hubreads += new_hubreads
 		
-		debruijn.remove_insignificant_sequences(minimal_weight=2)
+		debruijn.remove_insignificant_overlaps(minimal_evidence=2)
 		remaining_reads_ids = debruijn.get_relevant_reads(verbose = True)
 		remaining_reads = [this_iterations_reads[i] for i in remaining_reads_ids]
 		
@@ -425,14 +485,15 @@ def compare_different_read_partitions():
 	debruijn_by_distribution.get_asqg_output(filename = filename_output_base+"by_distribution.asqg")
 	
 if __name__ == '__main__':
-	#test_basic_functionality()
+	#test_basic_functionality(new_dataset=True)
+	test_assembly_ordering_cycle()
 	
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
 	#test_exponential_readlengths()
 	#test_hubpaths()
-	test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 5.0)
-	test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 10.0)
-	test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 15.0)
+	#test_multisized_debruijn_graph(dna_length = 2000, n_reads = 100, readlength = 400, indel_error = 5.0)
+	#test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 10.0)
+	#test_multisized_debruijn_graph(dna_length = 5000, n_reads = 100, readlength = 1000, indel_error = 15.0)
 	#test_multisized_on_corona_reads()
 	#test_read_parttition_by_length_distribution()
 	#test_position_labels()

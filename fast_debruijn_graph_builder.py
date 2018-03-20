@@ -799,7 +799,7 @@ class GraphData:
 					if self.k_value < 1:
 						self.k_value = int(overlap_data[6])					
 						
-	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=1):
+	def construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, delete_cycles=True, verbose=1):
 		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
 		# algorithm assumes that graph
 		# 	is not empty and
@@ -851,31 +851,61 @@ class GraphData:
 			if verbose == 2:
 				print ("Next sequence: " + str(current_node_id) + ", current label: " + str(current_position))
 				
-			for seq_id in self.sequences[current_node_id].overlaps_out:
-				if not was_visited[seq_id] or self.sequences[seq_id].label_p < current_position:
-					# check for cycle:
-					is_cycle = False
-					current_pred = current_node_id
-					while self.sequences[current_pred].label_p > self.sequences[seq_id].label_p and not predecessor[current_pred] < 0:
-						current_pred = predecessor[current_pred]
-						if current_pred == seq_id:
-							is_cycle = True
+			next_nodes = [seq_id for seq_id in self.sequences[current_node_id].overlaps_out]
+			for seq_id in next_nodes: # additional list necessary if cycles are deleted!
+				if seq_id in self.sequences[current_node_id].overlaps_out:
+					if not was_visited[seq_id] or self.sequences[seq_id].label_p < current_position:
+						# check for cycle:
+						is_cycle = False
+						current_pred = current_node_id
+						while self.sequences[current_pred].label_p > self.sequences[seq_id].label_p and not predecessor[current_pred] < 0:
+							current_pred = predecessor[current_pred]
+							if current_pred == seq_id:
+								is_cycle = True
+								if verbose >= 2:
+									print ("Cycle Found! Ignore path to sequence "+str(seq_id))
+									
+								if delete_cycles:
+									# fix the cycle: find and delete the overlap with minimum read evidence of the cycle:
+									# find overlap with minimun evidence weight within cycle:
+									min_ov_weight = -1
+									min_ov_id = -1
+									current_source = current_node_id
+									current_target = seq_id
+									while not current_source == seq_id:
+										current_ov_id = self.sequences[current_source].overlaps_out[current_target]
+										current_ov_weight = self.overlaps[current_ov_id].get_evidence_weight()
+										if min_ov_weight < 0 or current_ov_weight < min_ov_weight:
+											min_ov_weight = current_ov_weight
+											min_ov_id = current_ov_id
+										current_target = current_source
+										current_source = predecessor[current_source]
+									# delete this overlap:
+									self.delete_overlap(min_ov_id, verbose = verbose>2)
+									
+									# for all succeeding nodes of deleted overlap: reset the position label:
+									current_source = current_node_id
+									current_target = seq_id
+									while current_source in self.sequences[current_target].overlaps_in:
+										current_target = current_source
+										current_source = predecessor[current_source]
+										predecessor[current_target] = -1
+										was_visited[current_target] = False
+										self.sequences[current_target].label_p = 0
+								
+						# if no cycle found, update labels:
+						if not is_cycle:
+							if successor_label > self.max_label_p:
+								self.max_label_p = successor_label
+								self.max_sequence_p = seq_id
+							self.sequences[seq_id].label_p = successor_label
 							if verbose >= 2:
-								print ("Cycle Found! Ignore path to sequence "+str(seq_id))
-							
-					# if no cycle found, update labels:
-					if not is_cycle:
-						if successor_label > self.max_label_p:
-							self.max_label_p = successor_label
-							self.max_sequence_p = seq_id
-						self.sequences[seq_id].label_p = successor_label
-						if verbose >= 2:
-							print ("updated label of node "+str(seq_id)+": "+str(successor_label))
-						predecessor[seq_id] = current_node_id
-						end_label = successor_label + self.sequences[seq_id].get_length()
-						if end_label > self.max_path_length_p:
-							self.max_path_length_p = end_label
-						priority_queue.put((-successor_label, seq_id))
+								print ("updated label of node "+str(seq_id)+": "+str(successor_label))
+							predecessor[seq_id] = current_node_id
+							end_label = successor_label + self.sequences[seq_id].get_length()
+							if end_label > self.max_path_length_p:
+								self.max_path_length_p = end_label
+							priority_queue.put((-successor_label, seq_id))
 			
 			# going backwards: only set labels for previously unvisited nodes
 			for seq_id in self.sequences[current_node_id].overlaps_in:
