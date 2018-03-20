@@ -188,7 +188,11 @@ class GraphData:
 					self.remove_single_sequence_components(verbose=verbose)
 			
 			if construct_labels:
-				self.construct_assembly_ordering_labels(verbose=verbose)
+				if verbose:
+					v=2
+				else:
+					v=1
+				self.construct_assembly_ordering_labels(verbose=v)
 
 	def print_memory_usage(self):
 		size_reads = sys.getsizeof(self.reads)
@@ -837,6 +841,7 @@ class GraphData:
 			print ("Start with sequence " + str(start_sequence))
 		
 		predecessor = [-1 for seq in self.sequences]
+		successor = [-1 for seq in self.sequences]
 		was_visited = [False for seq in self.sequences]
 		priority_queue = Queue.PriorityQueue()
 		priority_queue.put((0,self.sequences[start_sequence].id))
@@ -915,6 +920,7 @@ class GraphData:
 						self.min_label_p = predecessor_label
 						self.min_sequence_p = seq_id
 					self.sequences[seq_id].label_p = predecessor_label
+					was_visited[seq_id] = True
 					if verbose >= 2:
 						print ("updated label of node "+str(seq_id)+": "+str(predecessor_label))
 					priority_queue.put((-predecessor_label, seq_id))
@@ -1590,3 +1596,12 @@ class GraphData:
 			# # 2) split sequence into multiple sequences, one for each set. split incident edges accordingly.
 		# # remove all edges without read_evidence (i.e. if source and target edge have no read_ids in common)
 		return
+
+	def compute_overlap_evidence_distribution(self):
+		print ("Compute distribution of overlap evidences")
+		overlap_weights = [self.overlaps[ov].get_evidence_weight() for ov in self.overlaps]
+		overlap_weight_distribution = [0 for i in range(max(overlap_weights)+1)]
+		for ovw in overlap_weights:
+			overlap_weight_distribution[ovw] += 1
+		
+		return overlap_weight_distribution
