@@ -631,7 +631,7 @@ class GraphData:
 								seq_stack.append(adj_seq)
 								visited_sequences[adj_seq] = True					
 					components.append(current_comp)
-		return components				
+		return components
 		
 	def remove_tips(self, only_simply_connected_tips=True, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
@@ -863,7 +863,7 @@ class GraphData:
 						# check for cycle:
 						is_cycle = False
 						current_pred = current_node_id
-						while self.sequences[current_pred].label_p > self.sequences[seq_id].label_p and not predecessor[current_pred] < 0:
+						while self.sequences[current_pred].label_p > self.sequences[seq_id].label_p and not predecessor[current_pred] < 0 and not is_cycle:
 							current_pred = predecessor[current_pred]
 							if current_pred == seq_id:
 								is_cycle = True
@@ -1619,3 +1619,51 @@ class GraphData:
 		else:
 			return 2
 			
+	def check_if_graph_decomposes(self, overlaps_to_remove, relative_component_size_bound=0.95):
+		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
+		
+		# same code as in get_components, but ignores overlaps that are defined by overlaps_to_remove:
+		components = []
+		visited_sequences = {seq.id: False for seq in self.sequences if seq.is_relevant}
+		for seq in self.sequences:
+			if seq.is_relevant:
+				if not visited_sequences[seq.id]:
+					current_comp = []
+					seq_stack = [seq.id]
+					visited_sequences[seq.id] = True
+					while len(seq_stack) > 0:
+						current_seq_id = seq_stack[0]
+						seq_stack.pop(0)
+						current_comp.append(current_seq_id)
+						for adj_seq in self.sequences[current_seq_id].overlaps_out:
+							if not visited_sequences[adj_seq] and not self.sequences[current_seq_id].overlaps_out[adj_seq] in overlaps_to_remove:
+								seq_stack.append(adj_seq)
+								visited_sequences[adj_seq] = True
+						for adj_seq in self.sequences[current_seq_id].overlaps_in:
+							if not visited_sequences[adj_seq] and not self.sequences[current_seq_id].overlaps_in[adj_seq] in overlaps_to_remove:
+								seq_stack.append(adj_seq)
+								visited_sequences[adj_seq] = True					
+					components.append(current_comp)
+		
+		# check if largest component has siginificant size:
+		max_comp_size = max([len(c) for c in components])
+		if max_comp_size > relative_component_size_bound*len(self.get_relevant_sequences()):
+			return True
+		else:
+			return False
+		
+	def remove_low_evidence_overlaps_until_graph_decomposes(self):
+		min_cov_evidence = 2
+		overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
+		graph_decomposees = self.check_if_graph_decomposes(overlaps_with_small_evidence)
+		while not graph_decomposees:
+			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence)
+			self.reduce_to_single_largest_component()
+			self.contract_unique_overlaps()
+			self.remove_tips()
+			self.contract_unique_overlaps()
+			self.remove_single_sequence_components()
+			
+			min_cov_evidence += 1
+			overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
+			graph_decomposees = self.check_if_graph_decomposes(overlaps_with_small_evidence)
