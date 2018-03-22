@@ -639,7 +639,7 @@ class GraphData:
 					components.append(current_comp)
 		return components
 		
-	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, remove_only_unique_tips=False, verbose=False):
+	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, remove_only_unique_tips=True, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
 		# if maximum_tip_weight > 0, only tips with weight < maximum_tip_weight will be removed.
