@@ -189,7 +189,7 @@ class GraphData:
 				self.contract_unique_overlaps(verbose=verbose)
 				
 				if remove_tips:
-					self.remove_tips(verbose=verbose)
+					self.remove_tips(remove_only_unique_tips=True, verbose=verbose)
 					self.remove_single_sequence_components(verbose=verbose)
 			
 			if construct_labels:
@@ -639,19 +639,20 @@ class GraphData:
 					components.append(current_comp)
 		return components
 		
-	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, verbose=False):
+	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, remove_only_unique_tips=False, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
 		# if maximum_tip_weight > 0, only tips with weight < maximum_tip_weight will be removed.
+		# if remove_only_unique_tips==True, a tip will only be removed if the node it is connected to as other connections in the same orientation, which have to be non-tips.
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
 		while (num_of_removed_tips != 0):
 			num_of_removed_tips = 0
 			for seq in self.sequences:
 				if seq.is_relevant:
-					if verbose:
-						print ("Consider sequence:")
-						seq.print_data()
+					#if verbose:
+					#	print ("Consider sequence:")
+					#	seq.print_data()
 					# check if sequence is a tip and if sequence is shorter than 2k:
 					if (len(seq.sequence) < 2*self.k_value):
 						if seq.get_total_weight() < maximum_tip_weight or maximum_tip_weight <= 0:
@@ -664,13 +665,36 @@ class GraphData:
 								is_tip =True							
 							if is_tip:
 								if verbose:
-									print ("Sequence is a tip, remove this sequence.")
-								# remove sequence:
-								self.delete_sequence(seq.id, verbose)
-								num_of_removed_tips += 1
-								# mark reads of tip:
-								tip_reads = self.get_read_of_sequences([seq])
-								self.removed_reads += tip_reads
+									print ("Consider tip sequence "+str(seq.id))
+								if remove_only_unique_tips:
+									remove_tip = False
+									# check if connected node have other non-tip-connection:
+									if len(seq.overlaps_in) > 0:
+										# case 1: tip is outgoing
+										for adj_seq in seq.overlaps_in:
+											for adj_adj_seq in self.sequences[adj_seq].overlaps_out:
+												if len(self.sequences[adj_adj_seq].overlaps_out) > 0:
+													remove_tip = True
+									elif len(seq.overlaps_out) > 0:
+										# case 2: tip is incoming
+										for adj_seq in seq.overlaps_out:
+											for adj_adj_seq in self.sequences[adj_seq].overlaps_in:
+												if len(self.sequences[adj_adj_seq].overlaps_in) > 0:
+													remove_tip = True
+									if verbose and not remove_tip:
+										print ("Tip is not unique!")
+											
+								else:
+									remove_tip = True
+								if remove_tip:
+									if verbose:
+										print ("Sequence is a tip, remove this sequence.")
+									# remove sequence:
+									self.delete_sequence(seq.id, verbose)
+									num_of_removed_tips += 1
+									# mark reads of tip:
+									tip_reads = self.get_read_of_sequences([seq])
+									self.removed_reads += tip_reads
 							
 			self.contract_unique_overlaps(verbose = 0)
 
