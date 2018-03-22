@@ -639,8 +639,10 @@ class GraphData:
 					components.append(current_comp)
 		return components
 		
-	def remove_tips(self, only_simply_connected_tips=True, verbose=False):
+	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
+		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
+		# if maximum_tip_weight > 0, only tips with weight < maximum_tip_weight will be removed.
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
 		while (num_of_removed_tips != 0):
@@ -652,25 +654,68 @@ class GraphData:
 						seq.print_data()
 					# check if sequence is a tip and if sequence is shorter than 2k:
 					if (len(seq.sequence) < 2*self.k_value):
-						is_tip = False
-						if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
-							# (sequence is a simply connected tip)
-							is_tip = True
-						elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0):
-							# (sequence is a tip)
-							is_tip =True
-						if is_tip:
-							if verbose:
-								print ("Sequence is a tip, remove this sequence.")
-							# remove sequence:
-							self.delete_sequence(seq.id, verbose)
-							num_of_removed_tips += 1
-							# mark reads of tip:
-							tip_reads = self.get_read_of_sequences([seq])
-							self.removed_reads += tip_reads
+						if seq.get_total_weight() < maximum_tip_weight or maximum_tip_weight <= 0:
+							is_tip = False
+							if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
+								# (sequence is a simply connected tip)
+								is_tip = True
+							elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0):
+								# (sequence is a tip)
+								is_tip =True							
+							if is_tip:
+								if verbose:
+									print ("Sequence is a tip, remove this sequence.")
+								# remove sequence:
+								self.delete_sequence(seq.id, verbose)
+								num_of_removed_tips += 1
+								# mark reads of tip:
+								tip_reads = self.get_read_of_sequences([seq])
+								self.removed_reads += tip_reads
 							
 			self.contract_unique_overlaps(verbose = 0)
 
+	def unrestricted_tip_removal(self, only_simply_connected_tips=True, verbose=False):
+		# removes tips of any lengths, but only if the node to which it is connected has another adjacent node in the same direction, which also has to be longer than the tip.
+		
+		num_of_removed_tips = -1
+		while (num_of_removed_tips != 0):
+			num_of_removed_tips = 0
+			for seq in self.sequences:
+				if seq.is_relevant:
+					if verbose:
+						print ("Consider sequence:")
+						seq.print_data()
+					# check if sequence is a tip:
+					is_tip = False
+					if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
+						# (sequence is a simply connected tip)
+						is_tip = True
+					elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0):
+						# (sequence is a tip)
+						is_tip =True
+					if is_tip:
+						length_of_tip = len(seq.sequence)
+						# check if tip is longest adjacent node:						
+						number_of_adj_nodes_with_longer_adj_nodes = 0
+						if len(seq.overlaps_in) > 0:
+							# case 1: tip is outgoing
+							for adj_seq in seq.overlaps_in:
+								for adj_adj_seq in self.sequences[adj_seq].overlaps_out:
+									if len(self.sequences[adj_adj_seq].sequence) > length_of_tip:
+										number_of_adj_nodes_with_longer_adj_nodes += 1
+						elif len(seq.overlaps_out) > 0:
+							# case 2: tip is incoming
+							for adj_seq in seq.overlaps_out:
+								for adj_adj_seq in self.sequences[adj_seq].overlaps_in:
+									if len(self.sequences[adj_adj_seq].sequence) > length_of_tip:
+										number_of_adj_nodes_with_longer_adj_nodes += 1
+										
+						if number_of_adj_nodes_with_longer_adj_nodes == len(seq.overlaps_out) + len(seq.overlaps_in):
+							# every adjacent node has another longer adjacent sequence
+							self.delete_sequence(seq.id, verbose)
+							num_of_removed_tips += 1
+			self.contract_unique_overlaps()
+		
 	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
 		# removes all sequences with weight less than minimal_weight
 		print ("Removing sequences with evidence_weight < "+str(minimal_weight)+" ...")
@@ -1652,7 +1697,10 @@ class GraphData:
 					components.append(current_comp)
 		
 		# check if largest component has siginificant size:
-		max_comp_size = max([len(c) for c in components])
+		if len(components) == 0:
+			max_comp_size = 0
+		else:
+			max_comp_size = max([len(c) for c in components])
 		
 		if verbose:
 			print ("Components after overlaps have been removed:")
@@ -1683,7 +1731,7 @@ class GraphData:
 			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence)
 			self.reduce_to_single_largest_component()
 			self.contract_unique_overlaps()
-			self.remove_tips()
+			self.remove_tips(maximum_tip_weight = min_overlap_number)
 			self.contract_unique_overlaps()
 			self.remove_single_sequence_components()
 	
