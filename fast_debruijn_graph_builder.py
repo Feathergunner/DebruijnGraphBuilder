@@ -1862,11 +1862,13 @@ class GraphData:
 	
 			min_cov_depth += 1
 			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth and seq.id in self.hubs]
-			#adjacent_overlaps = []
-			#for seq_id in small_cov_depth_sequences:
-			#	adjacent_overlaps += [self.sequences[seq_id].overlaps_out[s] for s in self.sequences[seq_id].overlaps_out]
-			#	adjacent_overlaps += [self.sequences[seq_id].overlaps_in[s] for s in self.sequences[seq_id].overlaps_in]
+			
+			while len(small_cov_depth_sequences) == 0:
+				min_cov_depth += 1
+				small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth]
+			
 			graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)
+			
 		print ("Graph decomposes for min_cov_depth = "+str(min_cov_depth))
 			
 	'''
