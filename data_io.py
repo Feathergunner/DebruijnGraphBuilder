@@ -31,7 +31,8 @@ def get_reads_from_file(filename="samplereads.txt"):
 	return reads
 	
 def get_reads_from_fastq_file(filename, read_ids=-1):
-	# if num_of_reads > 0, only the specified number of reads will be read from the file.
+	# if read_ids < -1, will return all reads from file,
+	# if read_ids is a nonempty list, only the reads specified by indices of read_ids will be returned
 	status = 0
 	reads = []
 	n = 0
