@@ -1820,7 +1820,7 @@ class GraphData:
 		else:
 			return False
 		
-	def remove_low_evidence_overlaps_until_graph_decomposes(self, relative_component_size_bound=0.5, verbose=False):
+	def remove_low_evidence_overlaps_until_graph_decomposes(self, relative_component_size_bound=0.05, verbose=False):
 		# remove overlaps with low evidence until graph decomposes
 		# leave at least 10% of the initial overlaps
 		
@@ -1853,7 +1853,7 @@ class GraphData:
 			graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, verbose=verbose)
 			
 			
-	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.8, max_coverage_depth_to_remove = 20, verbose=False):
+	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.05, max_coverage_depth_to_remove = 20, verbose=False):
 		# remove sequences with low coverage depth until graph decomposes
 		print ("Remove low-coverage sequences until graph decomposes:")
 		
