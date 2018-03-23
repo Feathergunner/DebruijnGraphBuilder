@@ -1714,7 +1714,7 @@ class GraphData:
 		else:
 			return 2
 			
-	def check_if_graph_decomposes_edgeremoval(self, overlaps_to_remove, relative_component_size_bound=0.6, verbose=False):
+	def check_if_graph_decomposes_edgeremoval(self, overlaps_to_remove, relative_component_size_bound=0.05, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
 		print ("Checking if graph decomposes ...")
 		
@@ -1745,19 +1745,30 @@ class GraphData:
 		if len(components) == 0:
 			max_comp_size = 0
 		else:
-			max_comp_size = max([len(c) for c in components])
+			max_comp_size = 0
+			second_max_comp_size = 0
+			for c in component:
+				s = len(c)
+				if c > max_comp_size:
+					second_mac_comp_size = max_comp_size
+					max_comp_size = c
+				elif c > second_max_comp_size:
+					second_max_comp_size = c
+			#comp_sizes = [len(c) for c in components]
+			#max_comp_size = max([len(c) for c in components])
 		
 		if verbose:
 			print ("Number of Components after overlaps have been removed: "+str(len(components)))
 			print ("Max component size: "+str(max_comp_size))
+			print ("Second max component size: "+str(second_max_comp_size))
 			#print ("Bound on comp size: "+str(relative_component_size_bound)+" * "+str(len(self.get_relevant_sequences()))+" = "+str(relative_component_size_bound*len(self.get_relevant_sequences())))
 		
-		if max_comp_size < relative_component_size_bound*len(self.get_relevant_sequences()):
+		if second_max_comp_size > relative_component_size_bound*max_comp_size:
 			return True
 		else:
 			return False
 			
-	def check_if_graph_decomposes_seqremove(self, sequences_to_remove, relative_component_size_bound=0.6, verbose=False):
+	def check_if_graph_decomposes_seqremove(self, sequences_to_remove, relative_component_size_bound=0.05, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
 		print ("Checking if graph decomposes ...")
 		
@@ -1788,14 +1799,23 @@ class GraphData:
 		if len(components) == 0:
 			max_comp_size = 0
 		else:
-			max_comp_size = max([len(c) for c in components])
+			max_comp_size = 0
+			second_max_comp_size = 0
+			for c in component:
+				s = len(c)
+				if c > max_comp_size:
+					second_mac_comp_size = max_comp_size
+					max_comp_size = c
+				elif c > second_max_comp_size:
+					second_max_comp_size = c
 		
 		if verbose:
 			print ("Number of Components after overlaps have been removed: "+str(len(components)))
 			print ("Max component size: "+str(max_comp_size))
+			print ("Second max component size: "+str(second_max_comp_size))
 			#print ("Bound on comp size: "+str(relative_component_size_bound)+" * "+str(len(self.get_relevant_sequences()))+" = "+str(relative_component_size_bound*len(self.get_relevant_sequences())))
 		
-		if max_comp_size < relative_component_size_bound*len(self.get_relevant_sequences()):
+		if second_max_comp_size > relative_component_size_bound*max_comp_size:
 			return True
 		else:
 			return False
@@ -1825,7 +1845,10 @@ class GraphData:
 			self.contract_unique_overlaps()
 			self.remove_single_sequence_components()
 	
-			min_cov_evidence += 1
+			if len(overlaps_with_small_evidence) < 10:
+				min_cov_evidence += 5
+			else:
+				min_cov_evidence += 1
 			overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
 			graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, verbose=verbose)
 			
@@ -1860,7 +1883,10 @@ class GraphData:
 			self.contract_unique_overlaps()
 			self.remove_single_sequence_components()
 	
-			min_cov_depth += 1
+			if len(small_cov_depth_sequences) < 10:
+				min_cov_depth += 5
+			else:
+				min_cov_depth += 1
 			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth and seq.id in self.hubs]
 			
 			while len(small_cov_depth_sequences) == 0:
