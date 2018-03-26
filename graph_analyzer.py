@@ -4,6 +4,7 @@
 import os
 import re
 import matplotlib.pyplot as plt
+import math
 
 def compute_distribution(data, verbose=False):
 	if len(data) == 0:
@@ -276,6 +277,8 @@ class GraphAnalyzer:
 				gd.casename = filenames[i]	
 				gd.dirname = datapath
 				
+				gd.get_data_from_csv(datapath+"/"+filenames[i]+".csv")
+				
 				for line in datafile:
 					data = re.split(r'\s', line)
 					if data[0] == "VT":
@@ -358,8 +361,8 @@ class GraphAnalyzer:
 				axis.set_ylabel(y_label)
 				axis.legend(loc=legend_pos)
 
-	def distribution_lineplot(self, data, style='-', axis=0, legend_pos=0, verbose=False):
-		if not (data in ["seq_length", "degree_dist"]):
+	def distribution_lineplot(self, data, style='-', axis=0, legend_pos=0, logscale=False, show_legend=False, verbose=False):
+		if not (data in ["seq_length", "degree_dist", "cov_depth"]):
 			print ("Error! Wrong Specifier!")
 		else:
 			x_values = []
@@ -377,7 +380,15 @@ class GraphAnalyzer:
 					y = compute_distribution(gd.get_degree_distribution())
 					this_label += "degree_distribution"
 					x_label += "Node-degree"
-					
+				elif data == "cov_depth":
+					y = compute_distribution(gd.coverage_depths)#[1:]
+					this_label += "covdepths"
+					x_label += "Coverage Depth"
+				
+				if logscale:
+					yl = [math.log10(yi+1) for yi in y]
+					y = yl
+					y_label = "log("+y_label+")"
 				this_label += "rl="+str(gd.readlength)+"_ep="+str(gd.error_percentage)+"_nr="+str(gd.num_of_reads)+"_k="+str(gd.k_value)
 				
 				if not this_label in label_data:
@@ -394,8 +405,11 @@ class GraphAnalyzer:
 			if axis == 0:
 				plt.xlabel(x_label)
 				plt.ylabel(y_label)
-				plt.legend(loc=legend_pos)
+				if show_legend:
+					plt.legend(loc=legend_pos)
 			else:
 				axis.set_xlabel(x_label)
 				axis.set_ylabel(y_label)
 				axis.legend(loc=legend_pos)
+				if show_legend:
+					axis.legend_.remove()
