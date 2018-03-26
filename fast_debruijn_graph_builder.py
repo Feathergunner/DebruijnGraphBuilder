@@ -671,7 +671,7 @@ class GraphData:
 							if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
 								# (sequence is a simply connected tip)
 								is_tip = True
-							elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0):
+							elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0) and (len(seq.overlaps_in) + len(seq.overlaps_out) > 0):
 								# (sequence is a tip)
 								is_tip =True							
 							if is_tip:
@@ -679,26 +679,7 @@ class GraphData:
 									print ("Consider tip sequence "+str(seq.id))
 								remove_tip = False
 								if (not remove_only_unique_tips) or (seq.id not in self.tips_to_keep):
-									remove_tip = True
-									'''
-									remove_tip = False
-									# check if connected node have other non-tip-connection:
-									if len(seq.overlaps_in) > 0:
-										# case 1: tip is outgoing
-										for adj_seq in seq.overlaps_in:
-											for adj_adj_seq in self.sequences[adj_seq].overlaps_out:
-												if len(self.sequences[adj_adj_seq].overlaps_out) > 0:
-													remove_tip = True
-									elif len(seq.overlaps_out) > 0:
-										# case 2: tip is incoming
-										for adj_seq in seq.overlaps_out:
-											for adj_adj_seq in self.sequences[adj_seq].overlaps_in:
-												if len(self.sequences[adj_adj_seq].overlaps_in) > 0:
-													remove_tip = True
-									if verbose and not remove_tip:
-										print ("Tip is not unique!")
-									'''
-											
+									remove_tip = True											
 								if remove_tip:
 									if verbose:
 										print ("Sequence is a tip, remove this sequence.")
@@ -792,6 +773,9 @@ class GraphData:
 				if self.sequences[seq_id].is_relevant and len(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
 					self.sequences[seq_id].is_relevant = False
 					self.removed_reads += self.get_read_of_sequences([self.sequences[seq_id]])
+			return True
+		else:
+			return False
 					
 	def remove_single_sequence_loops(self, do_contraction=True, verbose=False):
 		ov_ids_to_delete = []
@@ -1747,13 +1731,13 @@ class GraphData:
 		else:
 			max_comp_size = 0
 			second_max_comp_size = 0
-			for c in component:
+			for c in components:
 				s = len(c)
-				if c > max_comp_size:
+				if s > max_comp_size:
 					second_mac_comp_size = max_comp_size
-					max_comp_size = c
-				elif c > second_max_comp_size:
-					second_max_comp_size = c
+					max_comp_size = s
+				elif s > second_max_comp_size:
+					second_max_comp_size = s
 			#comp_sizes = [len(c) for c in components]
 			#max_comp_size = max([len(c) for c in components])
 		
@@ -1801,13 +1785,13 @@ class GraphData:
 		else:
 			max_comp_size = 0
 			second_max_comp_size = 0
-			for c in component:
+			for c in components:
 				s = len(c)
-				if c > max_comp_size:
+				if s > max_comp_size:
 					second_mac_comp_size = max_comp_size
-					max_comp_size = c
-				elif c > second_max_comp_size:
-					second_max_comp_size = c
+					max_comp_size = s
+				elif s > second_max_comp_size:
+					second_max_comp_size = s
 		
 		if verbose:
 			print ("Number of Components after overlaps have been removed: "+str(len(components)))
@@ -1828,6 +1812,8 @@ class GraphData:
 		
 		min_cov_evidence = 2
 		min_overlap_number = len(self.overlaps)/10
+		if min_overlap_number == 0:
+			return
 		
 		overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
 		graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, relative_component_size_bound, verbose=verbose)
@@ -1852,6 +1838,7 @@ class GraphData:
 			overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
 			graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, verbose=verbose)
 			
+		print ("Removal of low evidence overlaps stopped at min_cov_evidence = " +str(min_cov_evidence))
 			
 	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.05, max_coverage_depth_to_remove = 20, verbose=False):
 		# remove sequences with low coverage depth until graph decomposes
@@ -1864,12 +1851,10 @@ class GraphData:
 			min_cov_depth += 1
 			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth]
 		
-		#adjacent_overlaps = []
-		#for seq_id in small_cov_depth_sequences:
-		#	adjacent_overlaps += [self.sequences[seq_id].overlaps_out[s] for s in self.sequences[seq_id].overlaps_out]
-		#	adjacent_overlaps += [self.sequences[seq_id].overlaps_in[s] for s in self.sequences[seq_id].overlaps_in]
-		graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)
-				
+		if len(self.overlaps) == 0:
+			return
+			
+		graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)	
 		while not graph_decomposees and min_cov_depth < max_coverage_depth_to_remove:# and (len(self.overlaps)-len(overlaps_with_small_evidence)) > min_overlap_number:
 			#print ("Now deleting overlaps with evidence < "+str(min_cov_ecidence))
 			if verbose:
@@ -1895,43 +1880,7 @@ class GraphData:
 			
 			graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)
 			
-		print ("Graph decomposes for min_cov_depth = "+str(min_cov_depth))
-			
-	'''
-	def construct_list_of_tips_to_keep(self, verbose=False):
-		# constructs a list of tips that are attached to nodes that only have other tips in the same direction.
-		# we want to keep these tips as long as possible so that we dont delete a tip that is the end (or beginning) of the correct sequence
-		
-		print ("Construct list of tips that should not be to deleted ...")
-		
-		# reset list:
-		self.tips_to_keep = []
-		
-		for seq in self.sequences:
-			if seq.is_relevant:
-				can_delete_tip = False
-				if len(seq.overlaps_in) == 0:
-					# sequence is an incoming tip
-					for adj_seq in seq.overlaps_out:
-						# check all sequences that have edge into this tip:
-						# for all these sequences, check if any incoming sequence is not a tip or has a significant higher evidence weight:
-						for adj_adj_seq in self.sequences[adj_seq].overlaps_in:
-							if (len(self.sequences[adj_adj_seq].overlaps_in) > 0) or (self.sequences[adj_adj_seq].get_total_weight() > 2*seq.get_total_weight()):
-								can_delete_tip = True
-					
-			
-				elif len(seq.overlaps_out) == 0:
-					# sequence is an outgoing tip
-					for adj_seq in seq.overlaps_in:
-						# check all sequences that have edge into this tip:
-						# for all these sequences, check if any outgoing sequence is not a tip or has a significant higher evidence weight:
-						for adj_adj_seq in self.sequences[adj_seq].overlaps_out:
-							if (len(self.sequences[adj_adj_seq].overlaps_out) > 0) or (self.sequences[adj_adj_seq].get_total_weight() > 2*seq.get_total_weight()):
-								can_delete_tip = True
-				
-				if not can_delete_tip:
-					self.tips_to_keep.append(seq.id)
-	'''
+		print ("Removal of low coverage sequences stopped at min_cov_depth = "+str(min_cov_depth))
 				
 	def get_tip_classification(self, verbose=False):
 		#get all ids of sequences that are tips, and classify them as 'deletable', if their parent node has other adjacent nodes in the same orientation that are not tips or have significant higher coverage depth:
@@ -1995,5 +1944,6 @@ class GraphData:
 		self.hubs = hubs
 		self.tips_to_keep = tips_keep
 		self.tips_to_delete = tips_deletable
-		print ("number of tips to keep: "+str(len(tips_keep)))
-		print ("number of tips to delete: "+str(len(tips_deletable)))
+		if verbose:
+			print ("number of tips to keep: "+str(len(tips_keep)))
+			print ("number of tips to delete: "+str(len(tips_deletable)))
