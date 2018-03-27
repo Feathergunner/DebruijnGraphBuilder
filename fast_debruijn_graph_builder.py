@@ -1494,7 +1494,6 @@ class GraphData:
 					
 		return secmin_eigenvalue, part_a, part_b, part_c
 		
-		
 	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
 		if verbose:
 			print ("Do spectral clustering of the nodes into two clusters ...")
@@ -1556,7 +1555,6 @@ class GraphData:
 			if res:
 				components_to_potentially_cut.append(part_a)
 				components_to_potentially_cut.append(part_b)
-		#print 
 		
 	def cut_graph_into_partitions(self, partitions, seq_id_to_index, verbose=False):
 		if verbose:
@@ -1685,6 +1683,7 @@ class GraphData:
 		
 		return overlap_weight_distribution
 		
+	'''
 	def get_bound_on_erroneous_overlap_weights(self):
 		# computes the most-likely divider between the evidence weights of erroneous overlaps and correct overlaps:
 		
@@ -1697,6 +1696,7 @@ class GraphData:
 			return div
 		else:
 			return 2
+	'''
 			
 	def check_if_graph_decomposes_edgeremoval(self, overlaps_to_remove, relative_component_size_bound=0.05, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
@@ -1756,7 +1756,7 @@ class GraphData:
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
 		print ("Checking if graph decomposes ...")
 		
-		# same code as in get_components, but ignores overlaps that are defined by overlaps_to_remove:
+		# same code as in get_components, but ignores sequences that are defined by sequences_to_remove:
 		components = []
 		visited_sequences = {seq.id: False for seq in self.sequences if seq.is_relevant}
 		for seq in self.sequences:
@@ -1797,7 +1797,6 @@ class GraphData:
 			print ("Number of Components after overlaps have been removed: "+str(len(components)))
 			print ("Max component size: "+str(max_comp_size))
 			print ("Second max component size: "+str(second_max_comp_size))
-			#print ("Bound on comp size: "+str(relative_component_size_bound)+" * "+str(len(self.get_relevant_sequences()))+" = "+str(relative_component_size_bound*len(self.get_relevant_sequences())))
 		
 		if second_max_comp_size > relative_component_size_bound*max_comp_size:
 			return True
@@ -1806,16 +1805,20 @@ class GraphData:
 		
 	def remove_low_evidence_overlaps_until_graph_decomposes(self, relative_component_size_bound=0.05, verbose=False):
 		# remove overlaps with low evidence until graph decomposes
-		# leave at least 10% of the initial overlaps
-		
 		print ("Remove low-evidence overlaps until graph decomposes:")
 		
-		min_cov_evidence = 2
-		min_overlap_number = len(self.overlaps)/10
 		if min_overlap_number == 0:
+			# if graph is already trivial, return
 			return
+			
+		#initilization:
+		min_cov_evidence = 2
+		# leave at least 10% of the initial overlaps:
+		min_overlap_number = len(self.overlaps)/10
 		
+		# compute set of edges to remove in next iteration:
 		overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
+		# compute if graph decomposes:
 		graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, relative_component_size_bound, verbose=verbose)
 		while not graph_decomposees and (len(self.overlaps)-len(overlaps_with_small_evidence)) > min_overlap_number:
 			#print ("Now deleting overlaps with evidence < "+str(min_cov_ecidence))
@@ -1824,18 +1827,26 @@ class GraphData:
 				for ov in overlaps_with_small_evidence:
 					self.overlaps[ov].print_data()
 				
+			# remove the overlaps:
 			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence, keep_relevant_tips=True)
+			# remove decomposed parts:
 			self.reduce_to_single_largest_component()
-			self.contract_unique_overlaps()
+			# remove new tips:
 			self.remove_tips(maximum_tip_weight = min_overlap_number)
+			# simplify graph:
 			self.contract_unique_overlaps()
-			self.remove_single_sequence_components()
+			#self.remove_single_sequence_components()
 	
 			if len(overlaps_with_small_evidence) < 10:
+				# if last iteration had very little effect, increase the cutoff bound by 5
 				min_cov_evidence += 5
 			else:
+				# normal case: increase cutoff bound by 1
 				min_cov_evidence += 1
+			
+			# compute set of edges to remove in next iteration:
 			overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
+			# compute if graph decomposes:
 			graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, verbose=verbose)
 			
 		print ("Removal of low evidence overlaps stopped at min_cov_evidence = " +str(min_cov_evidence))
@@ -1844,16 +1855,24 @@ class GraphData:
 		# remove sequences with low coverage depth until graph decomposes
 		print ("Remove low-coverage sequences until graph decomposes:")
 		
+		if len(self.overlaps) == 0:
+			# if graph is already trivial, return
+			return
+			
+		# initilization:
 		min_cov_depth = 2
+		# compute partition of nodes into tips and non-tips (hubs)
 		self.get_tip_classification()
+		# compute set of nodes to remove in next iteration, do not consider tips:
 		small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth and seq.id in self.hubs]
+		
+			
+		# increase cutoff bound untill there is at least one sequence to remove:
 		while len(small_cov_depth_sequences) == 0:
 			min_cov_depth += 1
 			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth]
 		
-		if len(self.overlaps) == 0:
-			return
-			
+		# compute if graph decomposes:
 		graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)	
 		while not graph_decomposees and min_cov_depth < max_coverage_depth_to_remove:# and (len(self.overlaps)-len(overlaps_with_small_evidence)) > min_overlap_number:
 			#print ("Now deleting overlaps with evidence < "+str(min_cov_ecidence))
@@ -1861,23 +1880,31 @@ class GraphData:
 				print ("Graph does not decompose.")
 				print ("Number of next sequences to remove: "+ str(len(small_cov_depth_sequences)))
 				
+			# remove the sequences:
 			self.remove_insignificant_sequences(minimal_weight=min_cov_depth)
+			# remove decomposed components:
 			self.reduce_to_single_largest_component()
-			self.contract_unique_overlaps()
+			# remove new tips:
 			self.remove_tips()
+			# simplify graph:
 			self.contract_unique_overlaps()
-			self.remove_single_sequence_components()
 	
 			if len(small_cov_depth_sequences) < 10:
+				# if last iteration had very little effect, increase the cutoff bound by 5
 				min_cov_depth += 5
 			else:
+				# normal case: increase cutoff bound by 1
 				min_cov_depth += 1
+				
+			# compute set of nodes to remove in next iteration, do not consider tips:
 			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth and seq.id in self.hubs]
 			
+			# increase cutoff bound untill there is at least one sequence to remove:
 			while len(small_cov_depth_sequences) == 0:
 				min_cov_depth += 1
 				small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth]
 			
+			# compute if graph decomposes:
 			graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)
 			
 		print ("Removal of low coverage sequences stopped at min_cov_depth = "+str(min_cov_depth))
