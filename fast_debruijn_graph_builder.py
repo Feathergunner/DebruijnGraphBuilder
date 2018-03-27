@@ -201,7 +201,7 @@ class GraphData:
 					v=2
 				else:
 					v=1
-				self.construct_assembly_ordering_labels(verbose=v)
+				self.greedy_construct_assembly_ordering_labels(verbose=v)
 
 	def print_memory_usage(self):
 		size_reads = sys.getsizeof(self.reads)
@@ -888,6 +888,7 @@ class GraphData:
 		# 	is not empty and
 		#	has only one component
 		# edges that induce a cycle are ignored when they are encountered.
+		# if graph contains many cycles, this algorithm has exponential running time!
 		
 		if verbose > 0:
 			print "Construct longest assembly ordering labels..."
