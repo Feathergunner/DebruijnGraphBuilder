@@ -1807,8 +1807,8 @@ class GraphData:
 	def remove_low_evidence_overlaps_until_graph_decomposes(self, relative_component_size_bound=0.05, verbose=False):
 		# remove overlaps with low evidence until graph decomposes
 		print ("Remove low-evidence overlaps until graph decomposes:")
-		
-		if min_overlap_number == 0:
+			
+		if len(self.overlaps) == 0:
 			# if graph is already trivial, return
 			return
 			
