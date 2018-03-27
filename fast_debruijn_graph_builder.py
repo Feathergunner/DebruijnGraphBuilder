@@ -1142,7 +1142,8 @@ class GraphData:
 			self.greedy_construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
-		# returns a partition of all sequence-ids based on intervals of labels
+		# returns a set of sets of parallel aligned sequencs that cover the whole graph
+		# each interior position of the graph is covered by mutliple different sets of sequences, defined by the parameter overlap
 		sorted_nodes = sorted([seq for seq in self.sequences if seq.label_p], key=lambda x: x.label_p)
 		label_div = self.max_label_p-self.min_label_p
 		part_start_difference = label_div/(number_of_parts+overlap-1)
@@ -1158,13 +1159,13 @@ class GraphData:
 			if i == number_of_parts-1:
 				current_end = self.max_label_p
 			else:
-				current_end = current_start + part_size #self.min_label_p+(i+2)*(part_size)
+				current_end = current_start + part_size
 			this_part_sequences = [seq for seq in sorted_nodes if seq.label_p >= current_start and seq.label_p <= current_end]
 			parts_seq.append(this_part_sequences)
 		return parts_seq
 	
 	def get_read_of_sequences(self, sequences, verbose=False):
-		# returns all reads that contain a specific sequence
+		# returns all reads that are contained in specific set of sequences
 		reads = []
 		if len(self.kmers) > 0:
 			kmers = []
@@ -1290,6 +1291,9 @@ class GraphData:
 		
 	def reduce_every_component_to_single_path_max_weight(self, do_contraction=True, verbose=False):
 		print ("Reducing every component to a single path with maximum local weight ...")
+		# applies the reduce_to_single_path_max_weight algorithm on each component of the graph
+		# i.e. computes a consensus sequence for each component.
+		
 		components = self.get_components()
 		n = len(components)
 		if verbose:
@@ -1374,6 +1378,8 @@ class GraphData:
 		
 	def reduce_to_single_largest_component(self, verbose=False):
 		# deletes all sequences that are not part of the largest (by number of sequences) component
+		# thus only the largest component will remain.
+		
 		print ("Reducing graph to largest component...")
 		components = self.get_components()
 		if len(components) > 1:
@@ -1402,6 +1408,8 @@ class GraphData:
 					self.delete_sequence(seq.id)
 	
 	def get_label_span(self):
+		# get an approximation of the length of the genome
+		# this depends on the quality of the labels. if graph containes cycles, this may be significantly incorrect.
 		return self.max_label_p - self.min_label_p
 		
 	def construct_laplacian(self, list_of_nodes, verbose=False):
@@ -1446,6 +1454,7 @@ class GraphData:
 		return laplacian, seq_id_to_index, index_to_seq_id
 		
 	def construct_spectral_clusters(self, laplacian, index_to_seq_id, verbose=False):
+		# apply the spectral cluster algorithm on the de bruijn graph with a pre computed laplacian matrix of the graph
 		part_a = []
 		part_b = []
 		part_c = []
@@ -1496,6 +1505,7 @@ class GraphData:
 		return secmin_eigenvalue, part_a, part_b, part_c
 		
 	def compute_mincut(self, component=-1, divide_clusters=True, verbose=False):
+		# compute the spectral cut of the de bruijn graph.
 		if verbose:
 			print ("Do spectral clustering of the nodes into two clusters ...")
 		absoulute_minimum_component_size = 1000
@@ -1578,6 +1588,7 @@ class GraphData:
 			self.delete_overlap(ov_id)
 	
 	def remove_irrelevant_overlaps(self):
+		# remove overlaps from self.overlaps that are marked is_relevant==False
 		ov_to_del = []
 		for ov in self.overlaps:
 			if not self.sequences[self.overlaps[ov].contig_sequence_1].is_relevant or not self.sequences[self.overlaps[ov].contig_sequence_2].is_relevant:
