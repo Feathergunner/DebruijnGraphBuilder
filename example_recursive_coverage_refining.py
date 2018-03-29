@@ -98,24 +98,24 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 		debruijn_merge_sequences.contract_unique_overlaps()
 		debruijn_merge_sequences.remove_single_sequence_components()
 		
-		debruijn_merge_sequences.get_asqg_output(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_base.asqg")
-		debruijn_merge_sequences.get_csv_output(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_base.csv")
+		debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_base.asqg")
+		debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_base.csv")
 		
 		debruijn_merge_sequences.remove_low_evidence_overlaps_until_graph_decomposes()
 		debruijn_merge_sequences.reduce_to_single_largest_component()
 		debruijn_merge_sequences.remove_low_coverage_sequences_until_graph_decomposes()
 		debruijn_merge_sequences.reduce_to_single_largest_component()
 		
-		debruijn_merge_sequences.get_asqg_output(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_reduced.asqg")
-		debruijn_merge_sequences.get_csv_output(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_reduced.csv")
+		debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_reduced.asqg")
+		debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_reduced.csv")
 		
 		debruijn_merge_sequences.construct_assembly_ordering_labels()
 		debruijn_merge_sequences.reduce_to_single_path_max_weight()
 		debruijn_merge_sequences.contract_unique_overlaps()
 		
-		debruijn_merge_sequences.get_asqg_output(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.asqg")
-		debruijn_merge_sequences.get_csv_output(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.csv")
-		debruijn_merge_sequences.write_sequences_to_file(filename = data_dir_sub+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.fasta", asfasta = True)
+		debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.asqg")
+		debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.csv")
+		debruijn_merge_sequences.write_sequences_to_file(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.fasta", asfasta = True)
 	
 if __name__ == "__main__":
 	experiment_recursive_coverage_refining("Output/reccovref")
