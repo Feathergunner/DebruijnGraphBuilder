@@ -13,10 +13,6 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 		os.mkdir(outputdir)
 	if not os.path.exists(outputdir+"/parts"):
 		os.mkdir(outputdir+"/parts")
-		
-	k_base = 25
-	k_part = 15
-	k_merge = 17
 
 	# generate dna:
 	dna = dgen.generate_dna(dna_length)
@@ -121,4 +117,3 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 	
 if __name__ == "__main__":
 	experiment_recursive_coverage_refining("Output/reccovref")
-	
