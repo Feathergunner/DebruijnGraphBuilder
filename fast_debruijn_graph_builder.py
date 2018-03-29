@@ -178,6 +178,8 @@ class GraphData:
 		self.removed_reads = []
 		
 		if not reads == []:
+			if not isinstance(reads[0], (list, tuple)):
+				reads = [reads]
 			self.init_graph_database(reads, load_weights=load_weights, verbose=verbose)
 			
 			if reduce_data:
@@ -838,13 +840,13 @@ class GraphData:
 		allseqs = []
 		for seq in self.sequences:
 			if seq.is_relevant:
-				allseqs.append(seq.sequence)
+				allseqs.append(seq)
 		if asfasta:
-			dio.write_sequences_to_fasta(allseqs, filename)
+			dio.write_sequences_to_fasta([seq.sequence for seq in allseqs], filename)
 		else:
 			data = ""
 			for seq in allseqs:
-				data += seq
+				data += seq.sequence
 				if addweights:
 					data += ","+str(seq.get_total_weight())
 				data += "\n"
@@ -1144,8 +1146,8 @@ class GraphData:
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a set of sets of parallel aligned sequencs that cover the whole graph
 		# each interior position of the graph is covered by mutliple different sets of sequences, defined by the parameter overlap
-		sorted_nodes = sorted([seq for seq in self.sequences if seq.label_p], key=lambda x: x.label_p)
-		label_div = self.max_label_p-self.min_label_p
+		sorted_nodes = sorted([seq for seq in self.sequences if seq.is_relevant and seq.label_p], key=lambda x: x.label_p)
+		label_div = self.max_path_length_p-self.min_label_p
 		part_start_difference = label_div/(number_of_parts+overlap-1)
 		part_size = part_start_difference*overlap
 		
@@ -1157,10 +1159,12 @@ class GraphData:
 		for i in range(number_of_parts):
 			current_start = self.min_label_p+(i*part_start_difference)
 			if i == number_of_parts-1:
-				current_end = self.max_label_p
+				current_end = self.max_path_length_p
 			else:
 				current_end = current_start + part_size
-			this_part_sequences = [seq for seq in sorted_nodes if seq.label_p >= current_start and seq.label_p <= current_end]
+				
+			# this part contains all sequences that start or end within [current_start, current_end]:
+			this_part_sequences = [seq for seq in sorted_nodes if (seq.label_p >= current_start and seq.label_p <= current_end) or (seq.label_p+seq.get_length() >= current_start and seq.label_p+seq.get_length() <= current_end)]
 			parts_seq.append(this_part_sequences)
 		return parts_seq
 	
