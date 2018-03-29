@@ -8,7 +8,7 @@ import fast_debruijn_graph_builder as fdgb
 import os
 import re
 
-def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, number_of_parts=50, overlap=10, saveparts=True):
+def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, number_of_parts=50, overlap=10, k_base=25, k_part=15, k_merge=[13,15,17], saveparts=True):
 	if not os.path.exists(outputdir):
 		os.mkdir(outputdir)
 	if not os.path.exists(outputdir+"/parts"):
@@ -27,7 +27,7 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 	
 	# initilize:
 	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_percentage)))
-	casename = "reccovref"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_kb"+str(k_base)+"_kp"+str(k_part)+"_km"+str(k_merge)
+	casename = "reccovref"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_kb"+str(k_base)+"_kp"+str(k_part)
 	
 	debruijn_master = fdgb.GraphData([reads], k=25, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=True)
 	debruijn_master.reduce_to_single_largest_component()
@@ -92,30 +92,32 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 	readsets = [parts_reduced_sequences, parts_consensus_sequences]
 	readset_names = ["sequences", "consensus"]
 	for i in range(len(readsets)):
-		debruijn_merge_sequences = fdgb.GraphData([readsets[i]], k_merge, directed_reads=True, load_weights=True, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
-		debruijn_merge_sequences.remove_insignificant_overlaps(2)
-		debruijn_merge_sequences.remove_tips()
-		debruijn_merge_sequences.contract_unique_overlaps()
-		debruijn_merge_sequences.remove_single_sequence_components()
-		
-		debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_base.asqg")
-		debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_base.csv")
-		
-		debruijn_merge_sequences.remove_low_evidence_overlaps_until_graph_decomposes()
-		debruijn_merge_sequences.reduce_to_single_largest_component()
-		debruijn_merge_sequences.remove_low_coverage_sequences_until_graph_decomposes()
-		debruijn_merge_sequences.reduce_to_single_largest_component()
-		
-		debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_reduced.asqg")
-		debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_reduced.csv")
-		
-		debruijn_merge_sequences.construct_assembly_ordering_labels()
-		debruijn_merge_sequences.reduce_to_single_path_max_weight()
-		debruijn_merge_sequences.contract_unique_overlaps()
-		
-		debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.asqg")
-		debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.csv")
-		debruijn_merge_sequences.write_sequences_to_file(filename = outputdir+"/"+casename+"_merge_"+readset_names[i]+"_singlepath.fasta", asfasta = True)
+		for km in k_merge:
+			casename_merge = caseneme+"_merge_"+readset_names[i]+"_km"+str(k_merge)
+			debruijn_merge_sequences = fdgb.GraphData([readsets[i]], k_merge, directed_reads=True, load_weights=True, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
+			debruijn_merge_sequences.remove_insignificant_overlaps(2)
+			debruijn_merge_sequences.remove_tips()
+			debruijn_merge_sequences.contract_unique_overlaps()
+			debruijn_merge_sequences.remove_single_sequence_components()
+			
+			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_base.asqg")
+			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_base.csv")
+			
+			debruijn_merge_sequences.remove_low_evidence_overlaps_until_graph_decomposes()
+			debruijn_merge_sequences.reduce_to_single_largest_component()
+			debruijn_merge_sequences.remove_low_coverage_sequences_until_graph_decomposes()
+			debruijn_merge_sequences.reduce_to_single_largest_component()
+			
+			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_reduced.asqg")
+			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_reduced.csv")
+			
+			debruijn_merge_sequences.construct_assembly_ordering_labels()
+			debruijn_merge_sequences.reduce_to_single_path_max_weight()
+			debruijn_merge_sequences.contract_unique_overlaps()
+			
+			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_singlepath.asqg")
+			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_singlepath.csv")
+			debruijn_merge_sequences.write_sequences_to_file(filename = outputdir+"/"+casename_merge+"_singlepath.fasta", asfasta = True)
 	
 if __name__ == "__main__":
 	experiment_recursive_coverage_refining("Output/reccovref")
