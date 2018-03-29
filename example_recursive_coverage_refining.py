@@ -93,8 +93,8 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 	readset_names = ["sequences", "consensus"]
 	for i in range(len(readsets)):
 		for km in k_merge:
-			casename_merge = caseneme+"_merge_"+readset_names[i]+"_km"+str(k_merge)
-			debruijn_merge_sequences = fdgb.GraphData([readsets[i]], k_merge, directed_reads=True, load_weights=True, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
+			casename_merge = caseneme+"_merge_"+readset_names[i]+"_km"+str(km)
+			debruijn_merge_sequences = fdgb.GraphData([readsets[i]], km, directed_reads=True, load_weights=True, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
 			debruijn_merge_sequences.remove_insignificant_overlaps(2)
 			debruijn_merge_sequences.remove_tips()
 			debruijn_merge_sequences.contract_unique_overlaps()
