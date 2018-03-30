@@ -890,7 +890,7 @@ class GraphData:
 		# 	is not empty and
 		#	has only one component
 		# edges that induce a cycle are ignored when they are encountered.
-		# if graph contains many cycles, this algorithm has exponential running time!
+		# if graph contains many cycles, this algorithm would hav exponential running time, therefore it tracks the number of cycles and aborts if it finds more than 1000 different cycles
 		
 		if verbose > 0:
 			print "Construct longest assembly ordering labels..."
@@ -921,13 +921,15 @@ class GraphData:
 
 		if verbose >= 2:
 			print ("Start with sequence " + str(start_sequence))
+			
+		number_of_cycles_found = 0
 		
 		predecessor = [-1 for seq in self.sequences]
 		successor = [-1 for seq in self.sequences]
 		was_visited = [False for seq in self.sequences]
 		priority_queue = Queue.PriorityQueue()
 		priority_queue.put((0,self.sequences[start_sequence].id))
-		while not priority_queue.empty():
+		while not priority_queue.empty() and number_of_cycles_found <= 1000:
 			current_data = priority_queue.get()
 			current_node_id = current_data[1]
 			current_position = -current_data[0]
@@ -1007,23 +1009,26 @@ class GraphData:
 						print ("updated label of node "+str(seq_id)+": "+str(predecessor_label))
 					priority_queue.put((-predecessor_label, seq_id))
 		
-		if verbose == 2:
-			for seq in self.sequences:
-				if seq.is_relevant:
-					print str(seq.id) + ": " + str(seq.label_p)
-		
-		if do_second_iteration:
-			next_start = 0
-			if abs(self.max_label_p) > abs(self.min_label_p):
-				next_start = self.max_sequence_p
-			else:
-				next_start = self.min_sequence_p
+		if number_of_cycles_found < 1000:
 			if verbose == 2:
-				print ("max sequence of first iteration: "+str(self.max_sequence_p) + " with label "+str(self.max_label_p))
-				print ("min sequence of first iteration: "+str(self.min_sequence_p) + " with label "+str(self.min_label_p))
-				print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
+				for seq in self.sequences:
+					if seq.is_relevant:
+						print str(seq.id) + ": " + str(seq.label_p)
 			
-			self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
+			if do_second_iteration:
+				next_start = 0
+				if abs(self.max_label_p) > abs(self.min_label_p):
+					next_start = self.max_sequence_p
+				else:
+					next_start = self.min_sequence_p
+				if verbose == 2:
+					print ("max sequence of first iteration: "+str(self.max_sequence_p) + " with label "+str(self.max_label_p))
+					print ("min sequence of first iteration: "+str(self.min_sequence_p) + " with label "+str(self.min_label_p))
+					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
+				
+				self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
+		else:
+			self.greedy_construct_assembly_ordering_labels(start_sequence=start_sequence, do_second_iteration=do_second_iteration, verbose=verbose)
 		
 	def greedy_construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
 		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
