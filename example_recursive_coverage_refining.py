@@ -8,22 +8,27 @@ import fast_debruijn_graph_builder as fdgb
 import os
 import re
 
-def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, number_of_parts=50, overlap=10, k_base=25, k_part=15, k_merge=[13,15,17], saveparts=True):
+def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, number_of_parts=50, overlap=10, k_base=25, k_part=15, k_merge=[13,15,17], saveparts=True, create_new_dna=False):
 	if not os.path.exists(outputdir):
 		os.mkdir(outputdir)
 	if not os.path.exists(outputdir+"/parts"):
 		os.mkdir(outputdir+"/parts")
 
-	# generate dna:
-	dna = dgen.generate_dna(dna_length)
-	# write dna to fasta:
-	dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
+	if create_new_dna or not os.path.isfile(outputdir+"/dna.txt"):
+		# generate dna:
+		dna = dgen.generate_dna(dna_length)
+		# write dna to fasta:
+		dio.write_genome_to_file(dna, outputdir+"/dna.txt")
+		dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
+	else:
+		dna = [c for c in dio.get_genome_from_file(outputdir+"/dna.txt")]
+		
 	# generate reads:
 	reads = dgen.samplereads(dna, num_reads, indel_error_percentage=error_percentage, read_length_mean=readlength)
 	
 	# initilize:
 	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_percentage)))
-	casename = "reccovref"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_kb"+str(k_base)+"_kp"+str(k_part)
+	casename = "reccovref"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_numparts"+str(number_of_parts)+"_overlap"+str(overlap)+"_kb"+str(k_base)+"_kp"+str(k_part)
 	
 	debruijn_master = fdgb.GraphData([reads], k=25, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=True)
 	debruijn_master.reduce_to_single_largest_component()
@@ -89,7 +94,7 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 	readset_names = ["sequences", "consensus"]
 	for i in range(len(readsets)):
 		for km in k_merge:
-			casename_merge = caseneme+"_merge_"+readset_names[i]+"_km"+str(km)
+			casename_merge = casename+"_merge_"+readset_names[i]+"_km"+str(km)
 			debruijn_merge_sequences = fdgb.GraphData([readsets[i]], km, directed_reads=True, load_weights=True, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
 			debruijn_merge_sequences.remove_insignificant_overlaps(2)
 			debruijn_merge_sequences.remove_tips()

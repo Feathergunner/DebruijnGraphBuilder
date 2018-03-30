@@ -8,14 +8,19 @@ import fast_debruijn_graph_builder as fdgb
 import os
 import re
 
-def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True):
+def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False):
 	if not os.path.exists(outputdir):
 		os.mkdir(outputdir)
 
-	# generate dna:
-	dna = dgen.generate_dna(dna_length)
-	# write dna to fasta:
-	dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
+	if create_new_dna or not os.path.isfile(outputdir+"/dna.txt"):
+		# generate dna:
+		dna = dgen.generate_dna(dna_length)
+		# write dna to fasta:
+		dio.write_genome_to_file(dna, outputdir+"/dna.txt")
+		dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
+	else:
+		dna = [c for c in dio.get_genome_from_file(outputdir+"/dna.txt")]
+		
 	# generate reads:
 	reads = dgen.samplereads(dna, num_reads, indel_error_percentage=error_percentage, read_length_mean=readlength)
 	
