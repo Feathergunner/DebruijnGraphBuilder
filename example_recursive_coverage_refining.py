@@ -7,6 +7,7 @@ import fast_debruijn_graph_builder as fdgb
 
 import os
 import re
+import sys
 
 def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, number_of_parts=50, overlap=10, k_base=25, k_part=15, k_merge=[13,15,17], saveparts=True, create_new_dna=False):
 	if not os.path.exists(outputdir):
@@ -121,4 +122,16 @@ def experiment_recursive_coverage_refining(outputdir, dna_length=5000, num_reads
 			debruijn_merge_sequences.write_sequences_to_file(filename = outputdir+"/"+casename_merge+"_singlepath.fasta", asfasta = True)
 	
 if __name__ == "__main__":
-	experiment_recursive_coverage_refining("Output/reccovref")
+	num_reads = 1000
+	num_parts = 50
+	overlap = 10
+	for arg in sys.argv[1:]:
+		arg_data = re.split(r'=', arg)
+		if arg_data[0] == "nr":
+			num_reads = int(arg_data[1])
+		elif arg_data[0] == "np":
+			num_parts = int(arg_data[1])
+		elif arg_data[0] == "ov":
+			overlap = int(arg_data[1])
+	
+	experiment_recursive_coverage_refining("Output/reccovref_test", num_reads=num_reads, number_of_parts=num_parts, overlap=overlap)
