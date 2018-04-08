@@ -78,9 +78,8 @@ def test_basic_functionality_small(new_dataset=False, data_dir="Output/test", ve
 	stop_fdgb = 0
 	
 	print ("Construct de bruijn graph")
-	
 	start_fdgb = timeit.default_timer()
-	debruijn = fdgb.GraphData([reads], k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=True, directed_reads=False, verbose=verbose)
+	debruijn = fdgb.GraphData(reads, k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=True, directed_reads=False, verbose=verbose)
 	stop_fdgb = timeit.default_timer()
 	debruijn.print_memory_usage()
 	print ("Size of tracked objects: " +str(sum(sys.getsizeof(i) for i in gc.get_objects())/1000000.0) + "MB")
@@ -92,11 +91,87 @@ def test_basic_functionality_small(new_dataset=False, data_dir="Output/test", ve
 	print ("Number of sequences: "+str(len([seq for seq in debruijn.sequences if seq.is_relevant])))
 	print ("Number of overlaps: "+str(len(debruijn.overlaps)))
 	
-	
 	#for seq in debruijn.sequences:
 	#	if seq.is_relevant:
 	#		print seq.label_p
 	
+def test_basic_consensus_construction(new_dataset=False, data_dir="Output/test", verbose=False):
+	print ("Starting basic test of de bruijn graph construction")
+	if not os.path.exists(data_dir):
+		os.mkdir(data_dir)
+	if new_dataset or not os.path.isfile(data_dir+"/test_dna.txt"):
+		dna = dgen.generate_dna(length=1000)
+		dgen.write_dna_to_file(data_dir+"/test_dna.txt", dna)
+	else:
+		with open(data_dir+"/test_dna.txt") as inputfile:
+			lines = inputfile.readlines()
+		dna = lines[0]
+	
+	if new_dataset or not os.path.isfile(data_dir+"/test_reads.txt"):
+		reads = dgen.samplereads(dna, number_of_reads=1000, replace_error_percentage=0.5, indel_error_percentage=0.0, mutation_alphabet=["A","C","G","T"], read_length_mean=50, read_length_stddev=0)
+		with open(data_dir+"/test_reads.txt", 'w') as outf:
+			for read in reads:
+				outf.write(read + '\n')
+	else:
+		reads = dio.get_reads_from_file(filename=data_dir+"/test_reads.txt")
+	k = 17
+	
+	start_fdgb = 0
+	stop_fdgb = 0
+	print ("Construct de bruijn graph")
+	start_fdgb = timeit.default_timer()
+	debruijn = fdgb.GraphData(reads, k, reduce_data=True, simplify_graph=True, remove_tips=False, construct_labels=False, directed_reads=True, verbose=verbose)
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_1_base.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_1_base.csv")
+	
+	debruijn.remove_tips()
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_2_posttipremoval.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_2_posttipremoval.csv")
+	
+	debruijn.remove_insignificant_sequences()
+	debruijn.contract_unique_overlaps()
+	debruijn.remove_single_sequence_components()
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_3_postsequenceremoval.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_3_postsequenceremoval.csv")
+	
+	debruijn.remove_insignificant_overlaps()
+	debruijn.contract_unique_overlaps()
+	debruijn.remove_single_sequence_components()
+	
+	debruijn.get_asqg_output(filename = data_dir+"/test_4_postoverlapremoval.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_4_postoverlapremoval.csv")
+	
+	debruijn.reduce_to_single_largest_component()
+	debruijn.construct_assembly_ordering_labels()
+	debruijn.reduce_to_single_path_max_weight()
+	debruijn.contract_unique_overlaps()
+	
+	debruijn.get_asqg_output(filename = data_dir+"test_5_consensus.asqg")
+	debruijn.get_csv_output(filename = data_dir+"/test_5_consensus.csv")
+	debruijn.write_sequences_to_file(filename = data_dir+"/test_5_consensus.fasta", asfasta = True)
+	
+	stop_fdgb = timeit.default_timer()
+	debruijn.print_memory_usage()
+	print ("Size of tracked objects: " +str(sum(sys.getsizeof(i) for i in gc.get_objects())/1000000.0) + "MB")
+	print ("Running time of fdgb: " + str("%.2f" % (stop_fdgb - start_fdgb)))
+	
+	print ("Number of sequences: "+str(len([seq for seq in debruijn.sequences if seq.is_relevant])))
+	print ("Number of overlaps: "+str(len(debruijn.overlaps)))
+
+def test_reduce_to_largest_single_sequence():
+	reads = ["ACGTAACCGGTTAAACCCGGGTTTAAAACCCCGGGGTTTTAAAAACCCCCGGGGGTTTTT", "TGCATTGGCCAATTTGGGCCCAAA"]
+	debruijn = fdgb.GraphData(reads, 15, reduce_data=True, simplify_graph=True, remove_tips=True, construct_labels=False, directed_reads=True, verbose=False)
+	
+	debruijn.print_all_sequences()
+	
+	debruijn.remove_single_sequence_components()
+	debruijn.reduce_to_single_largest_component()
+	
+	debruijn.print_all_sequences()
+
 def test_assembly_ordering():
 	gl = 2000
 	rl = 500
@@ -521,6 +596,9 @@ def test_check_if_graph_decomposes():
 	
 if __name__ == '__main__':
 	#test_basic_functionality(new_dataset=True)
+	#test_basic_functionality_small(new_dataset=False)
+	test_basic_consensus_construction(new_dataset=True)
+	
 	#test_assembly_ordering_cycle()
 	
 	#test_clustercut_on_quasispecies(number_of_base_dnas=3, dna_length=5000, number_of_variations=1, num_reads_per_dna=5000)
@@ -536,4 +614,5 @@ if __name__ == '__main__':
 	
 	#test_removal_of_insignificant_nodes_and_edges()
 	#test_hubreads()
-	test_check_if_graph_decomposes()
+	#test_check_if_graph_decomposes()
+	#test_reduce_to_largest_single_sequence()

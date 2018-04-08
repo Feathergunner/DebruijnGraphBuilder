@@ -472,13 +472,15 @@ class GraphData:
 					print ("Source: ")
 					print (self.sequences[source_id].print_data())
 					print ("")
-				if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
-					# if source node has exactly one outgoing edge
-					# and the target node has exactly one incoming edge, 
-					# then contract edge:
-					ov = self.overlaps[ov_index]
-					self.contract_overlap(ov_index, verbose == 2)
-					num_deleted_overlaps += 1
+					
+				if not source_id == target_id:
+					if (len(self.sequences[source_id].overlaps_out) == 1) and (len(self.sequences[target_id].overlaps_in) == 1):
+						# if source node has exactly one outgoing edge
+						# and the target node has exactly one incoming edge, 
+						# then contract edge:
+						ov = self.overlaps[ov_index]
+						self.contract_overlap(ov_index, verbose == 2)
+						num_deleted_overlaps += 1
 		self.is_contracted = True
 	
 	def delete_overlap(self, overlap_id, verbose=False):
@@ -680,7 +682,7 @@ class GraphData:
 								if verbose:
 									print ("Consider tip sequence "+str(seq.id))
 								remove_tip = False
-								if (not remove_only_unique_tips) or (seq.id not in self.tips_to_keep):
+								if (not remove_only_unique_tips) or (seq.id in self.tips_to_delete):
 									remove_tip = True											
 								if remove_tip:
 									if verbose:
@@ -770,6 +772,9 @@ class GraphData:
 		# removes all components that consist only of a single sequence,
 		# i.e. all sequences without adjacencies
 		# only if there is at least one larger component
+		
+		print ("Removing disjunct sequences ...")
+		
 		if len(self.overlaps) > 0:
 			for seq_id in range(len(self.sequences)):
 				if self.sequences[seq_id].is_relevant and len(self.sequences[seq_id].overlaps_out) == 0 and len(self.sequences[seq_id].overlaps_in) == 0:
@@ -1393,12 +1398,16 @@ class GraphData:
 		components = self.get_components()
 		if len(components) > 1:
 			max_size = 0#len(components[0])
+			max_length = 0
 			max_comp_id = 0
 			for i in range(len(components)):
 				c = components[i]
 				if len(c) > max_size:
 					max_size = len(c)
 					max_comp_id = i
+				if max_size == 1 and len(self.sequences[c[0]].sequence) > max_length:
+					max_comp_id = i
+					max_length = len(self.sequences[c[0]].sequence)
 				if verbose:
 					print ("Component "+str(i)+" consists of "+str(len(c))+" sequences.")
 					
@@ -1703,21 +1712,6 @@ class GraphData:
 			overlap_weight_distribution[ovw] += 1
 		
 		return overlap_weight_distribution
-		
-	'''
-	def get_bound_on_erroneous_overlap_weights(self):
-		# computes the most-likely divider between the evidence weights of erroneous overlaps and correct overlaps:
-		
-		ovw = self.compute_overlap_evidence_distribution()
-		div = 2
-		while ovw[div] > ovw[div+1]:
-			div += 1
-			
-		if div < len(ovw)/2:
-			return div
-		else:
-			return 2
-	'''
 			
 	def check_if_graph_decomposes_edgeremoval(self, overlaps_to_remove, relative_component_size_bound=0.05, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
