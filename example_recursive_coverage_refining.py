@@ -125,6 +125,7 @@ if __name__ == "__main__":
 	num_reads = 1000
 	num_parts = 50
 	overlap = 10
+	name = "reccovref"
 	for arg in sys.argv[1:]:
 		arg_data = re.split(r'=', arg)
 		if arg_data[0] == "nr":
@@ -133,5 +134,7 @@ if __name__ == "__main__":
 			num_parts = int(arg_data[1])
 		elif arg_data[0] == "ov":
 			overlap = int(arg_data[1])
+		elif arg_data[0] == "name":
+			name += arg_data[1]
 	
-	experiment_recursive_coverage_refining("Output/reccovref_test", num_reads=num_reads, number_of_parts=num_parts, overlap=overlap)
+	experiment_recursive_coverage_refining("Output/"+name, num_reads=num_reads, number_of_parts=num_parts, overlap=overlap)
