@@ -7,6 +7,7 @@ import fast_debruijn_graph_builder as fdgb
 
 import os
 import re
+import sys
 
 def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False):
 	if not os.path.exists(outputdir):
