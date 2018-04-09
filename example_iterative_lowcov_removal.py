@@ -60,4 +60,16 @@ def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_re
 	debruijn.write_sequences_to_file(filename = outputdir+"/"+casename+"_singlepath.fasta", asfasta = True)
 	
 if __name__ == "__main__":
-	experiment_iterative_low_coverage_removal("Output/itlowcovrem")
+	num_reads = 1000
+	k = 15
+	name = "itlowcovrem"
+	for arg in sys.argv[1:]:
+		arg_data = re.split(r'=', arg)
+		if arg_data[0] == "nr":
+			num_reads = int(arg_data[1])
+		elif arg_data[0] == "k":
+			k = int(arg_data[1])
+		elif arg_data[0] == "name":
+			name += arg_data[1]
+	
+	experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k)
