@@ -135,6 +135,6 @@ if __name__ == "__main__":
 		elif arg_data[0] == "ov":
 			overlap = int(arg_data[1])
 		elif arg_data[0] == "name":
-			name += arg_data[1]
+			name += "_"+arg_data[1]
 	
 	experiment_recursive_coverage_refining("Output/"+name, num_reads=num_reads, number_of_parts=num_parts, overlap=overlap)

@@ -71,6 +71,6 @@ if __name__ == "__main__":
 		elif arg_data[0] == "k":
 			k = int(arg_data[1])
 		elif arg_data[0] == "name":
-			name += arg_data[1]
+			name += "_"+arg_data[1]
 	
 	experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k)
