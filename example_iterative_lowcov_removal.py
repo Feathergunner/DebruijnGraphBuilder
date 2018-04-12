@@ -28,11 +28,12 @@ def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_re
 	# initilize:
 	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_percentage)))
 	casename = "itlowcovrem"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_k"+str(k)
-	debruijn = fdgb.GraphData([reads], k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
+	debruijn = fdgb.GraphData([reads], k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=False)
 	# basic reduction:
-	debruijn.remove_insignificant_overlaps(2) # <- removes all overlaps with coverage 1
 	debruijn.remove_tips()
-	debruijn.contract_unique_overlaps()
+	debruijn.remove_insignificant_overlaps(2, remove_only_unique_tips=True) # <- removes all overlaps with coverage 1
+	debruijn.remove_tips()
+	#debruijn.contract_unique_overlaps()
 	debruijn.remove_single_sequence_components()
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_base.asqg")
