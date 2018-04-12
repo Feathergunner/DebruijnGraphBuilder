@@ -682,7 +682,7 @@ class GraphData:
 		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
 		# if maximum_tip_weight > 0, only tips with weight < maximum_tip_weight will be removed.
 		# if remove_only_unique_tips==True, a tip will only be removed if the node it is connected to as other connections in the same orientation, which have to be non-tips.
-		
+			
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
 		iteration = 0
@@ -771,6 +771,8 @@ class GraphData:
 	def remove_insignificant_sequences(self, minimal_weight=2, do_contraction=True, keep_relevant_tips=False, verbose=False):
 		# removes all sequences with weight less than minimal_weight
 		print ("Removing sequences with evidence_weight < "+str(minimal_weight)+" ...")
+		if keep_relevant_tips:
+			self.get_tip_classification()
 		for seq in self.sequences:
 			if seq.get_total_weight() < minimal_weight:
 				if not keep_relevant_tips:
@@ -785,8 +787,8 @@ class GraphData:
 	
 	def remove_insignificant_overlaps(self, minimal_evidence=2, do_contraction=True, keep_relevant_tips=False, verbose=False):
 		# remove all overlaps with evidence_weight less than minimal_evidence
-		#if keep_relevant_tips:
-		#	self.get_tip_classification()
+		if keep_relevant_tips:
+			self.get_tip_classification()
 		
 		print ("Removing overlaps with evidence_weight < "+str(minimal_evidence)+" ...")
 		ov_ids_to_delete = []
@@ -1881,12 +1883,10 @@ class GraphData:
 					self.overlaps[ov].print_data()
 				
 			# remove the overlaps:
-			self.get_tip_classification()
 			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence, do_contraction=True, keep_relevant_tips=True)
 			# remove decomposed parts:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
-			self.get_tip_classification()
 			self.remove_tips(maximum_tip_weight = min_overlap_number)
 			# simplify graph:
 			#self.contract_unique_overlaps()
@@ -1936,12 +1936,10 @@ class GraphData:
 				print ("Number of next sequences to remove: "+ str(len(small_cov_depth_sequences)))
 				
 			# remove the sequences:
-			self.get_tip_classification()
 			self.remove_insignificant_sequences(minimal_weight=min_cov_depth, do_contraction=True, keep_relevant_tips=True)
 			# remove decomposed components:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
-			self.get_tip_classification()
 			self.remove_tips()
 			# simplify graph:
 			#self.contract_unique_overlaps()
