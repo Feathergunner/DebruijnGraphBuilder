@@ -1074,8 +1074,9 @@ class GraphData:
 				self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
 		else:
 			self.greedy_construct_assembly_ordering_labels(start_sequence=start_sequence, do_second_iteration=do_second_iteration, verbose=verbose)
-		
-	def greedy_construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
+	
+	'''
+	def greedy_construct_assembly_ordering_labels_backup(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
 		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
 		# algorithm assumes that graph
 		# 	is not empty and
@@ -1192,6 +1193,87 @@ class GraphData:
 					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
 
 			self.greedy_construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
+	'''
+		
+	def greedy_construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=1):
+		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
+		# algorithm assumes that graph
+		# 	is not empty and
+		#	has only one component and
+		# 	has no cycles, i.e. implies a partial order
+		if verbose > 0:
+			print "Construct assembly ordering labels..."
+		
+		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
+			if verbose > 0:
+				print ("Error! Start sequence does not exist! Start with first sequence instead.")
+			start_sequence = 0
+		while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
+			start_sequence += 1
+		
+		if not start_sequence < len(self.sequences):
+			print("Error! No sequence found!")
+			return
+		
+		# reset labels
+		for seq in self.sequences:
+			if seq.is_relevant:
+				seq.label_p = False
+		# init for start sequence
+		self.min_label_p = 0
+		self.max_label_p = 0
+		self.min_sequence_p = start_sequence
+		self.max_sequence_p = start_sequence
+		self.max_path_length_p = self.sequences[start_sequence].get_length()
+		self.sequences[start_sequence].label_p = 0
+
+		if verbose == 2:
+			print ("Start with sequence " + str(start_sequence))
+				
+		queue = [[self.sequences[start_sequence].id, 0]]
+		while (len(queue) > 0):
+			current_data = queue[0]
+			queue.pop(0)
+			current_node_id = current_data[0]
+			current_position = current_data[1]
+
+			for seq_id in self.sequences[current_node_id].overlaps_out:
+				if self.sequences[seq_id].label_p == False:
+					start_label = current_position + self.sequences[current_node_id].get_length()
+					if start_label > self.max_label_p:
+						self.max_label_p = start_label
+						self.max_sequence_p = seq_id
+					end_label = start_label + self.sequences[seq_id].get_length()
+					if end_label > self.max_path_length_p:
+						self.max_path_length_p = end_label
+					self.sequences[seq_id].label_p = start_label
+					queue.append([seq_id, start_label])
+			for seq_id in self.sequences[current_node_id].overlaps_in:
+				if self.sequences[seq_id].label_p == False:
+					start_label = current_position - self.sequences[seq_id].get_length()
+					if start_label < self.min_label_p:
+						self.min_label_p = start_label
+						self.min_sequence_p = seq_id
+					self.sequences[seq_id].label_p = start_label
+					queue.append([seq_id, start_label])
+		
+		if verbose == 2:
+			for seq in self.sequences:
+				if seq.is_relevant:
+					print str(seq.id) + ": " + str(seq.label_p)
+		
+		if do_second_iteration:
+			next_start = 0
+			if abs(self.max_label_p) > abs(self.min_label_p):
+				next_start = self.max_sequence_p
+			else:
+				next_start = self.min_sequence_p
+			if verbose == 2:
+				print ("max sequence of first iteration: "+str(self.max_sequence_p) + " with label "+str(self.max_label_p))
+				print ("min sequence of first iteration: "+str(self.min_sequence_p) + " with label "+str(self.min_label_p))
+				print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
+
+			self.greedy_construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
 					
 	def get_partition_of_sequences(self, number_of_parts, overlap=3, verbose=False):
 		# returns a set of sets of parallel aligned sequencs that cover the whole graph
@@ -1716,6 +1798,7 @@ class GraphData:
 		return hubreads
 
 	def compute_common_genome_evidence(self, verbose=False):
+		# needs node position labels based on structural position of nodes, not sequence lengths
 		common_genome_evidence = {}
 
 		sequences_by_node_labels = {}
@@ -1734,16 +1817,7 @@ class GraphData:
 					for or_id in other_seq_read_ids:
 						common_genome_evidence[r_id][or_id] = -1
 		return common_genome_evidence
-
-	def split_sequences_with_contradicting_genome_evidence(self, common_genome_evidence, verbose=False):
-		# # use common_genome_evidence as computed by compute_common_genome_evidence()
-		# for each sequence:
-			# get all read_ids from all kmers of sequence
-			# # 1) partition read_ids into minimal number of sets such that there are no pairs of read_ids with negative common_genome_evidence within any set:
-			# # 2) split sequence into multiple sequences, one for each set. split incident edges accordingly.
-		# # remove all edges without read_evidence (i.e. if source and target edge have no read_ids in common)
-		return
-
+		
 	def compute_overlap_evidence_distribution(self):
 		print ("Compute distribution of overlap evidences")
 		overlap_weights = [self.overlaps[ov].get_evidence_weight() for ov in self.overlaps]
