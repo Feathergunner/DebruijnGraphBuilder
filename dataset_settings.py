@@ -254,6 +254,15 @@ examples_random_reads_1_smallreads_r_smallset = {
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "examples_random_reads_1"}
 	
+examples_random_reads_1_smallreads_r_smallset_lowcov = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlength_settings" : [50],
+    "number_of_reads_settings" : [1000],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "examples_random_reads_1"}
+	
 examples_random_reads_1_largereads_r = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlength_settings" : [500,1000,2000],
@@ -279,6 +288,15 @@ examples_random_reads_1_largereads_i_smallset = {
     "coverage_factors" : [1],
 	"error_type" : "indel",
 	"error_percentages" : [5.0, 10.0, 15.0],
+	"name" : "examples_random_reads_1"}
+	
+examples_random_reads_1_largereads_i_highcov = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29],
+	"readlength_settings" : [1000],
+    "number_of_reads_settings" : [500,1000,2000,5000],
+    "coverage_factors" : [1],
+	"error_type" : "indel",
+	"error_percentages" : [15.0],
 	"name" : "examples_random_reads_1"}
 	
 examples_random_reads_1_largereads_i = {
