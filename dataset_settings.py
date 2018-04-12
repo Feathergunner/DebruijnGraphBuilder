@@ -299,6 +299,15 @@ examples_random_reads_1_largereads_i_highcov = {
 	"error_percentages" : [15.0],
 	"name" : "examples_random_reads_1"}
 	
+examples_random_reads_1_largereads_r_highcov = {
+	"k_absolute_settings" : [13,15,17,19,21,23,25,29],
+	"readlength_settings" : [1000],
+    "number_of_reads_settings" : [500,1000,2000,5000],
+    "coverage_factors" : [1],
+	"error_type" : "replace",
+	"error_percentages" : [15.0],
+	"name" : "examples_random_reads_1"}
+	
 examples_random_reads_1_largereads_i = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlength_settings" : [500,1000],
