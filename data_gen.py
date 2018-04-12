@@ -145,7 +145,8 @@ def samplereads(dna,
 		if uniform_coveragedepth:
 			read_start_index_tmp = randint(-readlength, len(dna))
 			read_start_index = max(0, read_start_index_tmp)
-			readlength = max(len(dna)-read_start_index, readlength)
+			if read_start_index+readlength > len(dna):
+				readlength = len(dna)-read_start_index
 			
 		read_start_index = randint(0, len(dna)-readlength)
 		
