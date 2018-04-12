@@ -9,7 +9,7 @@ import os
 import re
 import sys
 
-def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=False):
+def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=True):
 	if not os.path.exists(outputdir):
 		os.mkdir(outputdir)
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 	num_reads = 1000
 	k = 15
 	name = "itlowcovrem"
-	ucd = False
+	ucd = True
 	for arg in sys.argv[1:]:
 		arg_data = re.split(r'=', arg)
 		if arg_data[0] == "nr":
@@ -80,5 +80,7 @@ if __name__ == "__main__":
 			name += "_"+arg_data[1]
 		elif arg_data[0] == "ucd":
 			ucd = True
+		elif arg_data[0] == "noucd":
+			ucd = False
 	
 	experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k, uniform_coveragedepth=ucd)
