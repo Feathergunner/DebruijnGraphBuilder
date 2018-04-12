@@ -118,6 +118,7 @@ def samplereads(dna,
 				read_length_stddev=0,
 				readlength_distribution='gaussian',
 				inverted_reads=False,
+				uniform_coveragedepth=False,
 				verbose=False):
 				
 	print ("Sample reads from dna ...")
@@ -141,6 +142,11 @@ def samplereads(dna,
 		# ensure that reads are not longer than dna:
 		readlength = min(readlength, len(dna))
 		# choose a random start position of read:
+		if uniform_coveragedepth:
+			read_start_index_tmp = randint(-readlength, len(dna))
+			read_start_index = max(0, read_start_index_tmp)
+			readlength = max(len(dna)-read_start_index, readlength)
+			
 		read_start_index = randint(0, len(dna)-readlength)
 		
 		sampleread_base = dna[read_start_index:read_start_index+readlength]

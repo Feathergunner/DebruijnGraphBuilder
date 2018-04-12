@@ -9,7 +9,7 @@ import os
 import re
 import sys
 
-def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False):
+def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=False):
 	if not os.path.exists(outputdir):
 		os.mkdir(outputdir)
 
@@ -23,11 +23,15 @@ def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_re
 		dna = [c for c in dio.get_genome_from_file(outputdir+"/dna.txt")]
 		
 	# generate reads:
-	reads = dgen.samplereads(dna, num_reads, indel_error_percentage=error_percentage, read_length_mean=readlength)
+	reads = dgen.samplereads(dna, num_reads, indel_error_percentage=error_percentage, read_length_mean=readlength, uniform_coveragedepth=uniform_coveragedepth)
 	
 	# initilize:
 	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_percentage)))
-	casename = "itlowcovrem"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_k"+str(k)
+	casename = "rl"+str(readlength)+"_nr"+str(num_reads)+"_ei"+ep_string+"_k"+str(k)
+	if uniform_coveragedepth:
+		casename = "itlowcovrem_ucd_"+casename
+	else:
+		casename = "itlowcovrem_"+casename
 	debruijn = fdgb.GraphData([reads], k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=False)
 	# basic reduction:
 	debruijn.remove_tips()
