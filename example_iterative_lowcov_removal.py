@@ -82,6 +82,8 @@ if __name__ == "__main__":
 			ucd = True
 		elif arg_data[0] == "noucd":
 			ucd = False
+		elif arg_data[0] == "set":
+			k_lengths = [13,15,17,19]
 			
 	if k_lengths == []:
 		k_lengths = [15]
