@@ -4,6 +4,7 @@
 import os
 import re
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import math
 
 def compute_distribution(data, verbose=False):
@@ -381,35 +382,53 @@ class GraphAnalyzer:
 					this_label += "degree_distribution"
 					x_label += "Node-degree"
 				elif data == "cov_depth":
-					y = compute_distribution(gd.coverage_depths)#[1:]
+					y = compute_distribution(gd.coverage_depths)[1:]
 					this_label += "covdepths"
 					x_label += "Coverage Depth"
 				
-				if logscale:
-					yl = [math.log10(yi+1) for yi in y]
-					y = yl
-					y_label = "log("+y_label+")"
+				#if logscale:
+				#	yl = [math.log10(yi+1) for yi in y]
+				#	y = yl
+				#	y_label = "log("+y_label+")"
 				this_label += "rl="+str(gd.readlength)+"_ep="+str(gd.error_percentage)+"_nr="+str(gd.num_of_reads)+"_k="+str(gd.k_value)
 				
 				if not this_label in label_data:
 					label_data.append(this_label)
-					x_values.append(range(len(y)))
+					if data == "cov_depth":
+						x_values.append([i+1 for i in range(len(y))])
+					else:
+						x_values.append(range(len(y)))
 					y_values.append(y)
 			
 			for i in range(len(x_values)):
 				if axis == 0:
-					plt.plot(x_values[i], y_values[i], label=label_data[i], linestyle=style, linewidth=3)
+					if logscale:
+						plt.semilogy(x_values[i], y_values[i], label=label_data[i], linestyle=style, linewidth=3)
+					else:
+						plt.plot(x_values[i], y_values[i], label=label_data[i], linestyle=style, linewidth=3)
 				else:
 					axis.plot(x_values[i], y_values[i], label=label_data[i], linestyle=style,  linewidth=3)
-			
+					
 			if axis == 0:
 				plt.xlabel(x_label)
 				plt.ylabel(y_label)
+				plt.axhline(0, color='black')
+				plt.axvline(1, color='black')
+				
+				ax = plt.gca()
+				ax.set_xlim([1,len(y)])
+				ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.0f'))
 				if show_legend:
 					plt.legend(loc=legend_pos)
+				if data == "cov_depth":
+					x_tick_diff = (len(y)+1)/10
+					plt.xticks([1]+range(x_tick_diff, len(y)+1, x_tick_diff))
 			else:
 				axis.set_xlabel(x_label)
 				axis.set_ylabel(y_label)
 				axis.legend(loc=legend_pos)
 				if show_legend:
 					axis.legend_.remove()
+				if logscale:
+					axis.set_yscale('log')
+			
