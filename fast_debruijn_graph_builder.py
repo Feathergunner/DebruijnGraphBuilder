@@ -800,8 +800,8 @@ class GraphData:
 					if (self.overlaps[ov_id].contig_sequence_1 not in self.tips_to_keep) and (self.overlaps[ov_id].contig_sequence_2 not in self.tips_to_keep):
 						ov_ids_to_delete.append(ov_id)
 		for ov_id in ov_ids_to_delete:
-			self.delete_overlap(ov_id)
 			self.removed_reads += self.overlaps[ov_id].evidence_reads
+			self.delete_overlap(ov_id)
 			
 		if do_contraction:
 			self.contract_unique_overlaps()
