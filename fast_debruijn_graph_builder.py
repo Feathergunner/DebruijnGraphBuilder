@@ -195,7 +195,8 @@ class GraphData:
 				self.contract_unique_overlaps(verbose=verbose)
 				
 				if remove_tips:
-					self.remove_tips(remove_only_unique_tips=True, verbose=verbose)
+					#self.remove_tips(remove_only_unique_tips=True, verbose=verbose)
+					self.remove_tips_simple()
 					self.remove_single_sequence_components(verbose=verbose)
 			
 			if construct_labels:
@@ -647,6 +648,35 @@ class GraphData:
 					components.append(current_comp)
 		return components
 		
+	def remove_tips_simple(self, verbose=False):
+		# removes tips (single-sequence-dead-ends) from the graph, if they are longer than 2*k
+		print ("Removing tips ...")
+		num_of_removed_tips = -1
+		iteration = 0
+		while (num_of_removed_tips != 0):
+			iteration += 1
+			print ("Current iteration of tip removal: "+str(iteration))
+			num_of_removed_tips = 0
+			for seq in self.sequences:
+				if seq.is_relevant:
+					# check if sequence is a tip and if sequence is shorter than 2k:
+					if (len(seq.sequence) < 2*self.k_value):
+							is_tip = False
+							if (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0) and (len(seq.overlaps_in) + len(seq.overlaps_out) > 0):
+								# (sequence is a tip)
+								is_tip =True							
+							if is_tip:
+								if verbose:
+									print ("Sequence is a tip, remove this sequence.")
+								# remove sequence:
+								self.delete_sequence(seq.id, verbose)
+								num_of_removed_tips += 1
+								# mark reads of tip:
+								tip_reads = self.get_read_of_sequences([seq])
+								self.removed_reads += tip_reads
+							
+			self.contract_unique_overlaps(verbose = 0)
+			
 	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, remove_only_unique_tips=True, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
@@ -738,18 +768,25 @@ class GraphData:
 							num_of_removed_tips += 1
 			self.contract_unique_overlaps()
 		
-	def remove_insignificant_sequences(self, minimal_weight=2, verbose=False):
+	def remove_insignificant_sequences(self, minimal_weight=2, do_contraction=True, keep_relevant_tips=False, verbose=False):
 		# removes all sequences with weight less than minimal_weight
 		print ("Removing sequences with evidence_weight < "+str(minimal_weight)+" ...")
 		for seq in self.sequences:
 			if seq.get_total_weight() < minimal_weight:
-				self.delete_sequence(seq.id, verbose)
-				self.removed_reads += self.get_read_of_sequences([seq])
+				if not keep_relevant_tips:
+					self.delete_sequence(seq.id, verbose)
+					self.removed_reads += self.get_read_of_sequences([seq])
+				elif seq.id not in self.tips_to_keep:
+					self.delete_sequence(seq.id, verbose)
+					self.removed_reads += self.get_read_of_sequences([seq])
+		
+		if do_contraction:
+			self.contract_unique_overlaps()
 	
 	def remove_insignificant_overlaps(self, minimal_evidence=2, do_contraction=True, keep_relevant_tips=False, verbose=False):
 		# remove all overlaps with evidence_weight less than minimal_evidence
-		if keep_relevant_tips:
-			self.get_tip_classification()
+		#if keep_relevant_tips:
+		#	self.get_tip_classification()
 		
 		print ("Removing overlaps with evidence_weight < "+str(minimal_evidence)+" ...")
 		ov_ids_to_delete = []
@@ -764,6 +801,7 @@ class GraphData:
 						ov_ids_to_delete.append(ov_id)
 		for ov_id in ov_ids_to_delete:
 			self.delete_overlap(ov_id)
+			self.removed_reads += self.overlaps[ov_id].evidence_reads
 			
 		if do_contraction:
 			self.contract_unique_overlaps()
@@ -1843,13 +1881,15 @@ class GraphData:
 					self.overlaps[ov].print_data()
 				
 			# remove the overlaps:
-			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence, keep_relevant_tips=True)
+			self.get_tip_classification()
+			self.remove_insignificant_overlaps(minimal_evidence=min_cov_evidence, do_contraction=True, keep_relevant_tips=True)
 			# remove decomposed parts:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
+			self.get_tip_classification()
 			self.remove_tips(maximum_tip_weight = min_overlap_number)
 			# simplify graph:
-			self.contract_unique_overlaps()
+			#self.contract_unique_overlaps()
 			#self.remove_single_sequence_components()
 	
 			if len(overlaps_with_small_evidence) < 10:
@@ -1896,13 +1936,15 @@ class GraphData:
 				print ("Number of next sequences to remove: "+ str(len(small_cov_depth_sequences)))
 				
 			# remove the sequences:
-			self.remove_insignificant_sequences(minimal_weight=min_cov_depth)
+			self.get_tip_classification()
+			self.remove_insignificant_sequences(minimal_weight=min_cov_depth, do_contraction=True, keep_relevant_tips=True)
 			# remove decomposed components:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
+			self.get_tip_classification()
 			self.remove_tips()
 			# simplify graph:
-			self.contract_unique_overlaps()
+			#self.contract_unique_overlaps()
 	
 			if len(small_cov_depth_sequences) < 10:
 				# if last iteration had very little effect, increase the cutoff bound by 5
