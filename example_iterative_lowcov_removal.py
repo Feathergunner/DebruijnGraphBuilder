@@ -67,7 +67,7 @@ def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_re
 	
 if __name__ == "__main__":
 	num_reads = 1000
-	k = 15
+	k_lengths = []
 	name = "itlowcovrem"
 	ucd = True
 	for arg in sys.argv[1:]:
@@ -75,12 +75,16 @@ if __name__ == "__main__":
 		if arg_data[0] == "nr":
 			num_reads = int(arg_data[1])
 		elif arg_data[0] == "k":
-			k = int(arg_data[1])
+			k_lengths.append(int(arg_data[1]))
 		elif arg_data[0] == "name":
 			name += "_"+arg_data[1]
 		elif arg_data[0] == "ucd":
 			ucd = True
 		elif arg_data[0] == "noucd":
 			ucd = False
+			
+	if k_lengths == []:
+		k_lengths = [15]
 	
-	experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k, uniform_coveragedepth=ucd)
+	for k in k_lengths:	
+		experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k, uniform_coveragedepth=ucd)
