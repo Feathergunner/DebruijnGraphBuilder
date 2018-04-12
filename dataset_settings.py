@@ -308,7 +308,7 @@ examples_random_reads_1_largereads_r_highcov = {
 	"error_percentages" : [15.0],
 	"name" : "examples_random_reads_1"}
 	
-examples_random_reads_1_largereads_i_highcov = {
+examples_random_reads_1_largereads_i_lowcov = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25,29],
 	"readlength_settings" : [1000],
     "number_of_reads_settings" : [50,100,200,500],
@@ -317,7 +317,7 @@ examples_random_reads_1_largereads_i_highcov = {
 	"error_percentages" : [15.0],
 	"name" : "examples_random_reads_1"}
 	
-examples_random_reads_1_largereads_r_highcov = {
+examples_random_reads_1_largereads_r_lowcov = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25,29],
 	"readlength_settings" : [1000],
     "number_of_reads_settings" : [50,100,200,500],
