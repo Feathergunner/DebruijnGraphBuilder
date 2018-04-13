@@ -125,7 +125,7 @@ def samplereads(dna,
 	
 	print "read_length_mean: "+str(read_length_mean)
 	reads = []
-	# construct reads:
+	# construct reads:	
 	for n in range(number_of_reads):
 		meta.print_progress(n, number_of_reads-1)
 		
@@ -144,13 +144,15 @@ def samplereads(dna,
 		# choose a random start position of read:
 		if uniform_coveragedepth:
 			read_start_index_tmp = randint(-readlength, len(dna))
+			read_end_index = read_start_index_tmp+readlength
 			read_start_index = max(0, read_start_index_tmp)
-			if read_start_index+readlength > len(dna):
-				readlength = len(dna)-read_start_index
-			
-		read_start_index = randint(0, len(dna)-readlength)
+			if read_end_index > len(dna):
+				read_end_index = len(dna)
+		else:
+			read_start_index = randint(0, len(dna)-readlength)
+			read_end_index = read_start_index+readlength
 		
-		sampleread_base = dna[read_start_index:read_start_index+readlength]
+		sampleread_base = dna[read_start_index:read_end_index]
 		sampleread_errors = sampleread_base
 		
 		j = 0
