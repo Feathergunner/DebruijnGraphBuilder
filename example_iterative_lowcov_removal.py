@@ -9,9 +9,15 @@ import os
 import re
 import sys
 
-def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=True):
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
+def experiment_iterative_low_coverage_removal(outputdir_base, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=True):		
+	if not os.path.exists(outputdir_base):
+		os.mkdir(outputdir_base)
+	dirnum = 1
+	while os.path.exists(outputdir_base+"/"+str(dirnum)):
+		dirnum+=1
+	outputdir = outputdir_base+"/"+str(dirnum)
+	os.mkdir(outputdir)
+	os.mkdir(outputdir+"/reads")
 
 	if create_new_dna or not os.path.isfile(outputdir+"/dna.txt"):
 		# generate dna:
@@ -40,30 +46,30 @@ def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_re
 	#debruijn.contract_unique_overlaps()
 	debruijn.remove_single_sequence_components()
 	if saveparts:
-		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_base.asqg")
-		debruijn.get_csv_output(filename = outputdir+"/"+casename+"_base.csv")
+		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_1_base.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+casename+"_1_base.csv")
 	
 	# reduction step 1: remove low coverage overlaps
 	debruijn.remove_low_evidence_overlaps_until_graph_decomposes()
 	debruijn.reduce_to_single_largest_component()
 	if saveparts:
-		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_reduced.asqg")
-		debruijn.get_csv_output(filename = outputdir+"/"+casename+"_reduced.csv")
+		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_2_ovred.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+casename+"_2_ovred.csv")
 	
 	# reduction step 2: remove low coverage sequences:
 	debruijn.remove_low_coverage_sequences_until_graph_decomposes()
 	debruijn.reduce_to_single_largest_component()
 	if saveparts:
-		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_reduced_2.asqg")
-		debruijn.get_csv_output(filename = outputdir+"/"+casename+"_reduced_2.csv")
+		debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_3_seqred.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+casename+"_3_seqred.csv")
 	
 	# construct a consensus sequence:
 	debruijn.construct_assembly_ordering_labels()
 	debruijn.reduce_to_single_path_max_weight()
 	debruijn.contract_unique_overlaps()
-	debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_singlepath.asqg")
-	debruijn.get_csv_output(filename = outputdir+"/"+casename+"_singlepath.csv")
-	debruijn.write_sequences_to_file(filename = outputdir+"/"+casename+"_singlepath.fasta", asfasta = True)
+	debruijn.get_asqg_output(filename = outputdir+"/"+casename+"_4_singlepath.asqg")
+	debruijn.get_csv_output(filename = outputdir+"/"+casename+"_4_singlepath.csv")
+	debruijn.write_sequences_to_file(filename = outputdir+"/"+casename+"_4_singlepath.fasta", asfasta = True)
 	
 if __name__ == "__main__":
 	num_reads = 1000
