@@ -367,7 +367,7 @@ set_conscons_shortreads_highcov = {
 set_conscons_longreads_highcov_r = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25],
 	"readlength_settings" : [1000],
-    "number_of_reads_settings" : [500,1000,2000,5000],
+    "number_of_reads_settings" : [200,300,500,1000],
     "coverage_factors" : [1],
 	"error_type" : "replace",
 	"error_percentages" : [15.0],
@@ -376,7 +376,7 @@ set_conscons_longreads_highcov_r = {
 set_conscons_longreads_highcov_i = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25],
 	"readlength_settings" : [1000],
-    "number_of_reads_settings" : [500,1000,2000,5000],
+    "number_of_reads_settings" : [200,300,500,1000],
     "coverage_factors" : [1],
 	"error_type" : "indel",
 	"error_percentages" : [15.0],
