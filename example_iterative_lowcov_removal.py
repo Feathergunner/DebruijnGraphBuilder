@@ -9,15 +9,9 @@ import os
 import re
 import sys
 
-def experiment_iterative_low_coverage_removal(outputdir_base, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=True):		
-	if not os.path.exists(outputdir_base):
-		os.mkdir(outputdir_base)
-	dirnum = 1
-	while os.path.exists(outputdir_base+"/"+str(dirnum)):
-		dirnum+=1
-	outputdir = outputdir_base+"/"+str(dirnum)
-	os.mkdir(outputdir)
-	os.mkdir(outputdir+"/reads")
+def experiment_iterative_low_coverage_removal(outputdir, dna_length=5000, num_reads=1000, readlength=1000, error_percentage=15.0, k=13, saveparts=True, create_new_dna=False, uniform_coveragedepth=True):
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
 
 	if create_new_dna or not os.path.isfile(outputdir+"/dna.txt"):
 		# generate dna:
