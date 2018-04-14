@@ -680,7 +680,7 @@ class GraphData:
 	def remove_tips(self, only_simply_connected_tips=True, maximum_tip_weight=-1, remove_only_unique_tips=True, verbose=False):
 		# removes tips (single-sequence-dead-ends) from the graph
 		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
-		# if maximum_tip_weight > 0, only tips with weight < maximum_tip_weight will be removed.
+		# if maximum_tip_weight > 0, only tips with weight <= maximum_tip_weight will be removed.
 		# if remove_only_unique_tips==True, a tip will only be removed if the node it is connected to as other connections in the same orientation, which have to be non-tips.
 			
 		print ("Removing tips ...")
@@ -700,7 +700,7 @@ class GraphData:
 					#	seq.print_data()
 					# check if sequence is a tip and if sequence is shorter than 2k:
 					if (len(seq.sequence) < 2*self.k_value):
-						if seq.get_total_weight() < maximum_tip_weight or maximum_tip_weight <= 0:
+						if seq.get_total_weight() <= maximum_tip_weight or maximum_tip_weight < 1:
 							is_tip = False
 							if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
 								# (sequence is a simply connected tip)
@@ -1961,7 +1961,7 @@ class GraphData:
 			# remove decomposed parts:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
-			self.remove_tips(maximum_tip_weight = min_overlap_number)
+			self.remove_tips()#maximum_tip_weight = min_overlap_number)
 			# simplify graph:
 			#self.contract_unique_overlaps()
 			#self.remove_single_sequence_components()
@@ -2091,9 +2091,9 @@ class GraphData:
 					if other_non_tip_exists:
 						tips_deletable += local_tips
 					elif len(local_tips) > 0:
-						# mark all tips as 'deletable' that have less than 1/2 of the maximal coverage depth
+						# mark all tips as 'deletable' that have less than the maximal coverage depth
 						maxweight = max([self.sequences[tip_id].get_total_weight() for tip_id in local_tips])
-						local_tips_to_delete = [tip_id for tip_id in local_tips if self.sequences[tip_id].get_total_weight() < maxweight/1.5]
+						local_tips_to_delete = [tip_id for tip_id in local_tips if self.sequences[tip_id].get_total_weight() < maxweight]
 						tips_deletable += local_tips_to_delete
 						tips_keep += [tip_id for tip_id in local_tips if not tip_id in local_tips_to_delete]
 						
