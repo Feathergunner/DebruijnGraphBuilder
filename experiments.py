@@ -14,6 +14,8 @@ import data_io as dio
 import dbg_consensus_construction as cc
 import fast_debruijn_graph_builder as fdgb
 
+max_num_threads = 10
+
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
 									dna,
@@ -156,6 +158,12 @@ def create_dataset(	algorithm,
 						p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
 						threads.append(p)
 						p.start()
+						
+						if len(threads) > max_num_threads:
+							for p in threads:
+								p.join()
+							threads = []
+							
 			
 		for p in threads:
 			p.join()
