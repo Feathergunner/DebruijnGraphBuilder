@@ -12,7 +12,6 @@ import datasets_experiments as dse
 import data_gen as dgen
 import data_io as dio
 import dbg_consensus_construction as cc
-import construct_stat_plots as csp
 
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
@@ -269,17 +268,8 @@ def experiments(params):
 			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope)
 		if testset == 3:
 			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope)
-	elif set_id in range(1, 6):
-		if set_id == 1:
-			setting = dse.set_cons2g_lowcov
-		if set_id == 2:
-			setting = dse.set_cons2g_highcov
-		if set_id == 3:
-			setting = dse.set_cons3g_r
-		if set_id == 4:
-			setting = dse.set_cons3g_i
-		if set_id == 5:
-			setting = dse.set_cons2g_vlowcov
+	elif set_id in range(1, len(dse.allsettings)+1):
+		setting = dse.allsettings[set_id-1]
 		
 		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope)
 		

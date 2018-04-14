@@ -1,5 +1,5 @@
 #!usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-		
 
 testset_2g = {
 	"kmer_lengths" : [13,15,17,19],
@@ -56,3 +56,10 @@ set_cons3g_i = {
 	"error_type" : "indel",
 	"error_rates" : [15.0],
 	"name" : "cons_3g_indel"}
+	
+
+allsettings = [ set_cons2g_lowcov,
+				set_cons2g_highcov,
+				set_cons3g_r,
+				set_cons3g_i,
+				set_cons2g_vlowcov]
