@@ -686,12 +686,12 @@ class GraphData:
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
 		iteration = 0
-		while (num_of_removed_tips != 0):
+		while (num_of_removed_tips != 0 or len(self.tips_to_delete) !=0):
 			iteration += 1
 			print ("Current iteration of tip removal: "+str(iteration))
 			if remove_only_unique_tips:
 				# initialize list of tips to keep:
-				self.get_tip_classification()
+				self.get_tip_classification(verbose=False)
 			num_of_removed_tips = 0
 			for seq in self.sequences:
 				if seq.is_relevant:
@@ -1967,8 +1967,8 @@ class GraphData:
 			#self.remove_single_sequence_components()
 	
 			if len(overlaps_with_small_evidence) < 10:
-				# if last iteration had very little effect, increase the cutoff bound by 5
-				min_cov_evidence += 5
+				# if last iteration had very little effect, increase the cutoff bound by 2
+				min_cov_evidence += 2
 			else:
 				# normal case: increase cutoff bound by 1
 				min_cov_evidence += 1
@@ -2019,8 +2019,8 @@ class GraphData:
 			#self.contract_unique_overlaps()
 	
 			if len(small_cov_depth_sequences) < 10:
-				# if last iteration had very little effect, increase the cutoff bound by 5
-				min_cov_depth += 5
+				# if last iteration had very little effect, increase the cutoff bound by 2
+				min_cov_depth += 2
 			else:
 				# normal case: increase cutoff bound by 1
 				min_cov_depth += 1
@@ -2040,6 +2040,10 @@ class GraphData:
 				
 	def get_tip_classification(self, verbose=False):
 		#get all ids of sequences that are tips, and classify them as 'deletable', if their parent node has other adjacent nodes in the same orientation that are not tips or have significant higher coverage depth:
+		print ("Classify nodes into (hubs, important tips, deletable tips) ...")
+		
+		if verbose:
+			print ("\tnumber of sequences: "+str(len(self.get_relevant_sequences())))
 		
 		hubs = []
 		tips_deletable = []
@@ -2050,9 +2054,13 @@ class GraphData:
 			if not self.sequences[i].is_relevant:
 				visited_sequences[i] = True
 			elif not visited_sequences[i]:
+				if verbose:
+					print ("\tCurrently visiting sequence "+str(i))
 				seq = self.sequences[i]
 				if len(seq.overlaps_in) > 0 and len(seq.overlaps_out) > 0:
 					# sequence is not a tip:
+					if verbose:
+						print ("\t\tis not a tip")
 					visited_sequences[i] = True
 					hubs.append(i)
 				else:
@@ -2060,6 +2068,8 @@ class GraphData:
 					other_non_tip_exists = False
 					if len(seq.overlaps_in) > 0:
 						# sequence is an outgoing tip:
+						if verbose:
+							print ("\t\tis outgoing tip")
 						for adj_seq in seq.overlaps_in:
 							visited_sequences[adj_seq] = True
 							# check all sequences that have edge into this tip:
@@ -2075,6 +2085,8 @@ class GraphData:
 							
 					else:
 						# sequence is an incoming tip:
+						if verbose:
+							print ("\t\tis incoming tip")
 						for adj_seq in seq.overlaps_out:
 							visited_sequences[adj_seq] = True
 							# check all sequences that have edge into this tip:
@@ -2101,5 +2113,5 @@ class GraphData:
 		self.tips_to_keep = tips_keep
 		self.tips_to_delete = tips_deletable
 		if verbose:
-			print ("number of tips to keep: "+str(len(tips_keep)))
-			print ("number of tips to delete: "+str(len(tips_deletable)))
+			print ("\tnumber of tips to keep: "+str(len(tips_keep)))
+			print ("\tnumber of tips to delete: "+str(len(tips_deletable)))
