@@ -89,7 +89,7 @@ def experiment_consensus_singlecase(algorithm,
 	elif algorithm == "covref":
 		cs.cons_covref(reads, number_of_parts, overlap, k, k_part, k_merge, outputdir, casename, saveparts)
 	elif algorithm == "noreconstruct":
-		debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=True)
+		debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=False)
 		debruijn.get_asqg_output(filename = outputdir+"/"+casename+".asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+casename+".csv")
 	else:

@@ -347,7 +347,7 @@ def construct_heatmaps_dbg(	datadir,
 					num_comps[i_er][i_k] += gd.get_number_of_components()
 					frac_edgespernode[i_er][i_k] += float(gd.num_of_edges)/float(gd.num_of_nodes)
 					avg_compsizes[i_er][i_k] += gd.get_avg_component_size()
-					max_compsizes[i_er][i_k] += float(gd.get_maximum_component_size())/num_nodes[i_er][i_k]
+					max_compsizes[i_er][i_k] += float(gd.get_maximum_component_size())/float(gd.num_of_nodes)
 		
 				else:
 					print ("no nodes in graph of case: er:"+str(error_rate)+", k:"+str(k))
@@ -362,12 +362,12 @@ def construct_heatmaps_dbg(	datadir,
 	
 	avg_seqlengths /= dimension_of_set
 	avg_covdepths /= dimension_of_set
-	num_nodes[i_er][i_k] /= dimension_of_set
-	num_edges[i_er][i_k] /= dimension_of_set
-	num_comps[i_er][i_k] /= dimension_of_set
-	frac_edgespernode[i_er][i_k] /= dimension_of_set
-	avg_compsizes[i_er][i_k] /= dimension_of_set
-	max_compsizes[i_er][i_k] /= dimension_of_set
+	num_nodes /= dimension_of_set
+	num_edges /= dimension_of_set
+	num_comps /= dimension_of_set
+	frac_edgespernode /= dimension_of_set
+	avg_compsizes /= dimension_of_set
+	max_compsizes /= dimension_of_set
 				
 	outputfilename = casename_gen_base
 	if not error_type == "replace":
@@ -382,7 +382,7 @@ def construct_heatmaps_dbg(	datadir,
 									xlabels = "Kmer length",
 									ylabels = "Error rate in %",
 									titles = ["Average length of sequences", "Average coverage depth of sequences", "Average number of nodes", "Average number of edges", "Average number of components", "fraction of edges per node", "Average component size", "Fraction of nodes in largest component"],
-									cellformats = ['.1f', '.1f', '.0f', '.0f', '.1f', '.2f', '.0f', '.2f'],
+									cellformats = ['.1f', '.1f', '.1f', '.1f', '.1f', '.2f', '.1f', '.2f'],
 									cbbounds = [[0, 0], [1, 30], [0, 0], [0, 0], [0, 0], [0.9, 1.4], [0,0], [0.8, 1.0]],
 									cmaps = ["gnuplot", "gnuplot", "gnuplot_r", "gnuplot_r", "gnuplot_r", "gnuplot", "gnuplot", "gnuplot"])
 	
