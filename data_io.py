@@ -88,7 +88,7 @@ def write_asqg_file(kmers, contig_seqs, edges, k, filename="asqg_file"):
 def write_sequences_to_fasta(sequences, filename="fasta.fasta"):
 	# this method assumes that the parameter "sequences" is a list
 	# if it is a single string, every character will be interpreted as a unique sequence!
-	print ("Writing fasta-file ...")
+	#print ("Writing fasta-file ...")
 	fasta_string = ""
 	seq_counter = 0
 	for seq in sequences:
