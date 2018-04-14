@@ -11,8 +11,6 @@ import time
 import data_gen as dgen
 import data_io as dio
 import fast_debruijn_graph_builder as fdgb
-import apply_blast as abl
-import construct_stat_plots as csp
 
 def experiment_iterative_low_coverage_removal_singlecase(	outputdir,
 															dna,
@@ -128,6 +126,9 @@ def create_dataset(name, dimension_of_set=1, dna_length=5000, error_rate=15.0, n
 		p.join()
 		
 	if not only_data:
+		import apply_blast as abl
+		import construct_stat_plots as csp
+		
 		print ("Compute BLAST ratings ...")
 		abl.init_blast_db(outputdir+"/dna.fasta")
 		# ensure that blast finishes:
