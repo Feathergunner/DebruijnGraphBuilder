@@ -22,7 +22,8 @@ def construct_consensus_heatmaps(	outputdir,
 									ylabels,
 									titles,
 									cellformats,
-									cbbounds):
+									cbbounds,
+									cmaps):
 									
 	matplotlib.rc('xtick', labelsize=10)
 	if (len(ylabels) >= 8):
@@ -47,22 +48,38 @@ def construct_consensus_heatmaps(	outputdir,
 		ax = plt.gca()
 		divider = make_axes_locatable(ax)
 		cax = divider.append_axes(cbar_position, size=cbar_size, pad=cbar_pad)
-		sns.heatmap(data[i],
-					cmap = "gnuplot",
-					linewidths = 1,
-					square = makesquare,
-					yticklabels = yticks,
-					xticklabels = xticks,
-					annot = True,
-					annot_kws = {"size": 8},
-					fmt = cellformats[i],
-					cbar_kws = additional_arg,
-					robust = True,
-					cbar = cb,
-					ax = ax,
-					cbar_ax = cax,
-					vmin=cbbounds[i][0],
-					vmax=cbbounds[i][1])
+		if not cbbounds[i][0] == cbbounds[i][1]:
+			sns.heatmap(data[i],
+						cmap = cmaps[i],
+						linewidths = 1,
+						square = makesquare,
+						yticklabels = yticks,
+						xticklabels = xticks,
+						annot = True,
+						annot_kws = {"size": 8},
+						fmt = cellformats[i],
+						cbar_kws = additional_arg,
+						robust = True,
+						cbar = cb,
+						ax = ax,
+						cbar_ax = cax,
+						vmin=cbbounds[i][0],
+						vmax=cbbounds[i][1])
+		else:
+			sns.heatmap(data[i],
+						cmap = cmaps[i],
+						linewidths = 1,
+						square = makesquare,
+						yticklabels = yticks,
+						xticklabels = xticks,
+						annot = True,
+						annot_kws = {"size": 8},
+						fmt = cellformats[i],
+						cbar_kws = additional_arg,
+						robust = True,
+						cbar = cb,
+						ax = ax,
+						cbar_ax = cax)
 					
 		ax.invert_yaxis()
 		ax.set(ylabel=ylabels, xlabel=xlabels)
@@ -172,7 +189,8 @@ def construct_heatmaps_cons_3g(	datadir,
 									ylabels = "Number of reads",
 									titles = ["Average length of reconstructed sequences", "Average coverage depth of sequences", "Average BLAST identity rating in %", "Average number of gaps", "Total fraction of correct bases in %"],
 									cellformats = ['.1f', '.1f', '.2f', '.2f', '.1f'],
-									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]])
+									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]],
+									cmaps = ["gnuplot", "gnuplot", "gnuplot", "gnuplot_r", "gnuplot"])
 	
 def construct_heatmaps_cons_2g(	datadir,
 								basename,
@@ -278,4 +296,93 @@ def construct_heatmaps_cons_2g(	datadir,
 									ylabels = "Error rate in %",
 									titles = ["Average length of reconstructed sequences", "Average coverage depth of sequences", "Average BLAST identity rating in %", "Average number of gaps", "Total fraction of correct bases in %"],
 									cellformats = ['.1f', '.1f', '.2f', '.2f', '.1f'],
-									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]])
+									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]],
+									cmaps = ["gnuplot", "gnuplot", "gnuplot", "gnuplot_r", "gnuplot"])
+									
+def construct_heatmaps_dbg(	datadir,
+							basename,
+							outputdir,
+							number_of_reads		= 2000,
+							k_values			= [13,15,17,19],
+							error_rates			= [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+							dna_length			= 5000,
+							readlength			= 50,
+							error_type			= "replace",
+							dimension_of_set	= 1):
+	
+	# initialize:
+	casename_gen_base = basename+"_rl"+str(readlength)+"_nr"+str(number_of_reads)
+	
+	num_nodes = np.zeros((len(error_rates), len(k_values)))
+	num_edges = np.zeros((len(error_rates), len(k_values)))
+	frac_edgespernode = np.zeros((len(error_rates), len(k_values)))
+	num_comps = np.zeros((len(error_rates), len(k_values)))
+	avg_seqlengths = np.zeros((len(error_rates), len(k_values)))
+	avg_covdepths = np.zeros((len(error_rates), len(k_values)))
+	avg_compsizes = np.zeros((len(error_rates), len(k_values)))
+	max_compsizes = np.zeros((len(error_rates), len(k_values)))
+	
+	for i in range(dimension_of_set):
+		for i_er in range(len(error_rates)):
+			for i_k in range(len(k_values)):
+				er = error_rates[i_er]
+				k = k_values[i_k]
+				ep_string = "".join(re.split(r'\.',str("%2.2f" % er)))
+				if error_type == "indel":
+					ep_string = "ei"+ep_string
+				else:
+					ep_string = "er"+ep_string
+				filename_base = datadir+"/"+casename_gen_base+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)
+				
+				gd = []
+				gd = ga.GraphData(error_percentage=er, readlength=readlength, num_of_reads=number_of_reads, k_value=k, nodes=[])		
+				gd.get_data_from_file(filename_base+".asqg")
+				gd.get_data_from_csv(filename_base+".csv")
+				
+				if gd.num_of_nodes > 0:
+					avg_seqlengths[i_er][i_k] += gd.get_avg_seq_length()
+					avg_covdepths[i_er][i_k] += gd.get_avg_coverage_depth()
+					num_nodes[i_er][i_k] += gd.num_of_nodes
+					num_edges[i_er][i_k] += gd.num_of_edges
+					num_comps[i_er][i_k] += gd.get_number_of_components()
+					frac_edgespernode[i_er][i_k] += float(gd.num_of_edges)/float(gd.num_of_nodes)
+					avg_compsizes[i_er][i_k] += gd.get_avg_component_size()
+					max_compsizes[i_er][i_k] += float(gd.get_maximum_component_size())/num_nodes[i_er][i_k]
+		
+				else:
+					print ("no nodes in graph of case: er:"+str(error_rate)+", k:"+str(k))
+					avg_seqlengths[i_er][i_k] += 0
+					avg_covdepths[i_er][i_k] += 0
+					num_nodes[i_er][i_k] += 0
+					num_edges[i_er][i_k] += 0
+					num_comps[i_er][i_k] += 0
+					frac_edgespernode[i_er][i_k] += 0
+					avg_compsizes[i_er][i_k] += 0
+					max_compsizes[i_er][i_k] += 0
+	
+	avg_seqlengths /= dimension_of_set
+	avg_covdepths /= dimension_of_set
+	num_nodes[i_er][i_k] /= dimension_of_set
+	num_edges[i_er][i_k] /= dimension_of_set
+	num_comps[i_er][i_k] /= dimension_of_set
+	frac_edgespernode[i_er][i_k] /= dimension_of_set
+	avg_compsizes[i_er][i_k] /= dimension_of_set
+	max_compsizes[i_er][i_k] /= dimension_of_set
+				
+	outputfilename = casename_gen_base
+	if not error_type == "replace":
+		outputfilename += "_indel"
+		
+	construct_consensus_heatmaps(	outputdir = outputdir,
+									outputfilename = outputfilename,
+									data = [avg_seqlengths, avg_covdepths, num_nodes, num_edges, num_comps, frac_edgespernode, avg_compsizes, max_compsizes],
+									datanames = ["seqlength", "covdepth", "numnodes", "numedges", "numcomps", "edgepernode", "avgcompsize", "maxcompsize"],
+									xticks = k_values,
+									yticks = error_rates,
+									xlabels = "Kmer length",
+									ylabels = "Error rate in %",
+									titles = ["Average length of sequences", "Average coverage depth of sequences", "Average number of nodes", "Average number of edges", "Average number of components", "fraction of edges per node", "Average component size", "Fraction of nodes in largest component"],
+									cellformats = ['.1f', '.1f', '.0f', '.0f', '.1f', '.2f', '.0f', '.2f'],
+									cbbounds = [[0, 0], [1, 30], [0, 0], [0, 0], [0, 0], [0.9, 1.4], [0,0], [0.8, 1.0]],
+									cmaps = ["gnuplot", "gnuplot", "gnuplot_r", "gnuplot_r", "gnuplot_r", "gnuplot", "gnuplot", "gnuplot"])
+	

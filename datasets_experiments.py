@@ -22,15 +22,23 @@ set_cons2g_vlowcov = {
 	"readlengths" : [50],
     "numbers_of_reads" : [1500],
 	"error_type" : "replace",
-	"error_rates" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_vlowcov"}
+	
+set_cons2g_vvlowcov = {
+	"kmer_lengths" : [13,15,17,19,21],
+	"readlengths" : [50],
+    "numbers_of_reads" : [1000],
+	"error_type" : "replace",
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "cons_2g_vvlowcov"}
 	
 set_cons2g_lowcov = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlengths" : [50],
     "numbers_of_reads" : [2000],
 	"error_type" : "replace",
-	"error_rates" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_lowcov"}
 	
 set_cons2g_highcov = {
@@ -38,7 +46,7 @@ set_cons2g_highcov = {
 	"readlengths" : [50],
     "numbers_of_reads" : [4000],
 	"error_type" : "replace",
-	"error_rates" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_highcov"}
 	
 set_cons3g_r = {
@@ -62,4 +70,5 @@ allsettings = [ set_cons2g_lowcov,
 				set_cons2g_highcov,
 				set_cons3g_r,
 				set_cons3g_i,
-				set_cons2g_vlowcov]
+				set_cons2g_vlowcov,
+				set_cons2g_vvlowcov]
