@@ -344,8 +344,6 @@ examples_random_reads_1_smallreads_hc_r = {
 	"error_percentages" : [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "examples_random_reads_1"}
 	
-	
-
 set_conscons_shortreads_lowcov = {
 	"k_absolute_settings" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlength_settings" : [50],
