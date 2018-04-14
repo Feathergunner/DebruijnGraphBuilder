@@ -99,7 +99,7 @@ def experiment_iterative_low_coverage_removal(	outputdir,
 	
 	experiment_iterative_low_coverage_removal_singlecase(outputdir, dna, num_reads=num_reads, readlength=readlength, error_percentage=error_percentage, k=k, saveparts=saveparts, uniform_coveragedepth=uniform_coveragedepth)
 	
-def create_dataset(name, dimension_of_set=1, dna_length=5000, error_rate=15.0, num_of_reads=[250, 500, 750, 1000], k_lengths=[13,15,17,19]):
+def create_dataset(name, dimension_of_set=1, dna_length=5000, error_rate=15.0, num_of_reads=[250, 500, 750, 1000], k_lengths=[13,15,17,19], only_data=False):
 	outputdir = "Output/"+name	
 	if os.path.exists(outputdir):
 		print ("Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name!")
@@ -127,15 +127,16 @@ def create_dataset(name, dimension_of_set=1, dna_length=5000, error_rate=15.0, n
 	for p in threads:
 		p.join()
 		
-	print ("Compute BLAST ratings ...")
-	abl.init_blast_db(outputdir+"/dna.fasta")
-	# ensure that blast finishes:
-	time.sleep(2.0)
-	abl.compute_blast_results(outputdir, outputdir+"/dna.fasta")
-	
-	# draw plots:
-	print ("Construct statistic plots ...")
-	csp.construct_heatmaps_3g_lcfr(datadir=outputdir, basename="itlowcovrem", outputdir=outputdir+"/plots", number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rate, dna_length=dna_length, readlength=1000, dimension_of_set=dimension_of_set)
+	if not only_data:
+		print ("Compute BLAST ratings ...")
+		abl.init_blast_db(outputdir+"/dna.fasta")
+		# ensure that blast finishes:
+		time.sleep(2.0)
+		abl.compute_blast_results(outputdir, outputdir+"/dna.fasta")
+		
+		# draw plots:
+		print ("Construct statistic plots ...")
+		csp.construct_heatmaps_3g_lcfr(datadir=outputdir, basename="itlowcovrem", outputdir=outputdir+"/plots", number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rate, dna_length=dna_length, readlength=1000, dimension_of_set=dimension_of_set)
 
 if __name__ == "__main__":
 	dim = 1
@@ -145,6 +146,7 @@ if __name__ == "__main__":
 	ucd = True
 	fullset = False
 	testset = False
+	only_data = False
 	for arg in sys.argv[1:]:
 		arg_data = re.split(r'=', arg)
 		if arg_data[0] == "nr":
@@ -163,6 +165,8 @@ if __name__ == "__main__":
 			fullset = True
 		elif arg_data[0] == "testset":
 			testset = True
+		elif arg_data[0] == "onlydata":
+			only_data = True
 			
 	if k_lengths == []:
 		k_lengths = [15]
@@ -172,6 +176,6 @@ if __name__ == "__main__":
 			experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k, uniform_coveragedepth=ucd)
 	
 	elif testset:
-		create_dataset(name, dimension_of_set=dim, error_rate=5.0, num_of_reads=[50, 100, 150, 200])
+		create_dataset(name, dimension_of_set=dim, error_rate=5.0, num_of_reads=[50, 100, 150, 200], only_data=only_data)
 	else:
-		create_dataset(name, dimension_of_set=dim)
+		create_dataset(name, dimension_of_set=dim, only_data=only_data)
