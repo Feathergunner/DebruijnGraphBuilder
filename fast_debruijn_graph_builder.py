@@ -1976,7 +1976,7 @@ class GraphData:
 			# compute set of edges to remove in next iteration:
 			overlaps_with_small_evidence = [ov_id for ov_id in self.overlaps if self.overlaps[ov_id].get_evidence_weight() < min_cov_evidence]
 			# compute if graph decomposes:
-			graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, verbose=verbose)
+			graph_decomposees = self.check_if_graph_decomposes_edgeremoval(overlaps_with_small_evidence, relative_component_size_bound, verbose=verbose)
 			
 		print ("Removal of low evidence overlaps stopped at min_cov_evidence = " +str(min_cov_evidence))
 			
