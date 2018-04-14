@@ -97,37 +97,43 @@ def experiment_iterative_low_coverage_removal(	outputdir,
 	
 	experiment_iterative_low_coverage_removal_singlecase(outputdir, dna, num_reads=num_reads, readlength=readlength, error_percentage=error_percentage, k=k, saveparts=saveparts, uniform_coveragedepth=uniform_coveragedepth)
 	
-def create_dataset(name, dimension_of_set=1, dna_length=5000, error_rate=15.0, num_of_reads=[250, 500, 750, 1000], k_lengths=[13,15,17,19], only_data=False):
+def create_dataset(name, dimension_of_set=1, dna_length=5000, error_rate=15.0, num_of_reads=[500, 750, 1000, 1500], k_lengths=[11,13,15,17,19,21], scope="all"):
 	outputdir = "Output/"+name	
-	if os.path.exists(outputdir):
-		print ("Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name!")
-		return
-	os.mkdir(outputdir)
-	os.mkdir(outputdir+"/reads")
-	os.mkdir(outputdir+"/plots")
 	
-	print ("Generate dna ...")
-	# generate dna:
-	dna = dgen.generate_dna(dna_length)
-	# write dna to fasta:
-	dio.write_genome_to_file(dna, outputdir+"/dna.txt")
-	dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
-	
-	print ("Run experiments ...")
-	threads = []
-	for i in range(dimension_of_set):
-		for nr in num_of_reads:
-			for k in k_lengths:
-				p = Process(target=experiment_iterative_low_coverage_removal_singlecase, args=(outputdir, dna, nr, 1000, error_rate, k, True, True, str(i+1), True))
-				threads.append(p)
-				p.start()
+	if scope == "all" or scope == "data":
+		if os.path.exists(outputdir):
+			print ("Error! Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name.")
+			return
+		os.mkdir(outputdir)
+		os.mkdir(outputdir+"/reads")
+		os.mkdir(outputdir+"/plots")
 		
-	for p in threads:
-		p.join()
+		print ("Generate dna ...")
+		# generate dna:
+		dna = dgen.generate_dna(dna_length)
+		# write dna to fasta:
+		dio.write_genome_to_file(dna, outputdir+"/dna.txt")
+		dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
 		
-	if not only_data:
+		print ("Run experiments ...")
+		threads = []
+		for i in range(dimension_of_set):
+			for nr in num_of_reads:
+				for k in k_lengths:
+					p = Process(target=experiment_iterative_low_coverage_removal_singlecase, args=(outputdir, dna, nr, 1000, error_rate, k, True, True, str(i+1), True))
+					threads.append(p)
+					p.start()
+			
+		for p in threads:
+			p.join()
+		
+	if scope == "all" or scope == "stat":
 		import apply_blast as abl
 		import construct_stat_plots as csp
+		
+		if not os.path.exists(outputdir):
+			print ("Error! Data with the name '"+name+"' does not exist!")
+			return
 		
 		print ("Compute BLAST ratings ...")
 		abl.init_blast_db(outputdir+"/dna.fasta")
@@ -148,6 +154,8 @@ if __name__ == "__main__":
 	fullset = False
 	testset = False
 	only_data = False
+	only_stat = False
+	scope = "all"
 	for arg in sys.argv[1:]:
 		arg_data = re.split(r'=', arg)
 		if arg_data[0] == "nr":
@@ -167,7 +175,9 @@ if __name__ == "__main__":
 		elif arg_data[0] == "testset":
 			testset = True
 		elif arg_data[0] == "onlydata":
-			only_data = True
+			scope = "data"
+		elif arg_data[0] == "onlystat":
+			scope = "stat"
 			
 	if k_lengths == []:
 		k_lengths = [15]
@@ -177,6 +187,6 @@ if __name__ == "__main__":
 			experiment_iterative_low_coverage_removal("Output/"+name, num_reads=num_reads, k=k, uniform_coveragedepth=ucd)
 	
 	elif testset:
-		create_dataset(name, dimension_of_set=dim, error_rate=5.0, num_of_reads=[50, 100, 150, 200], only_data=only_data)
+		create_dataset(name, dimension_of_set=dim, error_rate=5.0, num_of_reads=[50, 100, 150, 200], scope=scope)
 	else:
-		create_dataset(name, dimension_of_set=dim, only_data=only_data)
+		create_dataset(name, dimension_of_set=dim, scope=scope)
