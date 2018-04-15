@@ -31,7 +31,8 @@ def experiment_consensus_singlecase(algorithm,
 									uniform_coverage	= True,
 									name_suffix			= "",
 									saveparts			= True,
-									logfile				= False):
+									logfile				= False,
+									new_reads			= True):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# outputdir: 		string
 	# dna: 				string
@@ -48,10 +49,11 @@ def experiment_consensus_singlecase(algorithm,
 	# name_suffix: 		string
 	# saveparts: 		boolean
 	# logfile: 			boolean
+	# new_reads:		booelan
 	# (*) only needed if algo == "covref"
 	
-	#print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
-										
+	
+	#print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))									
 	# initialize:
 	if not os.path.exists(outputdir):
 		os.mkdir(outputdir)
@@ -76,15 +78,19 @@ def experiment_consensus_singlecase(algorithm,
 		orig_stdout = sys.stdout
 		sys.stdout = open(outputdir+"/log_"+casename, 'w')
 		
-	# generate reads:
-	if error_type == "indel":
-		err = 0.0
-		eir = error_percentage
+	if not os.path.isfile(outputdir+"/reads/reads_"+casename+".txt") or new_reads:
+		# generate reads:
+		if error_type == "indel":
+			err = 0.0
+			eir = error_percentage
+		else:
+			err = error_percentage
+			eir = 0.0
+		reads = dgen.samplereads(dna, num_reads, replace_error_percentage=err,  indel_error_percentage=eir, read_length_mean=readlength, uniform_coveragedepth=uniform_coverage)
+		dio.write_reads_to_file(reads, outputdir+"/reads/reads_"+casename+".txt")
 	else:
-		err = error_percentage
-		eir = 0.0
-	reads = dgen.samplereads(dna, num_reads, replace_error_percentage=err,  indel_error_percentage=eir, read_length_mean=readlength, uniform_coveragedepth=uniform_coverage)
-	dio.write_reads_to_file(reads, outputdir+"/reads/reads_"+casename+".txt")
+		# get reads from file:
+		reads = dio.get_reads_from_file(outputdir+"/reads/reads_"+casename+".txt")
 	
 	# construct consensus:
 	if algorithm == "simplecons":
@@ -122,7 +128,7 @@ def create_dataset(	algorithm,
 					scope				= "all",
 					saveparts			= True,
 					threaded			= True,
-					overwrite			= False):
+					overwrite			= "nothing"):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# focus: 			"err_vs_k" or "rl_vs_k"
 	# name: 			sting
@@ -141,13 +147,13 @@ def create_dataset(	algorithm,
 	# scope:			"all", "data" or "stat"
 	# saveparts: 		boolean
 	# threaded:			boolean
-	# overwrite:		boolean
+	# overwrite:		"nothing", "results", or "everything"
 	
 	outputdir = "Output/"+name+"_d"+str(dimension_of_set)
 	
 	if scope == "all" or scope == "data":
 		if os.path.exists(outputdir):
-			if not overwrite:
+			if overwrite == "nothing":
 				print ("Error! Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name.")
 				return
 			else:
@@ -157,12 +163,15 @@ def create_dataset(	algorithm,
 			os.mkdir(outputdir+"/reads")
 			os.mkdir(outputdir+"/plots")
 		
-		print ("Generate dna ...")
-		# generate dna:
-		dna = dgen.generate_dna(dna_length)
-		# write dna to fasta:
-		dio.write_genome_to_file(dna, outputdir+"/dna.txt")
-		dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
+		if not os.path.isfile(outputdir+"/dna.txt") or overwrite == "everything":
+			print ("Generate new dna ...")
+			# generate dna:
+			dna = dgen.generate_dna(dna_length)
+			# write dna to fasta:
+			dio.write_genome_to_file(dna, outputdir+"/dna.txt")
+			dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
+		else:
+			dna = [c for c in dio.get_genome_from_file(outputdir+"/dna.txt")]
 		
 		print ("Run experiments ...")
 		threads = []
@@ -244,7 +253,7 @@ def create_dataset_from_setting(algorithm,
 	# dimension_of_set: int > 0
 	# scope:			"all", "data" or "stat"
 	# threaded:			boolean
-	# overwrite:		boolean
+	# overwrite:		"nothing", "results", or "everything"
 	
 	numrreads = setting["numbers_of_reads"]
 	readlength = setting["readlengths"][0]
@@ -293,7 +302,7 @@ def experiments(params):
 	scope = "all"
 	algo = "simplecons"
 	threaded = True
-	overwrite = False
+	overwrite = "nothing"
 	
 	for arg in params:
 		arg_data = re.split(r'=', arg)
@@ -326,7 +335,10 @@ def experiments(params):
 		elif arg_data[0] == "nothr":
 			threaded = False
 		elif arg_data[0] == "overwrite":
-			overwrite = True
+			if arg_data[1] == "res":
+				overwrite = "results"
+			elif arg_data[1] == "all":
+				overwrite = "everything"
 			
 		elif arg_data[0] == "set":
 			set_id = int(arg_data[1])
