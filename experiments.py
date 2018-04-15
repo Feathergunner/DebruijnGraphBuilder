@@ -14,7 +14,7 @@ import data_io as dio
 import dbg_consensus_construction as cc
 import fast_debruijn_graph_builder as fdgb
 
-max_num_threads = 20
+max_num_threads = 3
 
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
@@ -50,7 +50,7 @@ def experiment_consensus_singlecase(algorithm,
 	# logfile: 			boolean
 	# (*) only needed if algo == "covref"
 	
-	#print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
+	print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
 										
 	# initialize:
 	if not os.path.exists(outputdir):
@@ -102,7 +102,7 @@ def experiment_consensus_singlecase(algorithm,
 	
 	if logfile:
 		sys.stdout = orig_stdout
-	#print ("Finished case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
+	print ("Finished case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
 		
 def create_dataset(	algorithm,
 					focus,
@@ -166,15 +166,24 @@ def create_dataset(	algorithm,
 						p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
 						threads.append(p)
 						p.start()
+						#time.sleep(0.1)
 						
+						'''
 						if len(threads) > max_num_threads:
 							print ("thrad limit reached... wait")
 							for p in threads:
 								p.join()
 							threads = []
-							
+						'''
+						
+		time.sleep(1)
+		print ("joining all threads...")
 		for p in threads:
 			p.join()
+		for p in threads:
+			print (p.pid)
+			print (p.is_alive())
+			print (p.exitcode)
 		
 	if scope == "all" or scope == "stat":
 		import construct_stat_plots as csp	
