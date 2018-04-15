@@ -132,7 +132,7 @@ def construct_heatmaps_cons_3g(	datadir,
 					seqlengths[n_i][k_i] += gd.get_avg_seq_length()
 					covdepths[n_i][k_i] += gd.get_avg_coverage_depth()
 				else:
-					print ("no nodes in graph of case: er:"+str(error_rate)+", k:"+str(k))
+					print ("no nodes in graph of case: nr:"+str(nr)+", k:"+str(k))
 					seqlengths[n_i][k_i] += 0
 					covdepths[n_i][k_i] += 0
 					
@@ -269,7 +269,7 @@ def construct_heatmaps_cons_2g(	datadir,
 					blast_num_of_gaps[i_er][i_k] += num_gaps
 					blast_correct_fraction[i_er][i_k] += 100*num_correct_identities
 				else:
-					print ("no nodes in graph of case: er:"+str(error_rate)+", k:"+str(k))
+					print ("no nodes in graph of case: er:"+str(er)+", k:"+str(k))
 					avg_seqlengths[i_er][i_k] += 0
 					avg_covdepths[i_er][i_k] += 0
 					blast_identity_ratings[i_er][i_k] += 0
@@ -350,7 +350,7 @@ def construct_heatmaps_dbg(	datadir,
 					max_compsizes[i_er][i_k] += float(gd.get_maximum_component_size())/float(gd.num_of_nodes)
 		
 				else:
-					print ("no nodes in graph of case: er:"+str(error_rate)+", k:"+str(k))
+					print ("no nodes in graph of case: er:"+str(er)+", k:"+str(k))
 					avg_seqlengths[i_er][i_k] += 0
 					avg_covdepths[i_er][i_k] += 0
 					num_nodes[i_er][i_k] += 0
