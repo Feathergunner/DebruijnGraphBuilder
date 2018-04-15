@@ -14,7 +14,7 @@ import data_io as dio
 import dbg_consensus_construction as cc
 import fast_debruijn_graph_builder as fdgb
 
-max_num_threads = 10
+max_num_threads = 20
 
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
@@ -49,6 +49,8 @@ def experiment_consensus_singlecase(algorithm,
 	# saveparts: 		boolean
 	# logfile: 			boolean
 	# (*) only needed if algo == "covref"
+	
+	#print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
 										
 	# initialize:
 	if not os.path.exists(outputdir):
@@ -71,6 +73,7 @@ def experiment_consensus_singlecase(algorithm,
 		casename += "_"+name_suffix
 	if logfile:
 		# redirect stdout to file:
+		orig_stdout = sys.stdout
 		sys.stdout = open(outputdir+"/log_"+casename, 'w')
 		
 	# generate reads:
@@ -96,6 +99,10 @@ def experiment_consensus_singlecase(algorithm,
 		debruijn.get_csv_output(filename = outputdir+"/"+casename+".csv")
 	else:
 		print ("Error! Algorithm '"+algorithm+"' unknown!")
+	
+	if logfile:
+		sys.stdout = orig_stdout
+	#print ("Finished case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
 		
 def create_dataset(	algorithm,
 					focus,
@@ -155,16 +162,17 @@ def create_dataset(	algorithm,
 			for error_rate in error_rates:
 				for k in k_lengths:
 					for nr in num_of_reads:
+						#print ("Next case: "+str(i)+"_"+str(error_rate)+"_"+str(k)+"_"+str(nr))
 						p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
 						threads.append(p)
 						p.start()
 						
 						if len(threads) > max_num_threads:
+							print ("thrad limit reached... wait")
 							for p in threads:
 								p.join()
 							threads = []
 							
-			
 		for p in threads:
 			p.join()
 		
