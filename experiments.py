@@ -50,7 +50,7 @@ def experiment_consensus_singlecase(algorithm,
 	# logfile: 			boolean
 	# (*) only needed if algo == "covref"
 	
-	print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
+	#print ("Work on case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
 										
 	# initialize:
 	if not os.path.exists(outputdir):
@@ -102,7 +102,7 @@ def experiment_consensus_singlecase(algorithm,
 	
 	if logfile:
 		sys.stdout = orig_stdout
-	print ("Finished case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
+	#print ("Finished case: "+str(num_reads)+"_"+str(readlength)+"_"+str(error_percentage)+"_"+str(k))
 		
 def create_dataset(	algorithm,
 					focus,
@@ -158,6 +158,7 @@ def create_dataset(	algorithm,
 		
 		print ("Run experiments ...")
 		threads = []
+		threadset = {}
 		for i in range(dimension_of_set):
 			for error_rate in error_rates:
 				for k in k_lengths:
@@ -166,6 +167,7 @@ def create_dataset(	algorithm,
 						p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
 						threads.append(p)
 						p.start()
+						threadset[p.pid] = [error_rate, k]
 						#time.sleep(0.1)
 						
 						'''
@@ -177,13 +179,22 @@ def create_dataset(	algorithm,
 						'''
 						
 		time.sleep(1)
-		print ("joining all threads...")
-		for p in threads:
-			p.join()
-		for p in threads:
-			print (p.pid)
-			print (p.is_alive())
-			print (p.exitcode)
+		#print ("joining all threads...")
+		#for p in threads:
+		#	p.join()
+		#for p in threads:
+		#	print (p.pid)
+		#	print (p.is_alive())
+		#	print (p.exitcode)
+		
+		a = True
+		while(a):
+			a = False
+			for p in threads:
+				if p.is_alive():
+					a = True
+					time.sleep(1)
+					print threadset[p.pid]
 		
 	if scope == "all" or scope == "stat":
 		import construct_stat_plots as csp	
