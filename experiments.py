@@ -238,7 +238,7 @@ def experiments(params):
 	num_reads = []
 	k_lengths = []
 	error_rate = []
-	name = "defaultexperiment"
+	name = ""
 	ucd = True
 	fullset = False
 	testset = 0
@@ -300,6 +300,10 @@ def experiments(params):
 		if error_rate == []:
 			error_rate = [0.1]
 			
+		if name == "":
+			name = algo+"_experiment"
+		else:
+			name = algo+"_"+name
 		outputdir = "Output/"+str(name)
 		if not os.path.exists(outputdir):
 			os.mkdir(outputdir)
