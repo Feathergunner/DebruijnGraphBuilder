@@ -16,6 +16,23 @@ import fast_debruijn_graph_builder as fdgb
 
 max_num_threads = 30
 
+def construct_casename(algorithm, num_reads, readlength, error_rate, error_type, k, name_suffix=""):
+	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_rate)))
+	if error_type == "indel":
+		ep_string = "ei"+ep_string
+	else:
+		ep_string = "er"+ep_string
+		
+	if not algorithm == "noreconstruct":
+		casename = algorithm+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_"+ep_string+"_k"+str(k)
+	else:
+		casename = "basic_debruijn_graph"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_"+ep_string+"_k"+str(k)
+	
+	if not name_suffix == "":
+		casename += "_"+name_suffix
+	
+	return casename
+
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
 									dna,
@@ -59,20 +76,9 @@ def experiment_consensus_singlecase(algorithm,
 		os.mkdir(outputdir)
 	if not os.path.exists(outputdir+"/reads"):
 		os.mkdir(outputdir+"/reads")
-	
-	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_percentage)))
-	if error_type == "indel":
-		ep_string = "ei"+ep_string
-	else:
-		ep_string = "er"+ep_string
 		
-	if not algorithm == "noreconstruct":
-		casename = algorithm+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_"+ep_string+"_k"+str(k)
-	else:
-		casename = "basic_debruijn_graph"+"_rl"+str(readlength)+"_nr"+str(num_reads)+"_"+ep_string+"_k"+str(k)
-
-	if not name_suffix == "":
-		casename += "_"+name_suffix
+	casename = construct_casename(algorithm, num_reads, readlength, error_percentage, error_type, k, name_suffix)
+		
 	if logfile:
 		# redirect stdout to file:
 		orig_stdout = sys.stdout
@@ -147,7 +153,7 @@ def create_dataset(	algorithm,
 	# scope:			"all", "data" or "stat"
 	# saveparts: 		boolean
 	# threaded:			boolean
-	# overwrite:		"nothing", "results", or "everything"
+	# overwrite:		"nothing", "results", "everything", or "addmissing"
 	
 	outputdir = "Output/"+name+"_d"+str(dimension_of_set)
 	
@@ -156,6 +162,10 @@ def create_dataset(	algorithm,
 			if overwrite == "nothing":
 				print ("Error! Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name.")
 				return
+			elif overwrite == "addmissing":
+				print ("Add missing results to dataset with the name '"+name+"'.")
+			elif overwrite == "results":
+				print ("Overwriting results of dataset with the name '"+name+"' (keep dna and reads).")
 			else:
 				print ("Overwriting dataset with the name '"+name+"'!")
 		else:
@@ -180,21 +190,22 @@ def create_dataset(	algorithm,
 			for error_rate in error_rates:
 				for k in k_lengths:
 					for nr in num_of_reads:
-						if threaded:
-							#print ("Next case: "+str(i)+"_"+str(error_rate)+"_"+str(k)+"_"+str(nr))
-							p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
-							threads.append(p)
-							p.start()
-							threadset[p.pid] = [error_rate, k, i]
-							#time.sleep(0.1)
-							
-							if len(threads) > max_num_threads:
-								print ("thread limit reached... wait")
-								for p in threads:
-									p.join()
-								threads = []
-						else:
-							experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, False)
+						if not overwrite == "addmissing" or not os.path.isfile(outputdir+"/"+construct_casename(algorithm, nr, readlength, error_rate, error_type, k, str(i+1))+"_4_singlepath.fasta"):
+							print ("Next case: "+construct_casename(algorithm, nr, readlength, error_rate, error_type, k, str(i+1)))
+							if threaded:
+								p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
+								threads.append(p)
+								p.start()
+								threadset[p.pid] = [error_rate, k, i]
+								#time.sleep(0.1)
+								
+								if len(threads) > max_num_threads:
+									print ("thread limit reached... wait")
+									for p in threads:
+										p.join()
+									threads = []
+							else:
+								experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, False)
 		
 		'''
 		if threaded:	
@@ -254,7 +265,7 @@ def create_dataset_from_setting(algorithm,
 	# dimension_of_set: int > 0
 	# scope:			"all", "data" or "stat"
 	# threaded:			boolean
-	# overwrite:		"nothing", "results", or "everything"
+	# overwrite:		"nothing", "results", "everything", or "addmissing"
 	
 	numrreads = setting["numbers_of_reads"]
 	readlength = setting["readlengths"][0]
@@ -340,6 +351,8 @@ def experiments(params):
 				overwrite = "results"
 			elif arg_data[1] == "all":
 				overwrite = "everything"
+			elif arg_data[1] == "add":
+				overwrite = "addmissing"
 			else:
 				print ("Error! Parameter '"+arg_data[0]+"' unkown!")
 				return
