@@ -120,7 +120,9 @@ def create_dataset(	algorithm,
 					error_type			= "replace",
 					uniform_coverage	= True,
 					scope				= "all",
-					saveparts			= True):
+					saveparts			= True,
+					threaded			= True,
+					overwrite			= False):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# focus: 			"err_vs_k" or "rl_vs_k"
 	# name: 			sting
@@ -138,16 +140,22 @@ def create_dataset(	algorithm,
 	# uniform_coverage: boolean
 	# scope:			"all", "data" or "stat"
 	# saveparts: 		boolean
+	# threaded:			boolean
+	# overwrite:		boolean
 	
 	outputdir = "Output/"+name+"_d"+str(dimension_of_set)
 	
 	if scope == "all" or scope == "data":
 		if os.path.exists(outputdir):
-			print ("Error! Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name.")
-			return
-		os.mkdir(outputdir)
-		os.mkdir(outputdir+"/reads")
-		os.mkdir(outputdir+"/plots")
+			if not overwrite:
+				print ("Error! Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name.")
+				return
+			else:
+				print ("Overwriting dataset with the name '"+name+"'!")
+		else:
+			os.mkdir(outputdir)
+			os.mkdir(outputdir+"/reads")
+			os.mkdir(outputdir+"/plots")
 		
 		print ("Generate dna ...")
 		# generate dna:
@@ -163,38 +171,41 @@ def create_dataset(	algorithm,
 			for error_rate in error_rates:
 				for k in k_lengths:
 					for nr in num_of_reads:
-						#print ("Next case: "+str(i)+"_"+str(error_rate)+"_"+str(k)+"_"+str(nr))
-						p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
-						threads.append(p)
-						p.start()
-						threadset[p.pid] = [error_rate, k]
-						#time.sleep(0.1)
-						
-						'''
-						if len(threads) > max_num_threads:
-							print ("thrad limit reached... wait")
-							for p in threads:
-								p.join()
-							threads = []
-						'''
-						
-		time.sleep(1)
-		#print ("joining all threads...")
-		#for p in threads:
-		#	p.join()
-		#for p in threads:
-		#	print (p.pid)
-		#	print (p.is_alive())
-		#	print (p.exitcode)
-		
-		a = True
-		while(a):
-			a = False
-			for p in threads:
-				if p.is_alive():
-					a = True
-					time.sleep(1)
-					print threadset[p.pid]
+						if threaded:
+							#print ("Next case: "+str(i)+"_"+str(error_rate)+"_"+str(k)+"_"+str(nr))
+							p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True))
+							threads.append(p)
+							p.start()
+							threadset[p.pid] = [error_rate, k, i]
+							#time.sleep(0.1)
+							
+							'''
+							if len(threads) > max_num_threads:
+								print ("thrad limit reached... wait")
+								for p in threads:
+									p.join()
+								threads = []
+							'''
+						else:
+							experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, False)
+		if threaded:	
+			time.sleep(1)
+			#print ("joining all threads...")
+			#for p in threads:
+			#	p.join()
+			#for p in threads:
+			#	print (p.pid)
+			#	print (p.is_alive())
+			#	print (p.exitcode)
+			
+			a = True
+			while(a):
+				a = False
+				for p in threads:
+					if p.is_alive():
+						a = True
+						time.sleep(1)
+						print threadset[p.pid]
 		
 	if scope == "all" or scope == "stat":
 		import construct_stat_plots as csp	
@@ -225,17 +236,22 @@ def create_dataset(	algorithm,
 def create_dataset_from_setting(algorithm,
 								setting,
 								dimension_of_set,
-								scope):
+								scope,
+								threaded,
+								overwrite):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# setting:			a dictionary from datasets_experiments.py
 	# dimension_of_set: int > 0
 	# scope:			"all", "data" or "stat"
+	# threaded:			boolean
+	# overwrite:		boolean
 	
 	numrreads = setting["numbers_of_reads"]
 	readlength = setting["readlengths"][0]
 	k_lengths = setting["kmer_lengths"]
 	error_rates = setting["error_rates"]
 	error_type = setting["error_type"]
+	
 	if not algorithm == "noreconstruct":
 		name = algorithm+"_"+setting["name"]
 	else:
@@ -258,7 +274,8 @@ def create_dataset_from_setting(algorithm,
 					error_type=error_type,
 					uniform_coverage=True,
 					scope=scope,
-					saveparts=True)
+					saveparts=True,
+					threaded=threaded)
 	
 def experiments(params):
 	set_id = 0
@@ -274,6 +291,8 @@ def experiments(params):
 	only_stat = False
 	scope = "all"
 	algo = "simplecons"
+	threaded = True
+	overwrite = False
 	
 	for arg in params:
 		arg_data = re.split(r'=', arg)
@@ -303,6 +322,10 @@ def experiments(params):
 			ucd = True
 		elif arg_data[0] == "noucd":
 			ucd = False
+		elif arg_data[0] == "nothr":
+			threaded = False
+		elif arg_data[0] == "overwrite":
+			overwrite = True
 			
 		elif arg_data[0] == "set":
 			set_id = int(arg_data[1])
@@ -351,12 +374,12 @@ def experiments(params):
 	
 	elif testset > 0:
 		if testset == 2:
-			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope)
+			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope, overwrite=overwrite)
 		if testset == 3:
-			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope)
+			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope, overwrite=overwrite)
 	elif set_id in range(1, len(dse.allsettings)+1):
 		setting = dse.allsettings[set_id-1]
-		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope)
+		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite)
 		
 if __name__ == "__main__":
 	experiments(sys.argv[1:])
