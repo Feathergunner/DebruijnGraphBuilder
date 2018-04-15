@@ -339,6 +339,9 @@ def experiments(params):
 				overwrite = "results"
 			elif arg_data[1] == "all":
 				overwrite = "everything"
+			else:
+				print ("Error! Parameter '"+arg_data[0]+"' unkown!")
+				return
 			
 		elif arg_data[0] == "set":
 			set_id = int(arg_data[1])
