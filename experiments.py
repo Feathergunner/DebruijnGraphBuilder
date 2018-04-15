@@ -275,7 +275,8 @@ def create_dataset_from_setting(algorithm,
 					uniform_coverage=True,
 					scope=scope,
 					saveparts=True,
-					threaded=threaded)
+					threaded=threaded,
+					overwrite=overwrite)
 	
 def experiments(params):
 	set_id = 0
