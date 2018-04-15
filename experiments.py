@@ -188,15 +188,15 @@ def create_dataset(	algorithm,
 							threadset[p.pid] = [error_rate, k, i]
 							#time.sleep(0.1)
 							
-							'''
 							if len(threads) > max_num_threads:
 								print ("thrad limit reached... wait")
 								for p in threads:
 									p.join()
 								threads = []
-							'''
 						else:
 							experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, False)
+		
+		'''
 		if threaded:	
 			time.sleep(1)
 			#print ("joining all threads...")
@@ -215,6 +215,7 @@ def create_dataset(	algorithm,
 						a = True
 						time.sleep(1)
 						print threadset[p.pid]
+		'''
 		
 	if scope == "all" or scope == "stat":
 		import construct_stat_plots as csp	
