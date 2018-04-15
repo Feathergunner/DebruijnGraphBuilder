@@ -1924,6 +1924,7 @@ class GraphData:
 		# check if largest component has siginificant size:
 		if len(components) == 0:
 			max_comp_size = 0
+			second_max_comp_size = 0
 		else:
 			max_comp_size = 0
 			second_max_comp_size = 0
