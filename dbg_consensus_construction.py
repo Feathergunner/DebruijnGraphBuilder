@@ -43,10 +43,15 @@ def cons_locofere(	reads,
 					name,
 					saveparts=True):
 	debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=False)
+	
+	#if saveparts:
+	#	debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0_unsimplified.asqg")
+	#	debruijn.get_csv_output(filename = outputdir+"/"+name+"_0_unsimplified.csv")
+	
 	# basic reduction:
-	debruijn.remove_tips()
+	debruijn.remove_tips(verbose=False)
 	debruijn.remove_insignificant_overlaps(2, keep_relevant_tips=True) # <- removes all overlaps with coverage 1
-	debruijn.remove_tips()
+	debruijn.remove_tips(verbose=False)
 	#debruijn.contract_unique_overlaps()
 	debruijn.remove_single_sequence_components()
 	if saveparts:
@@ -61,7 +66,7 @@ def cons_locofere(	reads,
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_2_ovred.csv")
 	
 	# reduction step 2: remove low coverage sequences:
-	debruijn.remove_low_coverage_sequences_until_graph_decomposes(relative_component_size_bound=0.01)
+	debruijn.remove_low_coverage_sequences_until_graph_decomposes(relative_component_size_bound=0.01, verbose=False)
 	debruijn.reduce_to_single_largest_component()
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_3_seqred.asqg")

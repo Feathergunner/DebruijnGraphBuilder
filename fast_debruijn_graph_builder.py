@@ -310,12 +310,21 @@ class GraphData:
 				s.print_data()
 				print("")
 	
-	def get_relevant_sequences(self):
+	def get_relevant_sequences(self, only_id=False, verbose=False):
 		# returns list of all sequences with set relevance flag
+		if verbose:
+			print ("Total number of sequences: "+str(len(self.sequences)))
 		sequences = []
 		for s in self.sequences:
 			if s.is_relevant:
-				sequences.append(s.sequence)
+				if verbose:
+					print ("Found relevant sequence: "+str(s.id))
+				if not only_id:
+					sequences.append(s.sequence)
+				else:
+					sequences.append(s.id)
+		if verbose:
+			print ("Found "+str(len(sequences))+" relevant sequences")
 		return sequences
 		
 	def get_kmerdata_from_reads(self, verbose = False):
@@ -685,6 +694,7 @@ class GraphData:
 			
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
+		total_num_removed_tips = 0
 		iteration = 0
 		while (num_of_removed_tips != 0 and len(self.tips_to_delete) !=0):
 			iteration += 1
@@ -724,7 +734,10 @@ class GraphData:
 									tip_reads = self.get_read_of_sequences([seq])
 									self.removed_reads += tip_reads
 							
+			total_num_removed_tips += num_of_removed_tips
 			self.contract_unique_overlaps(verbose = 0)
+		if verbose:
+			print ("Total number of removed tips: "+str(total_num_removed_tips))
 
 	def unrestricted_tip_removal(self, only_simply_connected_tips=True, verbose=False):
 		# removes tips of any lengths, but only if the node to which it is connected has another adjacent node in the same direction, which also has to be longer than the tip.
@@ -1980,7 +1993,7 @@ class GraphData:
 			
 		print ("Removal of low evidence overlaps stopped at min_cov_evidence = " +str(min_cov_evidence))
 			
-	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.05, max_coverage_depth_to_remove = 20, verbose=False):
+	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.05, max_coverage_depth_to_remove = 50, verbose=False):
 		# remove sequences with low coverage depth until graph decomposes
 		print ("Remove low-coverage sequences until graph decomposes:")
 		
@@ -1991,15 +2004,15 @@ class GraphData:
 		# initilization:
 		min_cov_depth = 2
 		# compute partition of nodes into tips and non-tips (hubs)
-		self.get_tip_classification()
+		self.get_tip_classification(verbose=verbose)
 		# compute set of nodes to remove in next iteration, do not consider tips:
-		small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth and seq.id in self.hubs]
-		
+		relevant_sequences = self.get_relevant_sequences(only_id=True, verbose=verbose)
+		small_cov_depth_sequences = [id for id in relevant_sequences if self.sequences[id].is_relevant and self.sequences[id].get_total_weight() < min_cov_depth and id in self.hubs]
 			
 		# increase cutoff bound untill there is at least one sequence to remove:
-		while len(small_cov_depth_sequences) == 0:
+		while len(small_cov_depth_sequences) == 0 and min_cov_depth < max_coverage_depth_to_remove:
 			min_cov_depth += 1
-			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth]
+			small_cov_depth_sequences = [id for id in relevant_sequences if self.sequences[id].is_relevant and self.sequences[id].get_total_weight() < min_cov_depth and id in self.hubs]
 		
 		# compute if graph decomposes:
 		graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)	
@@ -2011,10 +2024,11 @@ class GraphData:
 				
 			# remove the sequences:
 			self.remove_insignificant_sequences(minimal_weight=min_cov_depth, do_contraction=True, keep_relevant_tips=True)
+			relevant_sequences = [id for id in relevant_sequences if id >= min_cov_depth]
 			# remove decomposed components:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
-			self.remove_tips()
+			self.remove_tips(verbose=verbose)
 			# simplify graph:
 			#self.contract_unique_overlaps()
 	
@@ -2026,12 +2040,12 @@ class GraphData:
 				min_cov_depth += 1
 				
 			# compute set of nodes to remove in next iteration, do not consider tips:
-			small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth and seq.id in self.hubs]
+			small_cov_depth_sequences = [id for id in relevant_sequences if self.sequences[id].is_relevant and self.sequences[id].get_total_weight() < min_cov_depth and id in self.hubs]
 			
 			# increase cutoff bound untill there is at least one sequence to remove:
-			while len(small_cov_depth_sequences) == 0:
+			while len(small_cov_depth_sequences) == 0 and min_cov_depth < max_coverage_depth_to_remove:
 				min_cov_depth += 1
-				small_cov_depth_sequences = [seq.id for seq in self.sequences if seq.is_relevant and seq.get_total_weight() < min_cov_depth]
+				small_cov_depth_sequences = [id for id in relevant_sequences if self.sequences[id].is_relevant and self.sequences[id].get_total_weight() < min_cov_depth and id in self.hubs]
 			
 			# compute if graph decomposes:
 			graph_decomposees = self.check_if_graph_decomposes_seqremove(small_cov_depth_sequences, relative_component_size_bound, verbose=verbose)
