@@ -14,7 +14,7 @@ import data_io as dio
 import dbg_consensus_construction as cc
 import fast_debruijn_graph_builder as fdgb
 
-max_num_threads = 3
+max_num_threads = 30
 
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
