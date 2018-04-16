@@ -956,6 +956,7 @@ class GraphData:
 			print "Construct longest assembly ordering labels..."
 	
 		# initialize:
+		max_num_of_cycles_before_abort = 1000
 		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
 			if verbose > 0:
 				print ("Error! Start sequence does not exist! Start with first sequence instead.")
@@ -989,7 +990,7 @@ class GraphData:
 		was_visited = [False for seq in self.sequences]
 		priority_queue = Queue.PriorityQueue()
 		priority_queue.put((0,self.sequences[start_sequence].id))
-		while not priority_queue.empty() and number_of_cycles_found <= 1000:
+		while not priority_queue.empty() and number_of_cycles_found < max_num_of_cycles_before_abort: 
 			current_data = priority_queue.get()
 			current_node_id = current_data[1]
 			current_position = -current_data[0]
@@ -1069,7 +1070,7 @@ class GraphData:
 						print ("updated label of node "+str(seq_id)+": "+str(predecessor_label))
 					priority_queue.put((-predecessor_label, seq_id))
 		
-		if number_of_cycles_found < 1000:
+		if number_of_cycles_found < max_num_of_cycles_before_abort:
 			if verbose == 2:
 				for seq in self.sequences:
 					if seq.is_relevant:

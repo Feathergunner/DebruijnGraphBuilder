@@ -407,10 +407,12 @@ def parse_input_start_experiments(params):
 					experiment_consensus_singlecase(algo, outputdir, dna, nr, 50, er, k)
 	
 	elif testset > 0:
+		if overwrite == "nothing":
+			overwrite = "all"
 		if testset == 2:
-			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=all, arclevel=arclevel)
+			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
 		if testset == 3:
-			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=all, arclevel=arclevel)
+			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
 	elif set_id in range(1, len(dse.allsettings)+1):
 		setting = dse.allsettings[set_id-1]
 		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
