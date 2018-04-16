@@ -177,7 +177,6 @@ def create_dataset(	algorithm,
 		else:
 			os.mkdir(outputdir)
 			os.mkdir(outputdir+"/reads")
-			os.mkdir(outputdir+"/plots")
 		
 		if not os.path.isfile(outputdir+"/dna.txt") or overwrite == "everything":
 			print ("Generate new dna ...")
@@ -218,6 +217,7 @@ def create_dataset(	algorithm,
 			p.join()
 
 		if not arclevel == "none":
+			print ("Create tar archive:")
 			tf = tarfile.open(outputdir+"/"+name+"_d"+str(dimension_of_set)+".tar", 'w')
 			for filename in os.listdir(outputdir):
 				if not "tar" in filename:
@@ -226,9 +226,12 @@ def create_dataset(	algorithm,
 			tf.close()
 					
 	if scope == "all" or scope == "stat":
-		import construct_stat_plots as csp	
 		# draw plots:
+		
+		import construct_stat_plots as csp	
+		os.mkdir(outputdir+"/plots")
 		print ("Construct statistic plots ...")
+		
 		if not algorithm == "noreconstruct":
 			import apply_blast as abl
 			
