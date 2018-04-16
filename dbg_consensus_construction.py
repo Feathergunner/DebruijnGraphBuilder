@@ -44,14 +44,22 @@ def cons_locofere(	reads,
 					saveparts=True):
 	debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=False)
 	
-	#if saveparts:
-	#	debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0_unsimplified.asqg")
-	#	debruijn.get_csv_output(filename = outputdir+"/"+name+"_0_unsimplified.csv")
+	if saveparts:
+		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0_unsimplified.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0_unsimplified.csv")
 	
 	# basic reduction:
-	debruijn.remove_tips(verbose=False)
+	debruijn.remove_tips(verbose=True)
+	'''
+	if saveparts:
+		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0b_tiprm.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0b_tiprm.csv")
 	debruijn.remove_insignificant_overlaps(2, keep_relevant_tips=True) # <- removes all overlaps with coverage 1
-	debruijn.remove_tips(verbose=False)
+	if saveparts:
+		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0c_ov2rm.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0c_ov2rm.csv")
+	debruijn.remove_tips(verbose=True)
+	'''
 	#debruijn.contract_unique_overlaps()
 	debruijn.remove_single_sequence_components()
 	if saveparts:
