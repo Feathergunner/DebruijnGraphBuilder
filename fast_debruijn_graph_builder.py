@@ -2070,7 +2070,7 @@ class GraphData:
 		tips_deletable = []
 		tips_keep = []
 		
-		visited_sequences = [False for seq in self.sequences]
+		visited_sequences = {seqid : False for seqid in self.get_relevant_sequences(only_id=True)}
 		for i in range(len(self.sequences)):
 			if not self.sequences[i].is_relevant:
 				visited_sequences[i] = True
