@@ -26,7 +26,7 @@ set_cons2g_vlowcov = {
 	"name" : "cons_2g_vlowcov"}
 	
 set_cons2g_vvlowcov = {
-	"kmer_lengths" : [13,15,17,19,21],
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlengths" : [50],
     "numbers_of_reads" : [1000],
 	"error_type" : "replace",
@@ -50,7 +50,7 @@ set_cons2g_highcov = {
 	"name" : "cons_2g_highcov"}
 	
 set_cons3g_r = {
-	"kmer_lengths" : [11,13,15,17,19,21],
+	"kmer_lengths" : [13,15,17,19,21],
 	"readlengths" : [1000],
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "replace",
@@ -58,7 +58,7 @@ set_cons3g_r = {
 	"name" : "cons_3g_replace"}
 	
 set_cons3g_i = {
-	"kmer_lengths" : [11,13,15,17,19,21],
+	"kmer_lengths" : [13,15,17,19,21],
 	"readlengths" : [1000],
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "indel",
