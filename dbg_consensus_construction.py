@@ -7,29 +7,30 @@ def simplecons(	reads,
 				k,
 				outputdir,
 				name,
-				saveparts=True):
+				saveparts	= True,
+				verbose		= False):
 	debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False)
 	
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_1_base.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_1_base.csv")
 	
-	debruijn.remove_tips_simple()
+	debruijn.remove_tips_simple(verbose=verbose)
 	
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_2_posttipremoval.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_2_posttipremoval.csv")
 	
-	debruijn.remove_insignificant_sequences()
-	debruijn.remove_single_sequence_components()
+	debruijn.remove_insignificant_sequences(verbose=verbose)
+	debruijn.remove_single_sequence_components(verbose=verbose)
 	
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_3_postsequenceremoval.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_3_postsequenceremoval.csv")
 	
-	debruijn.reduce_to_single_largest_component()
-	debruijn.greedy_construct_assembly_ordering_labels()
-	debruijn.reduce_to_single_path_max_weight()
+	debruijn.reduce_to_single_largest_component(verbose=verbose)
+	debruijn.greedy_construct_assembly_ordering_labels(verbose=verbose)
+	debruijn.reduce_to_single_path_max_weight(verbose=verbose)
 	debruijn.contract_unique_overlaps()
 	
 	debruijn.get_asqg_output(filename = outputdir+"/"+name+"_4_singlepath.asqg")
@@ -41,7 +42,8 @@ def cons_locofere(	reads,
 					k,
 					outputdir,
 					name,
-					saveparts=True):
+					saveparts = True,
+					verbose   = False):
 	debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=False)
 	
 	if saveparts:
@@ -49,7 +51,7 @@ def cons_locofere(	reads,
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0_unsimplified.csv")
 	
 	# basic reduction:
-	debruijn.remove_tips(verbose=False)
+	debruijn.remove_tips()#(verbose=verbose)
 	'''
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0b_tiprm.asqg")
@@ -61,28 +63,28 @@ def cons_locofere(	reads,
 	debruijn.remove_tips(verbose=True)
 	'''
 	#debruijn.contract_unique_overlaps()
-	debruijn.remove_single_sequence_components()
+	debruijn.remove_single_sequence_components()#(verbose=verbose)
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_1_base.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_1_base.csv")
 	
 	# reduction step 1: remove low coverage overlaps
-	debruijn.remove_low_evidence_overlaps_until_graph_decomposes(relative_component_size_bound=0.01)
-	debruijn.reduce_to_single_largest_component()
+	debruijn.remove_low_evidence_overlaps_until_graph_decomposes(relative_component_size_bound=0.01, verbose=verbose)
+	debruijn.reduce_to_single_largest_component(verbose=verbose)
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_2_ovred.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_2_ovred.csv")
 	
 	# reduction step 2: remove low coverage sequences:
-	debruijn.remove_low_coverage_sequences_until_graph_decomposes(relative_component_size_bound=0.01, verbose=False)
-	debruijn.reduce_to_single_largest_component()
+	debruijn.remove_low_coverage_sequences_until_graph_decomposes(relative_component_size_bound=0.01, verbose=verbose)
+	debruijn.reduce_to_single_largest_component(verbose=verbose)
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_3_seqred.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_3_seqred.csv")
 	
 	# construct a consensus sequence:
-	debruijn.construct_assembly_ordering_labels()
-	debruijn.reduce_to_single_path_max_weight()
+	debruijn.construct_assembly_ordering_labels(verbose=verbose)
+	debruijn.reduce_to_single_path_max_weight(verbose=verbose)
 	debruijn.contract_unique_overlaps()
 	debruijn.get_asqg_output(filename = outputdir+"/"+name+"_4_singlepath.asqg")
 	debruijn.get_csv_output(filename = outputdir+"/"+name+"_4_singlepath.csv")
@@ -96,7 +98,8 @@ def cons_covref(reads,
 				k_merge,#			=[13,15,17],
 				outputdir,
 				name,
-				saveparts=True):
+				saveparts	= True,
+				verbose   	= False):
 	debruijn_master = fdgb.GraphData(reads, k=k_base, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=True)
 	debruijn_master.reduce_to_single_largest_component()
 	debruijn_master.construct_assembly_ordering_labels()
@@ -143,7 +146,7 @@ def cons_covref(reads,
 			parts_reduced_sequences += [seq.sequence+","+str(seq.get_total_weight()) for seq in debruijn_part.sequences if seq.is_relevant]
 				
 			# construct a consensus sequence of this de Bruijn graph:
-			debruijn_part.construct_assembly_ordering_labels(verbose=1)
+			debruijn_part.construct_assembly_ordering_labels()
 			debruijn_part.reduce_to_single_path_max_weight()
 			debruijn_part.contract_unique_overlaps()
 			
