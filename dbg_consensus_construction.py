@@ -49,7 +49,7 @@ def cons_locofere(	reads,
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0_unsimplified.csv")
 	
 	# basic reduction:
-	debruijn.remove_tips(verbose=True)
+	debruijn.remove_tips(verbose=False)
 	'''
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0b_tiprm.asqg")
