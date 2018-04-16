@@ -7,6 +7,7 @@ import sys
 import tarfile
 from multiprocessing import Process
 import time
+import timeit
 
 import datasets_experiments as dse
 import data_gen as dgen
@@ -424,7 +425,14 @@ def parse_input_start_experiments(params):
 					for er in error_rate:
 						if overwrite == "results":
 							new_reads = False
+							
+						t_start = 0
+						t_stop = 0
+	
+						t_start = timeit.default_timer()
 						experiment_consensus_singlecase(algo, outputdir, dna, nr, rl, er, k, new_reads=new_reads, verbose=verbose)
+						t_stop = timeit.default_timer()
+						print ("Running time of algorithm: " + str("%.2f" % (t_stop - t_start)))
 	
 	elif testset > 0:
 		if overwrite == "nothing":
