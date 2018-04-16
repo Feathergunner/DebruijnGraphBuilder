@@ -363,7 +363,7 @@ def parse_input_start_experiments(params):
 		elif arg_data[0] == "noucd":
 			ucd = False
 		elif arg_data[0] == "nothr":
-			verbose_level = False
+			threaded = False
 		elif arg_data[0] == "verbose":
 			verbose = True
 		elif arg_data[0] == "overwrite":
