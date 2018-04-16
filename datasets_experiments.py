@@ -64,11 +64,26 @@ set_cons3g_i = {
 	"error_type" : "indel",
 	"error_rates" : [15.0],
 	"name" : "cons_3g_indel"}
+		
+set_cons3g_r_lowcov = {
+	"kmer_lengths" : [13,15,17,19,21],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [50,100,200,500],
+	"error_type" : "replace",
+	"error_rates" : [15.0],
+	"name" : "cons_3g_replace"}
 	
+set_cons3g_i_lowcov = {
+	"kmer_lengths" : [13,15,17,19,21],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [50,100,200,500],
+	"error_type" : "indel",
+	"error_rates" : [15.0],
+	"name" : "cons_3g_indel"}
 
 allsettings = [ set_cons2g_lowcov,
 				set_cons2g_highcov,
-				set_cons3g_r,
-				set_cons3g_i,
+				set_cons3g_r_lowcov,
+				set_cons3g_i_lowcov,
 				set_cons2g_vlowcov,
 				set_cons2g_vvlowcov]
