@@ -5,9 +5,10 @@ import fast_debruijn_graph_builder as fdgb
 
 def simplecons(	reads,
 				k,
-				outputdir,
-				name,
+				name		= "",
+				outputdir	= ".",
 				saveparts	= True,
+				saveresult	= True,
 				verbose		= False):
 	debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False)
 	
@@ -33,17 +34,21 @@ def simplecons(	reads,
 	debruijn.reduce_to_single_path_max_weight(verbose=verbose)
 	debruijn.contract_unique_overlaps()
 	
-	debruijn.get_asqg_output(filename = outputdir+"/"+name+"_4_singlepath.asqg")
-	debruijn.get_csv_output(filename = outputdir+"/"+name+"_4_singlepath.csv")
-	debruijn.write_sequences_to_file(filename = outputdir+"/"+name+"_4_singlepath.fasta", asfasta = True)
+	if saveresult:
+		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_4_singlepath.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+name+"_4_singlepath.csv")
+		debruijn.write_sequences_to_file(filename = outputdir+"/"+name+"_4_singlepath.fasta", asfasta = True)
+	
+	return debruijn.get_relevant_sequences()[0]
 
 # low coverage feature removal:
 def cons_locofere(	reads,
 					k,
-					outputdir,
-					name,
-					saveparts = True,
-					verbose   = False):
+					name		= "",
+					outputdir	= ".",
+					saveparts 	= True,
+					saveresult	= True,
+					verbose		= False):
 	debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=False)
 	
 	if saveparts:
@@ -52,17 +57,7 @@ def cons_locofere(	reads,
 	
 	# basic reduction:
 	debruijn.remove_tips()#(verbose=verbose)
-	'''
-	if saveparts:
-		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0b_tiprm.asqg")
-		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0b_tiprm.csv")
-	debruijn.remove_insignificant_overlaps(2, keep_relevant_tips=True) # <- removes all overlaps with coverage 1
-	if saveparts:
-		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_0c_ov2rm.asqg")
-		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0c_ov2rm.csv")
-	debruijn.remove_tips(verbose=True)
-	'''
-	#debruijn.contract_unique_overlaps()
+	
 	debruijn.remove_single_sequence_components()#(verbose=verbose)
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_1_base.asqg")
@@ -86,10 +81,14 @@ def cons_locofere(	reads,
 	debruijn.construct_assembly_ordering_labels(verbose=verbose)
 	debruijn.reduce_to_single_path_max_weight(verbose=verbose)
 	debruijn.contract_unique_overlaps()
-	debruijn.get_asqg_output(filename = outputdir+"/"+name+"_4_singlepath.asqg")
-	debruijn.get_csv_output(filename = outputdir+"/"+name+"_4_singlepath.csv")
-	debruijn.write_sequences_to_file(filename = outputdir+"/"+name+"_4_singlepath.fasta", asfasta = True)
+	
+	if saveresult:
+		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_4_singlepath.asqg")
+		debruijn.get_csv_output(filename = outputdir+"/"+name+"_4_singlepath.csv")
+		debruijn.write_sequences_to_file(filename = outputdir+"/"+name+"_4_singlepath.fasta", asfasta = True)
 
+	return debruijn.get_relevant_sequences()[0]
+	
 def cons_covref(reads,
 				number_of_parts,#	=50,
 				overlap,#			=10,
