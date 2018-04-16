@@ -968,7 +968,7 @@ class GraphData:
 			print "Construct longest assembly ordering labels..."
 	
 		# initialize:
-		max_num_of_cycles_before_abort = 1000
+		max_num_of_cycles_before_abort = 10
 		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
 			if verbose > 0:
 				print ("Error! Start sequence does not exist! Start with first sequence instead.")
