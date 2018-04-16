@@ -135,7 +135,7 @@ def create_dataset(	algorithm,
 					saveparts			= True,
 					threaded			= True,
 					overwrite			= "nothing",
-					createarc			= True):
+					arclevel			= "results"):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# focus: 			"err_vs_k" or "rl_vs_k"
 	# name: 			sting
@@ -155,7 +155,7 @@ def create_dataset(	algorithm,
 	# saveparts: 		boolean
 	# threaded:			boolean
 	# overwrite:		"nothing", "results", "everything", or "addmissing"
-	# createarc:		boolean
+	# arclevel:			"all", "reults, or "none"
 	
 	# (*) these are only used if algo == "covref"
 	
@@ -217,11 +217,12 @@ def create_dataset(	algorithm,
 		for p in threads:
 			p.join()
 
-		if createarc:
+		if not arclevel == "none":
 			tf = tarfile.open(outputdir+"/"+name+"_d"+str(dimension_of_set)+".tar", 'w')
 			for filename in os.listdir(outputdir):
 				if not "tar" in filename:
-					tf.add(outputdir+"/"+filename)
+					if "dna" in filename or "singlepath" in filename or arclevel == "all":
+						tf.add(outputdir+"/"+filename)
 			tf.close()
 					
 	if scope == "all" or scope == "stat":
@@ -255,13 +256,15 @@ def create_dataset_from_setting(algorithm,
 								dimension_of_set,
 								scope,
 								threaded,
-								overwrite):
+								overwrite,
+								arclevel):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# setting:			a dictionary from datasets_experiments.py
 	# dimension_of_set: int > 0
 	# scope:			"all", "data" or "stat"
 	# threaded:			boolean
 	# overwrite:		"nothing", "results", "everything", or "addmissing"
+	# arclevel:			"all", "reults, or "none"
 	
 	numrreads = setting["numbers_of_reads"]
 	readlength = setting["readlengths"][0]
@@ -294,7 +297,7 @@ def create_dataset_from_setting(algorithm,
 					saveparts=True,
 					threaded=threaded,
 					overwrite=overwrite,
-					createarc=True)
+					arclevel=arclevel)
 	
 def parse_input_start_experiments(params):
 	set_id = 0
@@ -309,6 +312,7 @@ def parse_input_start_experiments(params):
 	algo = "simplecons"
 	threaded = True
 	overwrite = "nothing"
+	arclevel = "results"
 	
 	for arg in params:
 		arg_data = re.split(r'=', arg)
@@ -331,6 +335,11 @@ def parse_input_start_experiments(params):
 				algo = "covref"
 			elif arg_data[1] == "dbg":
 				algo = "noreconstruct"
+			else:
+				print ("Error! Parameter '"+arg_data[1]+"' unknown!")
+		elif arg_data[0] == "arc":
+			if arg_data[1] in ["results", "all", "none"]:
+				arclevel = arg_data[1]
 			else:
 				print ("Error! Parameter '"+arg_data[1]+"' unknown!")
 			
@@ -398,12 +407,12 @@ def parse_input_start_experiments(params):
 	
 	elif testset > 0:
 		if testset == 2:
-			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=all)
+			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=all, arclevel=arclevel)
 		if testset == 3:
-			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=all)
+			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=all, arclevel=arclevel)
 	elif set_id in range(1, len(dse.allsettings)+1):
 		setting = dse.allsettings[set_id-1]
-		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite)
+		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
 		
 if __name__ == "__main__":
 	parse_input_start_experiments(sys.argv[1:])
