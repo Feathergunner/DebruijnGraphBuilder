@@ -5,6 +5,8 @@ import os
 import re
 import sys
 import tarfile
+import gzip
+import shutil
 from multiprocessing import Process
 import time
 import timeit
@@ -223,12 +225,15 @@ def create_dataset(	algorithm,
 
 		if not arclevel == "none":
 			print ("Create tar archive:")
-			tf = tarfile.open(outputdir+"/"+name+"_d"+str(dimension_of_set)+".tar", 'w')
+			tarfilename = outputdir+"/"+name+"_d"+str(dimension_of_set)+".tar"
+			tf = tarfile.open(tarfilename, 'w')
 			for filename in os.listdir(outputdir):
 				if not "tar" in filename:
 					if "dna" in filename or "singlepath" in filename or arclevel == "all":
 						tf.add(outputdir+"/"+filename)
 			tf.close()
+			with open(tarfilename, 'rb') as f_in, gzip.open(tarfilename+".gz", 'wb') as f_out:
+				shutil.copyfileobj(f_in, f_out)
 					
 	if scope == "all" or scope == "stat":
 		# draw plots:
