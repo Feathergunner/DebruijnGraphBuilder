@@ -35,6 +35,16 @@ def construct_casename(algorithm, num_reads, readlength, error_rate, error_type,
 		casename += "_"+name_suffix
 	
 	return casename
+	
+def check_if_dna_has_repeats_of_min_length(dna, replength):
+	# heuristic way to check if dna has no repeats:
+	# if reconstruction with simple algo from error-free reads works, we can assume that there is no cycle
+	reads = dgen.samplereads(dna, 1000, replace_error_percentage=0, indel_error_percentage=0, read_length_mean=1000, uniform_coveragedepth=True)
+	recons = cc.simplecons(reads, replength, saveparts=False, saveresult=False, verbose=False)
+	if len(recons) > 0.99*len(dna):
+		return True
+	else:
+		return False
 
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
@@ -105,9 +115,9 @@ def experiment_consensus_singlecase(algorithm,
 	
 	# construct consensus:
 	if algorithm == "simplecons":
-		cc.simplecons(reads, k, outputdir, casename, saveparts, verbose=verbose)
+		cc.simplecons(reads, k, casename, outputdir, saveparts, saveresult=True, verbose=verbose)
 	elif algorithm == "locofere":
-		cc.cons_locofere(reads, k, outputdir, casename, saveparts, verbose=verbose)
+		cc.cons_locofere(reads, k, casename, outputdir, saveparts, saveresult=True, verbose=verbose)
 	elif algorithm == "covref":
 		cs.cons_covref(reads, number_of_parts, overlap, k, k_part, k_merge, outputdir, casename, saveparts, verbose=verbose)
 	elif algorithm == "noreconstruct":
@@ -188,7 +198,11 @@ def create_dataset(	algorithm,
 		if not os.path.isfile(outputdir+"/dna.txt") or overwrite == "everything":
 			print ("Generate new dna ...")
 			# generate dna:
-			dna = dgen.generate_dna(dna_length)
+			correct_dna = False
+			while not correct_dna:
+				dna = dgen.generate_dna(dna_length)
+				correct_dna = check_if_dna_has_repeats_of_min_length(dna, 11)
+			
 			# write dna to fasta:
 			dio.write_genome_to_file(dna, outputdir+"/dna.txt")
 			dio.write_sequences_to_fasta([''.join(dna)], outputdir+"/dna.fasta")
