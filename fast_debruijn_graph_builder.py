@@ -696,12 +696,14 @@ class GraphData:
 		num_of_removed_tips = -1
 		total_num_removed_tips = 0
 		iteration = 0
-		while (num_of_removed_tips != 0 and len(self.tips_to_delete) !=0):
+		possible_tips = -1
+		while (num_of_removed_tips != 0 and possible_tips !=0):
 			iteration += 1
 			print ("Current iteration of tip removal: "+str(iteration))
 			if remove_only_unique_tips:
 				# initialize list of tips to keep:
-				self.get_tip_classification(verbose=False)
+				self.get_tip_classification(verbose=verbose)
+				possible_tips = len(self.tips_to_delete)
 			num_of_removed_tips = 0
 			for seq in self.sequences:
 				if seq.is_relevant:
