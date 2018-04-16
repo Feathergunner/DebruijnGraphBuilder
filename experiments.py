@@ -304,10 +304,7 @@ def parse_input_start_experiments(params):
 	error_rate = []
 	name = ""
 	ucd = True
-	fullset = False
 	testset = 0
-	only_data = False
-	only_stat = False
 	scope = "all"
 	algo = "simplecons"
 	threaded = True
