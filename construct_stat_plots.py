@@ -188,7 +188,7 @@ def construct_heatmaps_cons_3g(	datadir,
 									xlabels = "Kmer length",
 									ylabels = "Number of reads",
 									titles = ["Average length of reconstructed sequences", "Average coverage depth of sequences", "Average BLAST identity rating in %", "Average number of gaps", "Total fraction of correct bases in %"],
-									cellformats = ['.1f', '.1f', '.2f', '.2f', '.1f'],
+									cellformats = ['.1f', '.1f', '.2f', '.2f', '.2f'],
 									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]],
 									cmaps = ["gnuplot", "gnuplot", "gnuplot", "gnuplot_r", "gnuplot"])
 	
@@ -295,7 +295,7 @@ def construct_heatmaps_cons_2g(	datadir,
 									xlabels = "Kmer length",
 									ylabels = "Error rate in %",
 									titles = ["Average length of reconstructed sequences", "Average coverage depth of sequences", "Average BLAST identity rating in %", "Average number of gaps", "Total fraction of correct bases in %"],
-									cellformats = ['.1f', '.1f', '.2f', '.2f', '.1f'],
+									cellformats = ['.1f', '.1f', '.2f', '.2f', '.2f'],
 									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]],
 									cmaps = ["gnuplot", "gnuplot", "gnuplot", "gnuplot_r", "gnuplot"])
 									
