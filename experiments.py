@@ -363,11 +363,12 @@ def parse_input_start_experiments(params):
 		elif arg_data[0] == "set":
 			set_id = int(arg_data[1])
 		elif arg_data[0] == "test":
-			testset = 2
-		elif arg_data[0] == "testgen2":
-			testset = 2
-		elif arg_data[0] == "testgen3":
-			testset = 3
+			if arg_data[1] == "":
+				testset = 2
+			elif int(arg_data[1]) in [2,3]:
+				testset = int(arg_data[1])
+			else:
+				print ("Error! Parameter '"+arg_data[0]+"' unkown!")
 		elif arg_data[0] == "onlydata":
 			scope = "data"
 		elif arg_data[0] == "onlystat":
