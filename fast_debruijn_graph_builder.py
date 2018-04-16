@@ -78,6 +78,12 @@ class ContigSequence:
 	def get_node_degree(self):
 		return len(self.overlaps_out) + len(self.overlaps_in)
 		
+	def get_node_degree_in(self):
+		return len(self.overlaps_in)
+		
+	def get_node_degree_out(self):
+		return len(self.overlaps_out)
+		
 	def check_if_overlap_exists(self, other_sequence_id):
 		# checks whether this sequence has a common instance of SequenceOverlap with another sequence
 		if other_sequence_id in self.overlaps_out:
@@ -123,6 +129,9 @@ class SequenceOverlap:
 		
 	def get_evidence_weight(self):
 		return self.evidence_weights
+		
+	def get_adjacent_sequences(self):
+		return [self.contig_sequence_1, self.contig_sequence_2]
 
 	def print_data(self):
 		print ("Overlap "+str(self.id))
@@ -1845,32 +1854,48 @@ class GraphData:
 			overlap_weight_distribution[ovw] += 1
 		
 		return overlap_weight_distribution
-			
+	
 	def check_if_graph_decomposes_edgeremoval(self, overlaps_to_remove, relative_component_size_bound=0.05, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
 		print ("Checking if graph decomposes ...")
 		
-		# same code as in get_components, but ignores overlaps that are defined by overlaps_to_remove:
+		# optimization: create dictionary with an entry for every overlap, set to True if overlap is in overlaps_to_remove
+		ov_to_rem = {ov_id: False for ov_id in self.overlaps}
+		for ov_id in overlaps_to_remove:
+			ov_to_rem[ov_id] = True
+		
 		components = []
+		# same code as in get_components, but ignores overlaps that are defined by overlaps_to_remove aka ov_to_rem:
 		relevant_sequences = self.get_relevant_sequences(only_id=True)
+		num_visited_nodes = 0
 		visited_sequences = {id: False for id in relevant_sequences}
+		num_visits = {id: 0 for id in relevant_sequences}
 		for seq_id in relevant_sequences:
+			if num_visited_nodes%1000 == 0:
+				meta.print_progress(num_visited_nodes, len(relevant_sequences))
+			#num_visited_nodes += 1
 			if not visited_sequences[seq_id]:
 				current_comp = []
 				seq_stack = [seq_id]
 				visited_sequences[seq_id] = True
 				while len(seq_stack) > 0:
+					if num_visited_nodes%1000 == 0:
+						meta.print_progress(num_visited_nodes, len(relevant_sequences))
 					current_seq_id = seq_stack[0]
 					seq_stack.pop(0)
+					num_visited_nodes += 1
 					current_comp.append(current_seq_id)
 					for adj_seq in self.sequences[current_seq_id].overlaps_out:
-						if not visited_sequences[adj_seq] and not self.sequences[current_seq_id].overlaps_out[adj_seq] in overlaps_to_remove:
+						if not visited_sequences[adj_seq] and not ov_to_rem[self.sequences[current_seq_id].overlaps_out[adj_seq]]:
 							seq_stack.append(adj_seq)
 							visited_sequences[adj_seq] = True
+							num_visits[adj_seq] += 1
 					for adj_seq in self.sequences[current_seq_id].overlaps_in:
-						if not visited_sequences[adj_seq] and not self.sequences[current_seq_id].overlaps_in[adj_seq] in overlaps_to_remove:
+						if not visited_sequences[adj_seq] and not ov_to_rem[self.sequences[current_seq_id].overlaps_in[adj_seq]]:
 							seq_stack.append(adj_seq)
-							visited_sequences[adj_seq] = True					
+							visited_sequences[adj_seq] = True
+							num_visits[adj_seq] += 1
+							
 				components.append(current_comp)
 		
 		# check if largest component has siginificant size:
@@ -1902,7 +1927,7 @@ class GraphData:
 			return True, components
 		else:
 			return False, components
-			
+
 	def check_if_graph_decomposes_seqremove(self, sequences_to_remove, relative_component_size_bound=0.05, verbose=False):
 		# method checks if graph decomposes into multiple major components, if a set of overlaps is removed
 		if verbose:
@@ -1917,8 +1942,11 @@ class GraphData:
 			if verbose:
 				print ("Number of Components after sequences have been removed: 1 (only tips will be removed)")
 			return False
+			
+		# optimization: it is faster to find (and remove) keys in a large dict than in a list
+		seq_to_rem = {seq_id: True for seq_id in sequences_to_remove}
 		
-		# same code as in get_components, but ignores sequences that are defined by sequences_to_remove:
+		# same code as in get_components, but ignores sequences that are defined by sequences_to_remove aka seq_to_rem:
 		components = []
 		relevant_sequences = self.get_relevant_sequences(only_id=True)
 		visited_sequences = {id: False for id in relevant_sequences}
@@ -1932,11 +1960,11 @@ class GraphData:
 					seq_stack.pop(0)
 					current_comp.append(current_seq_id)
 					for adj_seq in self.sequences[current_seq_id].overlaps_out:
-						if not visited_sequences[adj_seq] and not adj_seq in sequences_to_remove:
+						if not visited_sequences[adj_seq] and not adj_seq in seq_to_rem:
 							seq_stack.append(adj_seq)
 							visited_sequences[adj_seq] = True
 					for adj_seq in self.sequences[current_seq_id].overlaps_in:
-						if not visited_sequences[adj_seq] and not adj_seq in sequences_to_remove:
+						if not visited_sequences[adj_seq] and not adj_seq in seq_to_rem:
 							seq_stack.append(adj_seq)
 							visited_sequences[adj_seq] = True					
 				components.append(current_comp)
