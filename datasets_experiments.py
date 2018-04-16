@@ -12,7 +12,7 @@ testset_2g = {
 testset_3g = {
 	"kmer_lengths" : [13,15,17,19],
 	"readlengths" : [1000],
-    "numbers_of_reads" : [100,200,300,500],
+    "numbers_of_reads" : [50,100,200],
 	"error_type" : "indel",
 	"error_rates" : [5.0],
 	"name" : "testset_3g"}
@@ -49,21 +49,21 @@ set_cons2g_highcov = {
 	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_highcov"}
 	
-set_cons3g_r = {
+set_cons3g_r_hc = {
 	"kmer_lengths" : [13,15,17,19,21],
 	"readlengths" : [1000],
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "replace",
 	"error_rates" : [15.0],
-	"name" : "cons_3g_replace"}
+	"name" : "cons_3g_replace_hc"}
 	
-set_cons3g_i = {
+set_cons3g_i_hc = {
 	"kmer_lengths" : [13,15,17,19,21],
 	"readlengths" : [1000],
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
-	"name" : "cons_3g_indel"}
+	"name" : "cons_3g_indel_hc"}
 		
 set_cons3g_r_lowcov = {
 	"kmer_lengths" : [13,15,17,19,21],
@@ -83,7 +83,7 @@ set_cons3g_i_lowcov = {
 
 allsettings = [ set_cons2g_lowcov,
 				set_cons2g_highcov,
-				set_cons3g_r_lowcov,
-				set_cons3g_i_lowcov,
+				set_cons3g_r_hc,
+				set_cons3g_i_hc,
 				set_cons2g_vlowcov,
 				set_cons2g_vvlowcov]
