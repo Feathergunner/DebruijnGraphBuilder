@@ -9,13 +9,24 @@ testset_2g = {
 	"error_rates" : [0.0, 0.1, 0.25, 0.5],
 	"name" : "testset_2g"}
 	
-testset_3g = {
+testset_3g_locofere = {
 	"kmer_lengths" : [13,15,17,19],
 	"readlengths" : [1000],
     "numbers_of_reads" : [50,100,200],
 	"error_type" : "indel",
 	"error_rates" : [5.0],
-	"name" : "testset_3g"}
+	"name" : "testset_3g_lcfr"}
+	
+testset_3g_covref = {
+	"kmer_lengths" : [13,15,17],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [50,100,200],
+	"error_type" : "indel",
+	"error_rates" : [5.0],
+	"k_base" : 25,
+	"number_of_parts" : [10,25,50],
+	"overlaps" : [5,10,20],
+	"name" : "testset_3g_cr"}
 
 set_cons2g_vlowcov = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
@@ -55,6 +66,9 @@ set_cons3g_r_hc = {
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "replace",
 	"error_rates" : [15.0],
+	"k_base" : 25,
+	"number_of_parts" : [10,25,50],
+	"overlaps" : [5,10,20],
 	"name" : "cons_3g_replace_hc"}
 	
 set_cons3g_i_hc = {
@@ -63,23 +77,10 @@ set_cons3g_i_hc = {
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
+	"k_base" : 25,
+	"number_of_parts" : [10,25,50],
+	"overlaps" : [5,10,20],
 	"name" : "cons_3g_indel_hc"}
-		
-set_cons3g_r_lowcov = {
-	"kmer_lengths" : [13,15,17,19,21],
-	"readlengths" : [1000],
-    "numbers_of_reads" : [50,100,200,500],
-	"error_type" : "replace",
-	"error_rates" : [15.0],
-	"name" : "cons_3g_replace"}
-	
-set_cons3g_i_lowcov = {
-	"kmer_lengths" : [13,15,17,19,21],
-	"readlengths" : [1000],
-    "numbers_of_reads" : [50,100,200,500],
-	"error_type" : "indel",
-	"error_rates" : [15.0],
-	"name" : "cons_3g_indel"}
 
 allsettings = [ set_cons2g_lowcov,
 				set_cons2g_highcov,
