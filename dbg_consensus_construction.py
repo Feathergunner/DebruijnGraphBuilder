@@ -1,6 +1,8 @@
 #!usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+
 import fast_debruijn_graph_builder as fdgb
 
 def simplecons(	reads,
@@ -92,14 +94,18 @@ def cons_locofere(	reads,
 def cons_covref(reads,
 				number_of_parts,#	=50,
 				overlap,#			=10,
-				k_base,#			=25,
+				k_master,#			=25,
 				k_part,#			=15,
 				k_merge,#			=[13,15,17],
 				outputdir,
 				name,
 				saveparts	= True,
 				verbose   	= False):
-	debruijn_master = fdgb.GraphData(reads, k=k_base, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=True)
+	
+	if saveparts and not os.path.exists(outputdir+"/parts"):
+		os.mkdir(outputdir+"/parts")
+				
+	debruijn_master = fdgb.GraphData(reads, k=k_master, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=True)
 	debruijn_master.reduce_to_single_largest_component()
 	debruijn_master.construct_assembly_ordering_labels()
 			
@@ -170,21 +176,21 @@ def cons_covref(reads,
 			debruijn_merge_sequences.contract_unique_overlaps()
 			debruijn_merge_sequences.remove_single_sequence_components()
 			
-			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_base.asqg")
-			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_base.csv")
+			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_1_base.asqg")
+			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_1_base.csv")
 			
 			debruijn_merge_sequences.remove_low_evidence_overlaps_until_graph_decomposes()
 			debruijn_merge_sequences.reduce_to_single_largest_component()
 			debruijn_merge_sequences.remove_low_coverage_sequences_until_graph_decomposes()
 			debruijn_merge_sequences.reduce_to_single_largest_component()
 			
-			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_reduced.asqg")
-			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_reduced.csv")
+			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_2_reduced.asqg")
+			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_2_reduced.csv")
 			
 			debruijn_merge_sequences.construct_assembly_ordering_labels()
 			debruijn_merge_sequences.reduce_to_single_path_max_weight()
 			debruijn_merge_sequences.contract_unique_overlaps()
 			
-			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_singlepath.asqg")
-			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_singlepath.csv")
-			debruijn_merge_sequences.write_sequences_to_file(filename = outputdir+"/"+casename_merge+"_singlepath.fasta", asfasta = True)
+			debruijn_merge_sequences.get_asqg_output(filename = outputdir+"/"+casename_merge+"_3_singlepath.asqg")
+			debruijn_merge_sequences.get_csv_output(filename = outputdir+"/"+casename_merge+"_3_singlepath.csv")
+			debruijn_merge_sequences.write_sequences_to_file(filename = outputdir+"/"+casename_merge+"_3_singlepath.fasta", asfasta = True)

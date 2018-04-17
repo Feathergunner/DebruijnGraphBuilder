@@ -55,7 +55,7 @@ def experiment_consensus_singlecase(algorithm,
 									k,
 									number_of_parts		= 30,
 									overlap				= 5,
-									k_part				= 15,
+									k_master			= 25,
 									k_merge				= [13,15,17],
 									error_type			= "replace",
 									uniform_coverage	= True,
@@ -73,7 +73,7 @@ def experiment_consensus_singlecase(algorithm,
 	# k: 				int > 0
 	# num_parts:		int > 0	(*)
 	# overlap:			int > 0	(*)
-	# k_part:			int > 0	(*)
+	# k_master:			int > 0	(*)
 	# k_merge:			list of ints > 0 (*)
 	# error_type: 		"replace", "indel"
 	# uniform_coverage: boolean
@@ -119,7 +119,7 @@ def experiment_consensus_singlecase(algorithm,
 	elif algorithm == "locofere":
 		cc.cons_locofere(reads, k, casename, outputdir, saveparts, saveresult=True, verbose=verbose)
 	elif algorithm == "covref":
-		cs.cons_covref(reads, number_of_parts, overlap, k, k_part, k_merge, outputdir, casename, saveparts, verbose=verbose)
+		cc.cons_covref(reads, number_of_parts, overlap, k_master, k, k_merge, outputdir, casename, saveparts, verbose=verbose)
 	elif algorithm == "noreconstruct":
 		debruijn = fdgb.GraphData(reads, k=k, directed_reads=True, load_weights=False, reduce_data=False, simplify_graph=True, construct_labels=False, remove_tips=False, verbose=verbose)
 		debruijn.get_asqg_output(filename = outputdir+"/"+casename+".asqg")
@@ -142,8 +142,7 @@ def create_dataset(	algorithm,
 					k_lengths			= [11,13,15,17,19,21],
 					number_of_parts		= 30,
 					overlap				= 5,
-					k_part				= 15,
-					k_merge				= [13,15,17],
+					k_master			= 25,
 					error_type			= "replace",
 					uniform_coverage	= True,
 					scope				= "all",
@@ -163,8 +162,7 @@ def create_dataset(	algorithm,
 	# k_lengths:		list of ints > 0
 	# num_parts:		int > 0	(*)
 	# overlap:			int > 0	(*)
-	# k_part:			int > 0	(*)
-	# k_merge:			list of ints > 0 (*)
+	# k_master:			int > 0	(*)
 	# error_type: 		"replace" or "indel"
 	# uniform_coverage: boolean
 	# scope:			"all", "data" or "stat"
@@ -197,11 +195,11 @@ def create_dataset(	algorithm,
 		
 		if not os.path.isfile(outputdir+"/dna.txt") or overwrite == "everything":
 			print ("Generate new dna ...")
-			# generate dna:
+			# generate dna, check that dna contains (most likely) no repeat of length >=11
 			correct_dna = False
 			while not correct_dna:
 				dna = dgen.generate_dna(dna_length)
-				correct_dna = check_if_dna_has_repeats_of_min_length(dna, 11)
+				correct_dna = check_if_dna_has_repeats_of_min_length(dna, 13)
 			
 			# write dna to fasta:
 			dio.write_genome_to_file(dna, outputdir+"/dna.txt")
@@ -219,7 +217,7 @@ def create_dataset(	algorithm,
 						if not overwrite == "addmissing" or not os.path.isfile(outputdir+"/"+construct_casename(algorithm, nr, readlength, error_rate, error_type, k, str(i+1))+"_4_singlepath.fasta"):
 							#print ("Next case: "+construct_casename(algorithm, nr, readlength, error_rate, error_type, k, str(i+1)))
 							if threaded:
-								p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_part, k_merge, error_type, uniform_coverage, str(i+1), saveparts, True, newreads, verbose))
+								p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, error_rate, k, number_of_parts, overlap, k_master, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, True, newreads, verbose))
 								threads.append(p)
 								p.start()
 								threadset[p.pid] = [error_rate, k, i]
@@ -270,12 +268,26 @@ def create_dataset(	algorithm,
 			time.sleep(2.0)
 			abl.compute_blast_results(outputdir, outputdir+"/dna.fasta")
 			
-			if focus == "err_vs_k":
-				csp.construct_heatmaps_cons_2g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-			elif focus == "rl_vs_k":
-				csp.construct_heatmaps_cons_3g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rates[0], dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-			else:
-				print ("Error! Focus '"+focus+"' unknown!")
+			if algorithm == "simplecons" or algorithm == "locofere":
+				filename_suffix = "_4_singlepath"
+				outputname_suffix = ""
+				if focus == "err_vs_k":
+					csp.construct_heatmaps_cons_2g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+				elif focus == "rl_vs_k":
+					csp.construct_heatmaps_cons_3g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rates[0], error_type=error_type ,dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+				else:
+					print ("Error! Focus '"+focus+"' unknown!")
+			elif algorithm == "covref":
+				for km in k_lengths:
+					filename_suffix = "_merge_consensus_km"+str(km)+"_3_singlepath"
+					outputname_suffix = "_km"+str(km)
+					if focus == "err_vs_k":
+						csp.construct_heatmaps_cons_2g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+					elif focus == "rl_vs_k":
+						csp.construct_heatmaps_cons_3g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+					else:
+						print ("Error! Focus '"+focus+"' unknown!")
+			
 		else:
 			csp.construct_heatmaps_dbg(datadir=outputdir, basename="basic_debruijn_graph", outputdir=outputdir+"/plots", number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
 			
@@ -339,7 +351,7 @@ def parse_input_start_experiments(params):
 	error_rate = []
 	name = ""
 	ucd = True
-	testset = 0
+	test = False
 	scope = "all"
 	algo = "simplecons"
 	threaded = True
@@ -400,12 +412,7 @@ def parse_input_start_experiments(params):
 		elif arg_data[0] == "set":
 			set_id = int(arg_data[1])
 		elif arg_data[0] == "test":
-			if arg_data[1] == "":
-				testset = 2
-			elif int(arg_data[1]) in [2,3]:
-				testset = int(arg_data[1])
-			else:
-				print ("Error! Parameter '"+arg_data[0]+"' unkown!")
+			test = True
 		elif arg_data[0] == "onlydata":
 			scope = "data"
 		elif arg_data[0] == "onlystat":
@@ -414,7 +421,7 @@ def parse_input_start_experiments(params):
 			print ("Error! Parameter '"+arg_data[0]+"' unkown!")
 			return
 	
-	if set_id == 0 and testset == 0:
+	if set_id == 0 and  not test:
 		if k_lengths == []:
 			k_lengths = [15]
 		if num_reads == []:
@@ -453,13 +460,17 @@ def parse_input_start_experiments(params):
 						t_stop = timeit.default_timer()
 						print ("Running time of algorithm: " + str("%.2f" % (t_stop - t_start)))
 	
-	elif testset > 0:
+	elif test:
 		if overwrite == "nothing":
 			overwrite = "all"
-		if testset == 2:
-			create_dataset_from_setting("simplecons", dse.testset_2g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
-		if testset == 3:
-			create_dataset_from_setting("locofere", dse.testset_3g, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
+		if algo == "simplecons":
+			testset = dse.testset_2g
+		elif algo == "locofere":
+			testset = dse.testset_3g_locofere
+		elif algo == "covref":
+			testset = dse.testset_3g_locofere
+		create_dataset_from_setting(algo, testset, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
+		
 	elif set_id in range(1, len(dse.allsettings)+1):
 		setting = dse.allsettings[set_id-1]
 		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)

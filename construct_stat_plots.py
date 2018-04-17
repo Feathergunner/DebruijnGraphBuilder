@@ -88,9 +88,12 @@ def construct_consensus_heatmaps(	outputdir,
 def construct_heatmaps_cons_3g(	datadir,
 								basename,
 								outputdir,
+								filename_suffix,
+								outputname_suffix	= "",
 								number_of_reads		= [500, 750, 1000, 1500],
 								k_values			= [11,13,15,17,19,21],
 								error_rate			= 15.0,
+								error_type			= "indel",
 								dna_length			= 5000,
 								readlength			= 1000,
 								dimension_of_set	= 1):
@@ -106,6 +109,11 @@ def construct_heatmaps_cons_3g(	datadir,
 	
 	# initialize:
 	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_rate)))
+	if error_type == "replace":
+		ep_string = "er"+ep_string
+	else:
+		ep_string = "ei"+ep_string
+	
 	casename_gen_base = basename+"_rl"+str(readlength)
 	
 	seqlengths = np.zeros((len(number_of_reads), len(k_values)))
@@ -119,9 +127,7 @@ def construct_heatmaps_cons_3g(	datadir,
 			for n_i in range(len(number_of_reads)):
 				k = k_values[k_i]
 				nr = number_of_reads[n_i]
-				#filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_ei"+ep_string+"_k"+str(k)+"_rcsb0.1_singlepath"
-				filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_ei"+ep_string+"_k"+str(k)+"_"+str(i+1)+"_4_singlepath"
-				#filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_ei"+ep_string+"_newtipremoval_test_k"+str(k)+"_rcsb0.5_singlepath"
+				filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)+filename_suffix
 				
 				gd = []
 				gd = ga.GraphData(error_percentage=error_rate, readlength=readlength, num_of_reads=nr, k_value=k, nodes=[])		
@@ -180,7 +186,7 @@ def construct_heatmaps_cons_3g(	datadir,
 	blast_correct_fraction /= dimension_of_set
 	
 	construct_consensus_heatmaps(	outputdir = outputdir,
-									outputfilename = casename_gen_base,
+									outputfilename = casename_gen_base+outputname_suffix,
 									data = [seqlengths, covdepths, blast_identity_ratings, blast_num_of_gaps, blast_correct_fraction],
 									datanames = ["seqlength", "covdepth", "identityrating", "numofgaps", "correctbasess"],
 									xticks = k_values,
@@ -195,6 +201,8 @@ def construct_heatmaps_cons_3g(	datadir,
 def construct_heatmaps_cons_2g(	datadir,
 								basename,
 								outputdir,
+								filename_suffix,
+								outputname_suffix	= "",
 								number_of_reads		= 2000,
 								k_values			= [13,15,17,19],
 								error_rates			= [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
@@ -221,7 +229,7 @@ def construct_heatmaps_cons_2g(	datadir,
 					ep_string = "ei"+ep_string
 				else:
 					ep_string = "er"+ep_string
-				filename_base = datadir+"/"+casename_gen_base+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)+"_4_singlepath"
+				filename_base = datadir+"/"+casename_gen_base+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)+filename_suffix
 				
 				gd = []
 				gd = ga.GraphData(error_percentage=er, readlength=readlength, num_of_reads=number_of_reads, k_value=k, nodes=[])		
@@ -282,7 +290,7 @@ def construct_heatmaps_cons_2g(	datadir,
 	blast_num_of_gaps /= dimension_of_set
 	blast_correct_fraction /= dimension_of_set
 				
-	outputfilename = casename_gen_base
+	outputfilename = casename_gen_base+outputname_suffix
 	if not error_type == "replace":
 		outputfilename += "_indel"
 		
@@ -302,6 +310,8 @@ def construct_heatmaps_cons_2g(	datadir,
 def construct_heatmaps_dbg(	datadir,
 							basename,
 							outputdir,
+							filename_suffix,
+							outputname_suffix	= "",
 							number_of_reads		= 2000,
 							k_values			= [13,15,17,19],
 							error_rates			= [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
@@ -332,7 +342,7 @@ def construct_heatmaps_dbg(	datadir,
 					ep_string = "ei"+ep_string
 				else:
 					ep_string = "er"+ep_string
-				filename_base = datadir+"/"+casename_gen_base+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)
+				filename_base = datadir+"/"+casename_gen_base+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)+filename_suffix
 				
 				gd = []
 				gd = ga.GraphData(error_percentage=er, readlength=readlength, num_of_reads=number_of_reads, k_value=k, nodes=[])		
@@ -369,7 +379,7 @@ def construct_heatmaps_dbg(	datadir,
 	avg_compsizes /= dimension_of_set
 	max_compsizes /= dimension_of_set
 				
-	outputfilename = casename_gen_base
+	outputfilename = casename_gen_base+outputname_suffix
 	if not error_type == "replace":
 		outputfilename += "_indel"
 		
