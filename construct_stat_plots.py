@@ -85,27 +85,18 @@ def construct_consensus_heatmaps(	outputdir,
 		ax.set(ylabel=ylabels, xlabel=xlabels)
 		plt.savefig(outputdir+"\\"+outputfilename+"_"+datanames[i]+".png", dpi=dpi_setting)
 
-def construct_heatmaps_cons_3g(	datadir,
-								basename,
-								outputdir,
-								filename_suffix,
-								outputname_suffix	= "",
-								number_of_reads		= [500, 750, 1000, 1500],
-								k_values			= [11,13,15,17,19,21],
-								error_rate			= 15.0,
-								error_type			= "indel",
-								dna_length			= 5000,
-								readlength			= 1000,
-								dimension_of_set	= 1):
-	#datadir = "Output/examples_for_thesis/chapter_thirdgen/itlowcovrem_exp_thesis"
-	#datadir = "..\\tex\\tex_thesis\\img\\examples_thirdgen_reconstruction_lowcovremove"
-	#datadir = "Output/itlowcovrem_exp_0413"
-	#basename = "itlowcovrem"
-	#outputdir = "Output/itlowcovrem_exp_0413"
-	
-	#datadir = "Output/examples_for_thesis/example_thirdgen_reconstruct_edgeremove_test0412"
-	#outputdir = "Output/examples_for_thesis/example_thirdgen_reconstruct_edgeremove_test0412"
-	#basename = "thirdgen_reconstruct"
+def construct_heatmaps_cons_rlvsk(	datadir,
+									basename,
+									outputdir,
+									filename_suffix,
+									outputname_suffix	= "",
+									number_of_reads		= [500, 750, 1000, 1500],
+									k_values			= [11,13,15,17,19,21],
+									error_rate			= 15.0,
+									error_type			= "indel",
+									dna_length			= 5000,
+									readlength			= 1000,
+									dimension_of_set	= 1):
 	
 	# initialize:
 	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_rate)))
@@ -197,19 +188,136 @@ def construct_heatmaps_cons_3g(	datadir,
 									cellformats = ['.1f', '.1f', '.2f', '.2f', '.2f'],
 									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]],
 									cmaps = ["gnuplot", "gnuplot", "gnuplot", "gnuplot_r", "gnuplot"])
+
+def construct_heatmaps_cons_ovvsnp(	datadir,
+									basename,
+									outputdir,
+									filename_suffix,
+									outputname_suffix	= "",
+									number_of_reads		= 500,
+									k_base				= 25,
+									k_part				= 15,
+									k_merge				= 13,
+									number_of_parts 	= [10,20,30,50],
+									overlaps			= [2,5,10,20],
+									error_rate			= 15.0,
+									error_type			= "indel",
+									dna_length			= 5000,
+									readlength			= 1000,
+									dimension_of_set	= 1):
 	
-def construct_heatmaps_cons_2g(	datadir,
-								basename,
-								outputdir,
-								filename_suffix,
-								outputname_suffix	= "",
-								number_of_reads		= 2000,
-								k_values			= [13,15,17,19],
-								error_rates			= [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
-								dna_length			= 5000,
-								readlength			= 50,
-								error_type			= "replace",
-								dimension_of_set	= 1):
+	# data used in thesis: rcr_nr1000, rcr_nr2000, rcr_nr5000
+	
+	# initialize:
+	ep_string = "".join(re.split(r'\.',str("%2.2f" % error_rate)))
+	if error_type == "replace":
+		ep_string = "er"+ep_string
+	else:
+		ep_string = "ei"+ep_string
+	casename_gen_base = basename+"_rl"+str(readlength)+"_nr"+str(number_of_reads)+"_"+ep_string+"_kb"+str(k_base)+"_kp"+str(k_part)
+	
+	avg_seqlengths = np.zeros((len(overlaps), len(number_of_parts)))
+	avg_covdepths = np.zeros((len(overlaps), len(number_of_parts)))
+	blast_identity_ratings = np.zeros((len(overlaps), len(number_of_parts)))
+	blast_num_of_gaps = np.zeros((len(overlaps), len(number_of_parts)))
+	blast_correct_fraction = np.zeros((len(overlaps), len(number_of_parts)))
+	
+	for i in range(dimension_of_set):
+		for i_np in range(len(number_of_parts)):
+			for i_ov in range(len(overlaps)):
+				num_parts = number_of_parts[i_np]
+				overlap = overlaps[i_ov]
+				filename_base = datadir+"/"+casename_gen_base+"_np"+str(num_parts)+"_ov"+str(overlap)+"_"+str(i+1)+"_km"+str(k_merge)+filename_suffix
+		
+				gd = []
+				gd = ga.GraphData(error_percentage=error_rate, readlength=readlength, num_of_reads=number_of_reads, k_value=k_merge, nodes=[])		
+				gd.get_data_from_file(filename_base+".asqg")
+				gd.get_data_from_csv(filename_base+".csv")
+				
+				
+				if gd.num_of_nodes > 0:
+					avg_seqlengths[i_ov][i_np] += gd.get_avg_seq_length()
+					avg_covdepths[i_ov][i_np] += gd.get_avg_coverage_depth()
+					
+					blastfile = filename_base+"_blastresults.out"
+					#print outputfile
+					if not os.path.isfile(blastfile):
+						print ("Error! No Blast Results found! File '"+blastfile+"' is missing!")
+						# works only if only one sequence:
+						dnadbstring = datadir+"/dna.fasta"
+						querystring = filename_base+".fasta"
+						fullcommand = path_to_blast_binary+"\\blastn -query " +querystring+ " -db " + dnadbstring + " -out " + blastfile
+						fullcommand = fullcommand.replace("/","\\")
+						commandlist = fullcommand.split(' ')
+						subprocess.call(commandlist, cwd=".\\")
+					
+					num_correct_identities = 0
+					num_gaps = 0
+					blast_identity_rating = 0
+					with open(blastfile, 'r') as blastresultfile:
+						linenumber = 0
+						no_hits_found = False
+						for line in blastresultfile:
+							linenumber += 1
+							if "No hits found" in line:
+								no_hits_found = True
+								num_correct_identities = 0.0
+								num_gaps = 0.0
+								break;
+							if not no_hits_found and "Identities" in line:
+								# format of this line (mind the single leading whitespace!)
+								#  Identities = 4776/4779 (99%), Gaps = 0/4779 (0%)
+								data = re.split(r'\s', line)
+								blast_identity_rating = (float)(re.split(r'/', data[3])[0])/(float)(re.split(r'/', data[3])[1])
+								num_correct_identities = (float)(re.split(r'/', data[3])[0])/(float)(dna_length)
+								num_gaps = (int)(re.split(r'/', data[7])[0])
+								
+					blast_identity_ratings[i_ov][i_np] += 100*blast_identity_rating
+					blast_num_of_gaps[i_ov][i_np] += num_gaps
+					blast_correct_fraction[i_ov][i_np] += 100*num_correct_identities
+				else:
+					print ("no nodes in graph of case: er:"+str(er)+", k:"+str(k))
+					avg_seqlengths[i_ov][i_np] += 0
+					avg_covdepths[i_ov][i_np] += 0
+					blast_identity_ratings[i_ov][i_np] += 0
+					blast_correct_fraction[i_ov][i_np] += 0
+					blast_num_of_gaps[i_ov][i_np] += 0
+					
+	avg_seqlengths /= dimension_of_set
+	avg_covdepths /= dimension_of_set
+	blast_identity_ratings /= dimension_of_set
+	blast_num_of_gaps /= dimension_of_set
+	blast_correct_fraction /= dimension_of_set
+				
+	outputfilename = casename_gen_base+outputname_suffix
+	if not error_type == "replace":
+		outputfilename += "_indel"
+    
+	construct_consensus_heatmaps(	outputdir = outputdir,
+									outputfilename = casename_gen_base+outputname_suffix,
+									data = [avg_seqlengths, avg_covdepths, blast_identity_ratings, blast_num_of_gaps, blast_correct_fraction],
+									datanames = ["seqlength", "covdepth", "identityrating", "numofgaps", "correctbasess"],
+									xticks = number_of_parts,
+									yticks = overlaps,
+									xlabels = "Number of partial graphs",
+									ylabels = "Dimension of overlap",
+									titles = ["Average length of reconstructed sequences", "Average coverage depth of sequences", "Average BLAST identity rating in %", "Average number of gaps", "Total fraction of correct bases in %"],
+									cellformats = ['.1f', '.1f', '.2f', '.2f', '.2f'],
+									cbbounds = [[4500, 5000], [1, 30], [99, 100], [0, 20], [90, 100]],
+									cmaps = ["gnuplot", "gnuplot", "gnuplot", "gnuplot_r", "gnuplot"])
+	
+def construct_heatmaps_cons_evsk(	datadir,
+									basename,
+									outputdir,
+									filename_suffix,
+									outputname_suffix	= "",
+									number_of_reads		= 2000,
+									k_values			= [13,15,17,19],
+									error_rates			= [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+									dna_length			= 5000,
+									readlength			= 50,
+									error_type			= "replace",
+									dimension_of_set	= 1):
 	# initialize:
 	casename_gen_base = basename+"_rl"+str(readlength)+"_nr"+str(number_of_reads)
 	
