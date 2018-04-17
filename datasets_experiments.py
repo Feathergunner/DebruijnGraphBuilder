@@ -101,7 +101,7 @@ set_dbgbasic_sr_hc = {
 set_dbgbasic_lr_lc = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlengths" : [500],
-    "numbers_of_reads" : [500],
+    "numbers_of_reads" : [100],
 	"error_type" : "replace",
 	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
 	"name" : "set_dbgbasic_lr_lc"}
@@ -114,12 +114,13 @@ set_dbgbasic_lr_hc = {
 	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
 	"name" : "set_dbgbasic_lr_hc"}
 	
-allsettings = [ set_cons2g_lowcov,
-				set_cons2g_highcov,
-				set_cons3g_r_hc,
-				set_cons3g_i_hc,
-				set_cons2g_vlowcov,
-				set_dbgbasic_sr_lc,
-				set_dbgbasic_sr_hc,
-				set_dbgbasic_lr_lc,
-				set_dbgbasic_lr_hc]
+allsettings = [ set_cons2g_lowcov,		# 1
+				set_cons2g_highcov,		# 2
+				set_cons3g_r_hc,		# 3
+				set_cons3g_i_hc,		# 4
+				set_cons2g_vlowcov,		# 5
+				set_dbgbasic_sr_lc,		# 6
+				set_dbgbasic_sr_hc,		# 7
+				set_dbgbasic_lr_lc,		# 8
+				set_dbgbasic_lr_hc		# 9
+				]
