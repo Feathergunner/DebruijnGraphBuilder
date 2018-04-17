@@ -108,7 +108,7 @@ set_dbgbasic_lr_lc = {
 	
 set_dbgbasic_lr_hc = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
-	"readlengths" : [100],
+	"readlengths" : [1000],
     "numbers_of_reads" : [200],
 	"error_type" : "replace",
 	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
