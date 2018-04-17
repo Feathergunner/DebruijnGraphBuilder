@@ -1,5 +1,5 @@
 #!usr/bin/env python
-# -*- coding: utf-8 -*-		
+# -*- coding: utf-8 -*-	
 
 testset_2g = {
 	"kmer_lengths" : [13,15,17,19],
@@ -82,9 +82,44 @@ set_cons3g_i_hc = {
 	"overlaps" : [5,10,20],
 	"name" : "cons_3g_indel_hc"}
 
+set_dbgbasic_sr_lc = {
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlengths" : [50],
+    "numbers_of_reads" : [1000],
+	"error_type" : "replace",
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "cons_2g_vvlowcov"}
+	
+set_dbgbasic_sr_hc = {
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlengths" : [100],
+    "numbers_of_reads" : [2000],
+	"error_type" : "replace",
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"name" : "cons_2g_vvlowcov"}
+	
+set_dbgbasic_lr_lc = {
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlengths" : [500],
+    "numbers_of_reads" : [500],
+	"error_type" : "replace",
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
+	"name" : "cons_2g_vvlowcov"}
+	
+set_dbgbasic_lr_hc = {
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlengths" : [100],
+    "numbers_of_reads" : [200],
+	"error_type" : "replace",
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0],
+	"name" : "cons_2g_vvlowcov"}
+	
 allsettings = [ set_cons2g_lowcov,
 				set_cons2g_highcov,
 				set_cons3g_r_hc,
 				set_cons3g_i_hc,
 				set_cons2g_vlowcov,
-				set_cons2g_vvlowcov]
+				set_dbgbasic_sr_lc,
+				set_dbgbasic_sr_hc,
+				set_dbgbasic_lr_lc,
+				set_dbgbasic_lr_hc]
