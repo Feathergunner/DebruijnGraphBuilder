@@ -236,6 +236,8 @@ def create_dataset(	algorithm,
 						for np in number_of_parts:
 							for ov in overlaps:
 								filename_suffix = ""
+								if algorithm == "noreconstruct":
+									filename_suffix = ".asqg"
 								if algorithm == "simplecons":
 									filename_suffix = "_4_singlepath.fasta"
 								if algorithm == "locofere":
@@ -244,6 +246,7 @@ def create_dataset(	algorithm,
 									filename_suffix = "_km"+str(k_lengths[0])+"_3_singlepath.fasta"
 								
 								if not overwrite == "addmissing" or not os.path.isfile(outputdir+"/"+construct_casename(algorithm, nr, readlength, err, error_type, k, k_base, k, np, ov, str(i+1))+filename_suffix):
+									print ("missing file: "+outputdir+"/"+construct_casename(algorithm, nr, readlength, err, error_type, k, k_base, k, np, ov, str(i+1))+filename_suffix)
 									if threaded:
 										p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, err, k, np, ov, k_base, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, True, newreads, verbose))
 										threads.append(p)
