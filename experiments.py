@@ -321,7 +321,7 @@ def create_dataset(	algorithm,
 						print ("Error! Focus '"+focus+"' unknown!")
 					'''
 		else:
-			csp.construct_heatmaps_dbg(datadir=outputdir, basename="basic_debruijn_graph", outputdir=outputdir+"/plots", number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+			csp.construct_heatmaps_dbg(datadir=outputdir, basename="basic_debruijn_graph", outputdir=outputdir+"/plots", filename_suffix="", outputname_suffix = "",number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, error_type=error_type, dimension_of_set=dimension_of_set)
 			
 def create_dataset_from_setting(algorithm,
 								setting,
@@ -467,7 +467,7 @@ def parse_input_start_experiments(params):
 			print ("Error! Parameter '"+arg_data[0]+"' unkown!")
 			return
 	
-	if set_id == 0 and  not test:
+	if set_id == 0 and not test:
 		if k_lengths == []:
 			k_lengths = [15]
 		if num_reads == []:
