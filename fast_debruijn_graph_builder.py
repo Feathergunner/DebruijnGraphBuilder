@@ -681,7 +681,7 @@ class GraphData:
 			for seq in self.sequences:
 				if seq.is_relevant:
 					# check if sequence is a tip and if sequence is shorter than 2k:
-					if (len(seq.sequence) < 2*self.k_value):
+					if (len(seq.sequence) < 2*self.k_value and seq.get_total_weight() < 2):
 							is_tip = False
 							if (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0) and (len(seq.overlaps_in) + len(seq.overlaps_out) > 0):
 								# (sequence is a tip)
