@@ -54,8 +54,8 @@ set_cons2g_lowcov = {
 	
 set_cons2g_highcov = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
-	"readlengths" : [50],
-    "numbers_of_reads" : [4000],
+	"readlengths" : [100],
+    "numbers_of_reads" : [2000],
 	"error_type" : "replace",
 	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_highcov"}
