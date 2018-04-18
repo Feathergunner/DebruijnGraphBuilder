@@ -57,7 +57,7 @@ set_cons2g_highcov = {
 	"readlengths" : [100],
     "numbers_of_reads" : [2000],
 	"error_type" : "replace",
-	"error_rates" : [0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_highcov"}
 	
 set_cons3g_r_hc = {
