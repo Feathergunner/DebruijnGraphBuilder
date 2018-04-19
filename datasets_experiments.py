@@ -105,9 +105,9 @@ set_cons3g_i_hc_large = {
 	"name" : "cons_3g_indel_hc"}
 	
 set_cons3g_r_hc_detail = {
-	"kmer_lengths" : [14,15,16,17,18,19],
+	"kmer_lengths" : [13,14,15,16,17,18,19],
 	"readlengths" : [1000],
-    "numbers_of_reads" : [700,900,1100,1300,1500],
+    "numbers_of_reads" : [500,550, 600, 650, 700, 750, 800, 850, 900,1000],
 	"error_type" : "replace",
 	"error_rates" : [15.0],
 	"k_base" : 25,
@@ -116,9 +116,9 @@ set_cons3g_r_hc_detail = {
 	"name" : "cons_3g_replace_hc"}
 	
 set_cons3g_i_hc_detail = {
-	"kmer_lengths" : [14,15,16,17,18,19],
+	"kmer_lengths" : [13,14,15,16,17,18,19],
 	"readlengths" : [1000],
-    "numbers_of_reads" : [700,900,1100,1300,1500],
+    "numbers_of_reads" : [500,550, 600, 650, 700, 750, 800, 850, 900,1000],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
 	"k_base" : 25,
