@@ -93,10 +93,21 @@ set_cons3g_r_hc_large = {
 	"overlaps" : [5,10,20],
 	"name" : "cons_3g_replace_hc"}
 	
-set_cons3g_i_hc_large = {
-	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
+set_cons3g_r_hc_detail = {
+	"kmer_lengths" : [13,14,15,16,17,18,19],
 	"readlengths" : [1000],
-    "numbers_of_reads" : [500,750,1000,1500],
+    "numbers_of_reads" : [700,900,1100,1300,1500],
+	"error_type" : "replace",
+	"error_rates" : [15.0],
+	"k_base" : 25,
+	"number_of_parts" : [10,25,50],
+	"overlaps" : [5,10,20],
+	"name" : "cons_3g_replace_hc"}
+	
+set_cons3g_i_hc_detail = {
+	"kmer_lengths" : [13,14,15,16,17,18,19],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [700,900,1100,1300,1500],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
 	"k_base" : 25,
@@ -164,5 +175,7 @@ allsettings = [ set_cons2g_lowcov,		# 1
 				set_dbgbasic_sr_vhc,	# 10
 				set_dbgbasic_lr_hc_i,	# 11
 				set_cons3g_r_hc_large,	# 12
-				set_cons3g_i_hc_large	#13
+				set_cons3g_i_hc_large,	# 13
+				set_cons3g_r_hc_detail, # 14
+				set_cons3g_i_hc_detail	# 15
 				]
