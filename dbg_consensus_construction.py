@@ -58,9 +58,9 @@ def cons_locofere(	reads,
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_0_unsimplified.csv")
 	
 	# basic reduction:
-	debruijn.remove_tips()#(verbose=verbose)
+	debruijn.remove_tips()
 	
-	debruijn.remove_single_sequence_components()#(verbose=verbose)
+	debruijn.remove_single_sequence_components()
 	if saveparts:
 		debruijn.get_asqg_output(filename = outputdir+"/"+name+"_1_base.asqg")
 		debruijn.get_csv_output(filename = outputdir+"/"+name+"_1_base.csv")
@@ -129,9 +129,7 @@ def cons_covref(reads,
 				debruijn_part.get_csv_output(filename = outputdir+"/parts/"+name+"_part"+str(part_id)+"_base.csv")
 			
 			# basic reduction:
-			debruijn_part.remove_insignificant_overlaps(2)
 			debruijn_part.remove_tips()
-			debruijn_part.contract_unique_overlaps()
 			debruijn_part.remove_single_sequence_components()
 			
 			# further reduction:
@@ -171,7 +169,6 @@ def cons_covref(reads,
 	for km in k_merge:
 		#casename_merge = name+"_merge_"+readset_names[i]+"_km"+str(km)
 		debruijn_merge_sequences = fdgb.GraphData(parts_consensus_sequences, km, directed_reads=True, load_weights=True, reduce_data=True, simplify_graph=True, construct_labels=False, remove_tips=True)
-		debruijn_merge_sequences.remove_insignificant_overlaps(2)
 		debruijn_merge_sequences.remove_tips()
 		debruijn_merge_sequences.contract_unique_overlaps()
 		debruijn_merge_sequences.remove_single_sequence_components()
