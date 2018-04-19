@@ -497,8 +497,10 @@ def parse_input_start_experiments(params):
 			for nr in num_reads:
 				for rl in read_lengths:
 					for er in error_rate:
-						if overwrite == "results":
+						if overwrite == "results" or overwrite == "addmissing":
 							new_reads = False
+						else:
+							new_reads = True
 							
 						t_start = 0
 						t_stop = 0

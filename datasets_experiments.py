@@ -59,7 +59,7 @@ set_cons2g_highcov = {
 	"error_type" : "replace",
 	"error_rates" : [0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
 	"name" : "cons_2g_highcov"}
-	
+
 set_cons3g_r_hc = {
 	"kmer_lengths" : [13,15,17,19,21],
 	"readlengths" : [1000],
@@ -73,6 +73,28 @@ set_cons3g_r_hc = {
 	
 set_cons3g_i_hc = {
 	"kmer_lengths" : [13,15,17,19,21],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [500,750,1000,1500],
+	"error_type" : "indel",
+	"error_rates" : [15.0],
+	"k_base" : 25,
+	"number_of_parts" : [10,25,50],
+	"overlaps" : [5,10,20],
+	"name" : "cons_3g_indel_hc"}
+	
+set_cons3g_r_hc_large = {
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [500,750,1000,1500],
+	"error_type" : "replace",
+	"error_rates" : [15.0],
+	"k_base" : 25,
+	"number_of_parts" : [10,25,50],
+	"overlaps" : [5,10,20],
+	"name" : "cons_3g_replace_hc"}
+	
+set_cons3g_i_hc_large = {
+	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlengths" : [1000],
     "numbers_of_reads" : [500,750,1000,1500],
 	"error_type" : "indel",
@@ -141,4 +163,6 @@ allsettings = [ set_cons2g_lowcov,		# 1
 				set_dbgbasic_lr_hc,		# 9
 				set_dbgbasic_sr_vhc,	# 10
 				set_dbgbasic_lr_hc_i,	# 11
+				set_cons3g_r_hc_large,	# 12
+				set_cons3g_i_hc_large	#13
 				]
