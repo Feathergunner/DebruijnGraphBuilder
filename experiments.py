@@ -89,10 +89,10 @@ def experiment_consensus_singlecase(algorithm,
 	# readlength: 		int > 0
 	# error_rate:		float from [0.0, 100.0]
 	# k: 				int > 0
-	# num_parts:		int > 0	(*)
-	# overlap:			int > 0	(*)
-	# k_base:			int > 0	(*)
-	# k_merge:			list of ints > 0 (*)
+	# num_parts:		int > 0		(*)
+	# overlap:			int > 0		(*)
+	# k_base:			int > 0		(*)
+	# k_merge:			list of ints > 0 	(*)
 	# error_type: 		"replace", "indel"
 	# uniform_coverage: boolean
 	# name_suffix: 		string
@@ -162,7 +162,8 @@ def create_dataset(	algorithm,
 					k_lengths			= [11,13,15,17,19,21],
 					number_of_parts		= [30],
 					overlaps			= [5],
-					k_base				= 25,
+					k_part				= [13,15,17],
+					k_base				= [25],
 					error_type			= "replace",
 					uniform_coverage	= True,
 					scope				= "all",
@@ -182,7 +183,8 @@ def create_dataset(	algorithm,
 	# k_lengths:		list of ints > 0
 	# num_parts:		list of ints > 0		(*)
 	# overlaps:			list of ints > 0		(*)
-	# k_base:			int > 0					(*)
+	# k_part:			list of ints > 0		(*)
+	# k_base:			list of ints > 0		(*)
 	# error_type: 		"replace" or "indel"
 	# uniform_coverage: boolean
 	# scope:			"all", "data" or "stat"
@@ -238,41 +240,43 @@ def create_dataset(	algorithm,
 			
 		for i in range(dimension_of_set):
 			for err in error_rates:
-				for kb in k_base:
-					for k in k_lengths:
-						for nr in num_of_reads:
-							for np in number_of_parts:
-								for ov in overlaps:
-									filename_suffix = ""
-									if algorithm == "noreconstruct":
-										filename_suffix = ".asqg"
-									if algorithm == "simplecons":
-										filename_suffix = "_4_singlepath.fasta"
-									if algorithm == "locofere":
-										filename_suffix = "_4_singlepath.fasta"
-									if algorithm == "covref":
-										filename_suffix = "_km"+str(k_lengths[0])+"_4_singlepath.fasta"
-									
-									if not overwrite == "addmissing" or not os.path.isfile(outputdir+"/"+construct_casename(algorithm, nr, readlength, err, error_type, k, kb, k, np, ov, str(i+1))+filename_suffix):
-										if threaded:
-											p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, err, k, np, ov, kb, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, True, newreads, verbose))
-											threads.append(p)
-											p.start()
-											threadset[p.pid] = [err, k, i]
-											#time.sleep(0.1)
-											
-											threads = [p for p in threads if p.is_alive()]
-											while len(threads) >= max_num_threads:
-												#print ("thread limit reached... wait")
-												time.sleep(1.0)
+				for k in k_lengths:
+					for nr in num_of_reads:
+					
+						for kb in k_base:
+							for kp in k_part:
+								for np in number_of_parts:
+									for ov in overlaps:
+										filename_suffix = ""
+										if algorithm == "noreconstruct":
+											filename_suffix = ".asqg"
+										if algorithm == "simplecons":
+											filename_suffix = "_4_singlepath.fasta"
+										if algorithm == "locofere":
+											filename_suffix = "_4_singlepath.fasta"
+										if algorithm == "covref":
+											filename_suffix = "_km"+str(k_lengths[0])+"_4_singlepath.fasta"
+											k = kp
+										
+										if not overwrite == "addmissing" or not os.path.isfile(outputdir+"/"+construct_casename(algorithm, nr, readlength, err, error_type, k, kb, k, np, ov, str(i+1))+filename_suffix):
+											if threaded:
+												p = Process(target=experiment_consensus_singlecase, args=(algorithm, outputdir, dna, nr, readlength, err, k, np, ov, kb, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, True, newreads, verbose))
+												threads.append(p)
+												p.start()
+												threadset[p.pid] = [err, k, i]
+												
 												threads = [p for p in threads if p.is_alive()]
-												
-												#threads[0].join()
-												#threads.pop(0)
-												
-											#print ("Num of threads: "+str(len(threads)))
-										else:
-											experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, err, k, np, ov, kb, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, False, newreads, verbose)
+												while len(threads) >= max_num_threads:
+													#print ("thread limit reached... wait")
+													time.sleep(1.0)
+													threads = [p for p in threads if p.is_alive()]
+													
+													#threads[0].join()
+													#threads.pop(0)
+													
+												#print ("Num of threads: "+str(len(threads)))
+											else:
+												experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, err, k, np, ov, kb, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, False, newreads, verbose)
 		
 		if threaded:
 			# wait until all threads are finished:
@@ -329,7 +333,7 @@ def create_dataset(	algorithm,
 				filename_suffix = "_4_singlepath"
 				if len(overlaps) > 1 or len(number_of_parts) > 1:
 					for kb in k_base:
-						for kp in k_lengths:
+						for kp in k_part:
 							for km in k_lengths:
 								for nr in num_of_reads:
 									outputname_suffix = ""
@@ -338,16 +342,14 @@ def create_dataset(	algorithm,
 				if len(num_of_reads) > 1 or len(k_lengths) > 1:
 					for ov in overlaps:
 						for np in number_of_parts:
-							for kp in k_lengths:
+							for kp in k_part:
 								for kb in k_base:
 									outputname_suffix = "_ov"+str(ov)+"_np"+str(np)+"_kp"+str(kp)
-									csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, algorithm=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, k_base=kb, k_part=kp, num_parts=np, overlap=ov, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-								
-				'''
-				kp = k_lengths[0]
-				outputname_suffix = "_kp"+str(kp)
-				csp.construct_heatmaps_cons_rlvsk_covref_all(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, k_base=k_base, k_part=kp, num_parts=number_of_parts, overlaps=overlaps, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-				'''
+									csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, algorithm=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_part, k_base=kb, k_part=kp, num_parts=np, overlap=ov, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+				
+				outputname_suffix = "_overview"
+				csp.construct_heatmaps_cons_rlvsk_covref_all(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_base=k_base, k_part=k_part, k_merge=k_lengths, num_parts=number_of_parts, overlaps=overlaps, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+
 		else:
 			csp.construct_heatmaps_dbg(datadir=outputdir, basename="basic_debruijn_graph", outputdir=outputdir+"/plots", filename_suffix="", outputname_suffix = "",number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, error_type=error_type, dimension_of_set=dimension_of_set)
 			
@@ -377,6 +379,7 @@ def create_dataset_from_setting(algorithm,
 	number_of_parts = [-1]
 	overlaps = [-1]
 	k_base = [-1]
+	k_part = [-1]
 	if algorithm == "covref":
 		if "number_of_parts" in setting:
 			number_of_parts = setting["number_of_parts"]
@@ -386,6 +389,10 @@ def create_dataset_from_setting(algorithm,
 			k_base = setting["k_base"]
 			if not isinstance(k_base, (list, tuple)):
 				k_base = [k_base]
+		if "k_part" in setting:
+			k_part = setting["k_part"]
+		else:
+			k_part = k_length
 	
 	if not algorithm == "noreconstruct":
 		name = algorithm+"_"+setting["name"]
@@ -409,6 +416,7 @@ def create_dataset_from_setting(algorithm,
 					number_of_parts=number_of_parts,
 					overlaps=overlaps,
 					k_base=k_base,
+					k_part=k_part,
 					error_type=error_type,
 					uniform_coverage=True,
 					scope=scope,
