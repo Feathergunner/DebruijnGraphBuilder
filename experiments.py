@@ -136,7 +136,7 @@ def experiment_consensus_singlecase(algorithm,
 	if algorithm == "simplecons":
 		cc.simplecons(reads, k, casename, outputdir, saveparts, saveresult=True, verbose=verbose)
 	elif algorithm == "locofere":
-		cc.cons_locofere(reads, k, casename, outputdir, saveparts, saveresult=True, verbose=verbose)
+		cc.cons_locofere(reads, k, casename, outputdir, weightedreads=False, saveparts=saveparts, saveresult=True, verbose=verbose)
 	elif algorithm == "covref":
 		cc.cons_covref(reads, number_of_parts, overlap, k_base, k, k_merge, outputdir, casename, saveparts, verbose=verbose)
 	elif algorithm == "noreconstruct":
@@ -206,8 +206,12 @@ def create_dataset(	algorithm,
 			elif overwrite == "results":
 				print ("Overwriting results of dataset with the name '"+name+"' (keep dna and reads).")
 				newreads = False
-			else:
+			elif overwrite == "everything":
 				print ("Overwriting dataset with the name '"+name+"'!")
+			else:
+				print ("Error! Unknoen parameter: overwrite="+overwrite+"!")
+				print ("Error! Cannot create a dataset with the name '"+name+"'! There already exists a dataset of the same name.")
+				return
 		else:
 			os.mkdir(outputdir)
 			os.mkdir(outputdir+"/reads")
@@ -243,7 +247,7 @@ def create_dataset(	algorithm,
 								if algorithm == "locofere":
 									filename_suffix = "_4_singlepath.fasta"
 								if algorithm == "covref":
-									filename_suffix = "_km"+str(k_lengths[0])+"_3_singlepath.fasta"
+									filename_suffix = "_km"+str(k_lengths[0])+"_4_singlepath.fasta"
 								
 								if not overwrite == "addmissing" or not os.path.isfile(outputdir+"/"+construct_casename(algorithm, nr, readlength, err, error_type, k, k_base, k, np, ov, str(i+1))+filename_suffix):
 									if threaded:
@@ -296,7 +300,11 @@ def create_dataset(	algorithm,
 			abl.init_blast_db(outputdir+"/dna.fasta")
 			# ensure that blast finishes:
 			time.sleep(2.0)
-			abl.compute_blast_results(outputdir, outputdir+"/dna.fasta")
+			if overwrite=="results" or overwrite=="everything":
+				new_data = True
+			else:
+				new_data = False
+			abl.compute_blast_results(outputdir, outputdir+"/dna.fasta", new_data=new_data)
 			
 			if algorithm == "simplecons" or algorithm == "locofere":
 				filename_suffix = "_4_singlepath"
@@ -304,24 +312,24 @@ def create_dataset(	algorithm,
 				if focus == "err_vs_k":
 					csp.construct_heatmaps_cons_evsk(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
 				elif focus == "rl_vs_k":
-					csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+					csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, algorithm=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
 				else:
 					print ("Error! Focus '"+focus+"' unknown!")
 			elif algorithm == "covref":
-				for kp in k_lengths:
-					for km in k_lengths:
-						for nr in num_of_reads:
-							filename_suffix = "_3_singlepath"
-							outputname_suffix = ""
-							csp.construct_heatmaps_cons_ovvsnp(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=nr, k_base=k_base, k_part=kp, k_merge=km, number_of_parts=number_of_parts, overlaps=overlaps, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-					'''
-					if focus == "err_vs_k":
-						csp.construct_heatmaps_cons_2g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-					elif focus == "rl_vs_k":
-						csp.construct_heatmaps_cons_3g(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-					else:
-						print ("Error! Focus '"+focus+"' unknown!")
-					'''
+				filename_suffix = "_4_singlepath"
+				if len(overlaps) > 1 or len(number_of_parts) > 1:
+					for kp in k_lengths:
+						for km in k_lengths:
+							for nr in num_of_reads:
+								outputname_suffix = ""
+								csp.construct_heatmaps_cons_ovvsnp(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=nr, k_base=k_base, k_part=kp, k_merge=km, number_of_parts=number_of_parts, overlaps=overlaps, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+				
+				if len(num_of_reads) > 1 or len(k_lengths) > 1:
+					for ov in overlaps:
+						for np in number_of_parts:
+							for kp in k_lengths:
+								outputname_suffix = "_ov"+str(ov)+"_np"+str(np)+"_kp"+str(kp)
+								csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, algorithm=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, k_base=25, k_part=kp, num_parts=np, overlap=ov, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
 		else:
 			csp.construct_heatmaps_dbg(datadir=outputdir, basename="basic_debruijn_graph", outputdir=outputdir+"/plots", filename_suffix="", outputname_suffix = "",number_of_reads=num_of_reads[0], k_values=k_lengths, error_rates=error_rates, dna_length=dna_length, readlength=readlength, error_type=error_type, dimension_of_set=dimension_of_set)
 			
@@ -512,7 +520,7 @@ def parse_input_start_experiments(params):
 	
 	elif test:
 		if overwrite == "nothing":
-			overwrite = "all"
+			overwrite = "everything"
 		if algo == "simplecons":
 			testset = dse.testset_2g
 		elif algo == "locofere":
