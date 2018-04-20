@@ -88,7 +88,7 @@ set_cons3g_i_hc_rc = {
     "numbers_of_reads" : [500,750,1000],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
-	"k_base" : [19,25,31]
+	"k_base" : [19,25,31],
 	"number_of_parts" : [10,15,20],
 	"overlaps" : [3,5],
 	"name" : "cons_3g_rc_indel_rangetest"}
