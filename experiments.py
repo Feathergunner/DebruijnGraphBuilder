@@ -392,7 +392,7 @@ def create_dataset_from_setting(algorithm,
 		if "k_part" in setting:
 			k_part = setting["k_part"]
 		else:
-			k_part = k_length
+			k_part = k_lengths
 	
 	if not algorithm == "noreconstruct":
 		name = algorithm+"_"+setting["name"]
