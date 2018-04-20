@@ -67,8 +67,8 @@ set_cons3g_r_hc = {
 	"error_type" : "replace",
 	"error_rates" : [15.0],
 	"k_base" : 25,
-	"number_of_parts" : [10,25],#50],
-	"overlaps" : [5,10],#20],
+	"number_of_parts" : [10,15,20],#50],
+	"overlaps" : [3,5],#20],
 	"name" : "cons_3g_replace_hc"}
 	
 set_cons3g_i_hc = {
