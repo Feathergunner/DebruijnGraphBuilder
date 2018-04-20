@@ -222,7 +222,7 @@ def create_dataset(	algorithm,
 			correct_dna = False
 			while not correct_dna:
 				dna = dgen.generate_dna(dna_length)
-				correct_dna = check_if_dna_has_repeats_of_min_length(dna, 13)
+				correct_dna = check_if_dna_has_repeats_of_min_length(dna, 11)
 			
 			# write dna to fasta:
 			dio.write_genome_to_file(dna, outputdir+"/dna.txt")
