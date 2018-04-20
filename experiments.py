@@ -264,6 +264,7 @@ def create_dataset(	algorithm,
 										while len(threads) >= max_num_threads:
 											#print ("thread limit reached... wait")
 											time.sleep(1.0)
+											threads = [p for p in threads if p.is_alive()]
 											
 											#threads[0].join()
 											#threads.pop(0)
