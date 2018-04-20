@@ -91,7 +91,7 @@ set_cons3g_i_hc_rc = {
 	"k_base" : [19,25,31]
 	"number_of_parts" : [10,15,20],
 	"overlaps" : [3,5],
-	"name" : "cons_3g_indel_hc"}
+	"name" : "cons_3g_rc_indel_rangetest"}
 	
 set_cons3g_i_hc_rc_t = {
 	"kmer_lengths" : [13],
@@ -103,7 +103,7 @@ set_cons3g_i_hc_rc_t = {
 	"k_base" : 25,
 	"number_of_parts" : [10,15,20],
 	"overlaps" : [3,5],
-	"name" : "cons_3g_indel_hc"}
+	"name" : "cons_3g_rc_indel"}
 	
 	
 set_cons3g_r_hc_large = {
