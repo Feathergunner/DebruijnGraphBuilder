@@ -24,7 +24,8 @@ def construct_consensus_heatmaps(	outputdir,
 									cellformats,
 									cbbounds,
 									cmaps,
-									annot_font_size):
+									annot_font_size,
+									makesquare=True):
 									
 	matplotlib.rc('xtick', labelsize=10)
 	if (len(ylabels) >= 8):
@@ -34,7 +35,6 @@ def construct_consensus_heatmaps(	outputdir,
 			
 	xlabel_desc = "Kmer Length"# in Nucleotide Bases"
 	ylabel_desc = "Error rate in %"
-	makesquare = True
 	cb = True
 	additional_arg={"orientation": "horizontal"} # changes colorbar orientation
 	dpi_setting=500
@@ -88,11 +88,16 @@ def construct_consensus_heatmaps(	outputdir,
 
 def construct_heatmaps_cons_rlvsk(	datadir,
 									basename,
+									algorithm,
 									outputdir,
 									filename_suffix,
 									outputname_suffix	= "",
 									number_of_reads		= [500, 750, 1000, 1500],
 									k_values			= [11,13,15,17,19,21],
+									k_base				= 25,
+									k_part				= 15,
+									num_parts 			= 20,
+									overlap				= 5,
 									error_rate			= 15.0,
 									error_type			= "indel",
 									dna_length			= 5000,
@@ -119,7 +124,10 @@ def construct_heatmaps_cons_rlvsk(	datadir,
 			for n_i in range(len(number_of_reads)):
 				k = k_values[k_i]
 				nr = number_of_reads[n_i]
-				filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)+filename_suffix
+				if algorithm == "simplecons" or algorithm == "locofere":
+					filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_"+ep_string+"_k"+str(k)+"_"+str(i+1)+filename_suffix
+				elif algorithm == "covref":
+					filename_base = datadir+"/"+casename_gen_base+"_nr"+str(nr)+"_"+ep_string+"_kb"+str(k_base)+"_kp"+str(k_part)+"_np"+str(num_parts)+"_ov"+str(overlap)+"_"+str(i+1)+"_km"+str(k)+filename_suffix
 				
 				gd = []
 				gd = ga.GraphData(error_percentage=error_rate, readlength=readlength, num_of_reads=nr, k_value=k, nodes=[])		
@@ -291,12 +299,12 @@ def construct_heatmaps_cons_ovvsnp(	datadir,
 	blast_num_of_gaps /= dimension_of_set
 	blast_correct_fraction /= dimension_of_set
 				
-	outputfilename = casename_gen_base+outputname_suffix
+	outputfilename = casename_gen_base+"_km"+str(k_merge)+"_nr"+str(number_of_reads)+outputname_suffix
 	if not error_type == "replace":
 		outputfilename += "_indel"
     
 	construct_consensus_heatmaps(	outputdir = outputdir,
-									outputfilename = casename_gen_base+outputname_suffix,
+									outputfilename = outputfilename,
 									data = [avg_seqlengths, avg_covdepths, blast_identity_ratings, blast_num_of_gaps, blast_correct_fraction],
 									datanames = ["seqlength", "covdepth", "identityrating", "numofgaps", "correctbases"],
 									xticks = number_of_parts,
