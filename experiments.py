@@ -10,6 +10,7 @@ import shutil
 from multiprocessing import Process
 import time
 import timeit
+from Queue import Queue
 
 import datasets_experiments as dse
 import data_gen as dgen
@@ -62,7 +63,7 @@ def check_if_dna_has_repeats_of_min_length(dna, replength):
 		return True
 	else:
 		return False
-
+		
 def experiment_consensus_singlecase(algorithm,
 									outputdir,
 									dna,
@@ -231,8 +232,10 @@ def create_dataset(	algorithm,
 			dna = [c for c in dio.get_genome_from_file(outputdir+"/dna.txt")]
 		
 		print ("Run experiments ...")
-		threads = []
-		threadset = {}
+		if threaded:
+			threads = []
+			threadset = {}
+			
 		for i in range(dimension_of_set):
 			for err in error_rates:
 				for k in k_lengths:
@@ -257,11 +260,15 @@ def create_dataset(	algorithm,
 										threadset[p.pid] = [err, k, i]
 										#time.sleep(0.1)
 										
-										if len(threads) > max_num_threads:
-											print ("thread limit reached... wait")
-											for p in threads:
-												p.join()
-											threads = []
+										threads = [p for p in threads if p.is_alive()]
+										if len(threads) >= max_num_threads:
+											#print ("thread limit reached... wait")
+											time.sleep(1.0)
+											
+											#threads[0].join()
+											#threads.pop(0)
+											
+										#print ("Num of threads: "+str(len(threads)))
 									else:
 										experiment_consensus_singlecase(algorithm, outputdir, dna, nr, readlength, err, k, np, ov, k_base, k_lengths, error_type, uniform_coverage, str(i+1), saveparts, False, newreads, verbose)
 		
