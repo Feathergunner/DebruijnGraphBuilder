@@ -18,12 +18,13 @@ testset_3g_locofere = {
 	"name" : "testset_3g_lcfr"}
 	
 testset_3g_covref = {
-	"kmer_lengths" : [13,15,17],
+	"kmer_lengths" : [17,19],
 	"readlengths" : [1000],
     "numbers_of_reads" : [100,200],
 	"error_type" : "indel",
 	"error_rates" : [5.0],
 	"k_base" : [20, 25],
+	"k_part" : [13,15],
 	"number_of_parts" : [10,15],#[10,25,50],
 	"overlaps" : [3,5],#[5,10,20],
 	"name" : "testset_3g_cr"}
@@ -82,7 +83,7 @@ set_cons3g_i_hc = {
 	"overlaps" : [5,10,20],
 	"name" : "cons_3g_indel_hc"}
 	
-set_cons3g_i_hc_rc = {
+set_cons3g_i_hc_rc_t = {
 	"kmer_lengths" :[13,15,17,19,21],
 	"readlengths" : [1000],
     "numbers_of_reads" : [500,750,1000],
@@ -93,7 +94,7 @@ set_cons3g_i_hc_rc = {
 	"overlaps" : [3,5],
 	"name" : "cons_3g_rc_indel_rangetest"}
 	
-set_cons3g_i_hc_rc_t = {
+set_cons3g_i_hc_rc = {
 	"kmer_lengths" : [13],
 	"kmer_merge" : [17],
 	"readlengths" : [1000],
@@ -104,7 +105,6 @@ set_cons3g_i_hc_rc_t = {
 	"number_of_parts" : [10,15,20],
 	"overlaps" : [3,5],
 	"name" : "cons_3g_rc_indel"}
-	
 	
 set_cons3g_r_hc_large = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
