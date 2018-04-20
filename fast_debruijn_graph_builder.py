@@ -142,6 +142,8 @@ class SequenceOverlap:
 			print ("is not relevant")
 	
 class GraphData:
+	# Main class that constructs and simplifies a de Bruijn graph.
+	# Also contains all methods to remove errors and to reconstruct a consensus sequence.
 	def __init__(	self,
 					reads=[],
 					k=0,
@@ -165,7 +167,7 @@ class GraphData:
 		self.directed_reads = directed_reads
 		
 		self.hubs = []
-		self.tips_to_keep = []
+		self.tips_primary = []
 		self.tips_to_delete = []
 		
 		# Flag that marks if inverse sequences have been removed
@@ -182,10 +184,12 @@ class GraphData:
 		self.max_sequence_p = -1
 		self.max_path_length_p = 0
 
+		'''
 		self.min_label_n = 0
 		self.max_label_n = 0
 		self.min_sequence_n = -1
 		self.max_sequence_n = -1
+		'''
 		
 		self.removed_reads = []
 		
@@ -436,36 +440,6 @@ class GraphData:
 			ov_id = self.sequences[source_seq_id].overlaps_out[target_seq_id]
 			
 		self.overlaps[ov_id].add_evidence(read_evidence, read_weight)
-	
-	'''
-	def add_overlaps_for_sequences_with_small_insert_distance(self, max_insert_distance=1, verbose = False):
-		print ("Adding overlaps to sequences with small insert distance ...")
-		for sequence_id_1 in range(len(self.sequences)):
-			meta.print_progress(sequence_id_1, len(self.sequences))
-			if self.sequences[sequence_id_1].is_relevant:
-				for sequence_id_2 in range(sequence_id_1+1, len(self.sequences)):
-					if self.sequences[sequence_id_2].is_relevant:
-						s1 = self.sequences[sequence_id_1].sequence
-						s2 = self.sequences[sequence_id_2].sequence
-						l1 = len(s1)
-						l2 = len(s2)
-						# note that a sequence from the same read has always position-distance = insert-distance, but we do not want to add an overlap to these sequences:
-						# check if both sequence do share common evidence-reads:
-						reads_seq_1 = []
-						for kmer_id in self.sequences[sequence_id_1].kmers:
-							reads_seq_1 += self.kmers[kmer_id].evidence_reads
-						reads_seq_2 = []
-						for kmer_id in self.sequences[sequence_id_2].kmers:
-							reads_seq_2 += self.kmers[kmer_id].evidence_reads
-						common_reads = [r for r in reads_seq_1 if r in reads_seq_2]
-						if len(common_reads) == 0:
-							#if not sequence_id_2 in self.sequences[sequence_id_1].overlaps_in:
-							if meta.compute_insert_distance(s1[l1-self.k_value:], s2[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
-								self.increment_overlap(sequence_id_1, sequence_id_2, -1)
-							#if not sequence_id_1 in self.sequences[sequence_id_2].overlaps_in:
-							if meta.compute_insert_distance(s2[l2-self.k_value:], s1[:self.k_value], maxdist = max_insert_distance) <= max_insert_distance:
-								self.increment_overlap(sequence_id_2, sequence_id_1, -1)
-	'''
 
 	def contract_unique_overlaps(self, verbose = 1):
 		# This method contracts all overlaps between adjacent sequences that form an unique path
@@ -702,7 +676,7 @@ class GraphData:
 		# removes tips (single-sequence-dead-ends) from the graph
 		# if only_simple_connected_tips==True, only tips will be removed that are connected to exactly one other node
 		# if maximum_tip_weight > 0, only tips with weight <= maximum_tip_weight will be removed.
-		# if remove_only_unique_tips==True, a tip will only be removed if the node it is connected to as other connections in the same orientation, which have to be non-tips.
+		# if remove_only_unique_tips==True, only non-primary tips will be removed (see function get_tip_classification)
 			
 		print ("Removing tips ...")
 		num_of_removed_tips = -1
@@ -752,48 +726,6 @@ class GraphData:
 			self.contract_unique_overlaps(verbose = 0)
 		if verbose:
 			print ("Total number of removed tips: "+str(total_num_removed_tips))
-
-	def unrestricted_tip_removal(self, only_simply_connected_tips=True, verbose=False):
-		# removes tips of any lengths, but only if the node to which it is connected has another adjacent node in the same direction, which also has to be longer than the tip.
-		
-		num_of_removed_tips = -1
-		while (num_of_removed_tips != 0):
-			num_of_removed_tips = 0
-			for seq in self.sequences:
-				if seq.is_relevant:
-					if verbose:
-						print ("Consider sequence:")
-						seq.print_data()
-					# check if sequence is a tip:
-					is_tip = False
-					if (only_simply_connected_tips and (len(seq.overlaps_out) + len(seq.overlaps_in) == 1)):
-						# (sequence is a simply connected tip)
-						is_tip = True
-					elif (len(seq.overlaps_out) == 0 or len(seq.overlaps_in) == 0):
-						# (sequence is a tip)
-						is_tip =True
-					if is_tip:
-						length_of_tip = len(seq.sequence)
-						# check if tip is longest adjacent node:						
-						number_of_adj_nodes_with_longer_adj_nodes = 0
-						if len(seq.overlaps_in) > 0:
-							# case 1: tip is outgoing
-							for adj_seq in seq.overlaps_in:
-								for adj_adj_seq in self.sequences[adj_seq].overlaps_out:
-									if len(self.sequences[adj_adj_seq].sequence) > length_of_tip:
-										number_of_adj_nodes_with_longer_adj_nodes += 1
-						elif len(seq.overlaps_out) > 0:
-							# case 2: tip is incoming
-							for adj_seq in seq.overlaps_out:
-								for adj_adj_seq in self.sequences[adj_seq].overlaps_in:
-									if len(self.sequences[adj_adj_seq].sequence) > length_of_tip:
-										number_of_adj_nodes_with_longer_adj_nodes += 1
-										
-						if number_of_adj_nodes_with_longer_adj_nodes == len(seq.overlaps_out) + len(seq.overlaps_in):
-							# every adjacent node has another longer adjacent sequence
-							self.delete_sequence(seq.id, verbose)
-							num_of_removed_tips += 1
-			self.contract_unique_overlaps()
 		
 	def remove_insignificant_sequences(self, minimal_weight=2, do_contraction=True, keep_relevant_tips=False, verbose=False):
 		# removes all sequences with weight less than minimal_weight
@@ -805,7 +737,7 @@ class GraphData:
 				if not keep_relevant_tips:
 					self.delete_sequence(seq.id, verbose)
 					self.removed_reads += self.get_read_of_sequences([seq])
-				elif seq.id not in self.tips_to_keep:
+				elif seq.id not in self.tips_primary:
 					self.delete_sequence(seq.id, verbose)
 					self.removed_reads += self.get_read_of_sequences([seq])
 		
@@ -826,7 +758,7 @@ class GraphData:
 				if not keep_relevant_tips:
 					ov_ids_to_delete.append(ov_id)
 				else:
-					if (self.overlaps[ov_id].contig_sequence_1 not in self.tips_to_keep) and (self.overlaps[ov_id].contig_sequence_2 not in self.tips_to_keep):
+					if (self.overlaps[ov_id].contig_sequence_1 not in self.tips_primary) and (self.overlaps[ov_id].contig_sequence_2 not in self.tips_primary):
 						ov_ids_to_delete.append(ov_id)
 		for ov_id in ov_ids_to_delete:
 			self.removed_reads += self.overlaps[ov_id].evidence_reads
@@ -1102,126 +1034,6 @@ class GraphData:
 				self.construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, verbose=verbose)
 		else:
 			self.greedy_construct_assembly_ordering_labels(start_sequence=start_sequence, do_second_iteration=do_second_iteration, verbose=verbose)
-	
-	'''
-	def greedy_construct_assembly_ordering_labels_backup(self, start_sequence = 0, do_second_iteration=True, compute_position_labels=True, verbose=1):
-		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
-		# algorithm assumes that graph
-		# 	is not empty and
-		#	has only one component and
-		# 	has no cycles, i.e. implies a partial order
-		if verbose > 0:
-			print "Construct assembly ordering labels..."
-		
-		if not (start_sequence == 0 or self.sequences[start_sequence].is_relevant):
-			if verbose > 0:
-				print ("Error! Start sequence does not exist! Start with first sequence instead.")
-			start_sequence = 0
-		while start_sequence < len(self.sequences) and not self.sequences[start_sequence].is_relevant:
-			start_sequence += 1
-		
-		if not start_sequence < len(self.sequences):
-			print("Error! No sequence found!")
-			return
-		
-		# reset labels
-		for seq in self.sequences:
-			if seq.is_relevant:
-				seq.label_p = False
-		# init for start sequence
-		if compute_position_labels:
-			self.min_label_p = 0
-			self.max_label_p = 0
-			self.min_sequence_p = start_sequence
-			self.max_sequence_p = start_sequence
-			self.max_path_length_p = self.sequences[start_sequence].get_length()
-			self.sequences[start_sequence].label_p = 0
-		else:
-			self.min_label_n = 0
-			self.max_label_n = 0
-			self.min_sequence_n = start_sequence
-			self.max_sequence_n = start_sequence
-			self.sequences[start_sequence].label_n = 0
-
-		if verbose == 2:
-			print ("Start with sequence " + str(start_sequence))
-				
-		queue = [[self.sequences[start_sequence].id, 0]]
-		while (len(queue) > 0):
-			current_data = queue[0]
-			queue.pop(0)
-			current_node_id = current_data[0]
-			current_position = current_data[1]
-
-			for seq_id in self.sequences[current_node_id].overlaps_out:
-				if compute_position_labels:
-					if self.sequences[seq_id].label_p == False:
-						start_label = current_position + self.sequences[current_node_id].get_length()
-						if start_label > self.max_label_p:
-							self.max_label_p = start_label
-							self.max_sequence_p = seq_id
-						end_label = start_label + self.sequences[seq_id].get_length()
-						if end_label > self.max_path_length_p:
-							self.max_path_length_p = end_label
-						self.sequences[seq_id].label_p = start_label
-						queue.append([seq_id, start_label])
-				else:
-					if self.sequences[seq_id].label_n == False:
-						start_label = current_position + 1
-						if start_label > self.max_label_n:
-							self.max_label_n = start_label
-							self.max_sequence_n = seq_id
-						self.sequences[seq_id].label_n = start_label
-						queue.append([seq_id, start_label])
-			for seq_id in self.sequences[current_node_id].overlaps_in:
-				if compute_position_labels:
-					if self.sequences[seq_id].label_p == False:
-						start_label = current_position - self.sequences[seq_id].get_length()
-						if start_label < self.min_label_p:
-							self.min_label_p = start_label
-							self.min_sequence_p = seq_id
-						self.sequences[seq_id].label_p = start_label
-						queue.append([seq_id, start_label])
-				else:
-					if self.sequences[seq_id].label_n == False:
-						start_label = current_position - 1
-						if start_label < self.min_label_n:
-							self.min_label_n = start_label
-							self.min_sequence_n = seq_id
-						self.sequences[seq_id].label_n = start_label
-						queue.append([seq_id, start_label])
-		
-		if verbose == 2:
-			for seq in self.sequences:
-				if seq.is_relevant:
-					if compute_position_labels:
-						print str(seq.id) + ": " + str(seq.label_p)
-					else:
-						print str(seq.id) + ": " + str(seq.label_n)
-		
-		if do_second_iteration:
-			next_start = 0
-			if compute_position_labels:
-				if abs(self.max_label_p) > abs(self.min_label_p):
-					next_start = self.max_sequence_p
-				else:
-					next_start = self.min_sequence_p
-				if verbose == 2:
-					print ("max sequence of first iteration: "+str(self.max_sequence_p) + " with label "+str(self.max_label_p))
-					print ("min sequence of first iteration: "+str(self.min_sequence_p) + " with label "+str(self.min_label_p))
-					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
-			else:
-				if abs(self.max_label_n) > abs(self.min_label_n):
-					next_start = self.max_sequence_n
-				else:
-					next_start = self.min_sequence_n
-				if verbose == 2:
-					print ("max sequence of first iteration: "+str(self.max_sequence_n) + " with label "+str(self.max_label_n))
-					print ("min sequence of first iteration: "+str(self.min_sequence_n) + " with label "+str(self.min_label_n))
-					print ("Start a second iteration of labelling, starting from sequence "+str(next_start))
-
-			self.greedy_construct_assembly_ordering_labels(start_sequence=next_start, do_second_iteration=False, compute_position_labels=compute_position_labels, verbose=verbose)
-	'''
 		
 	def greedy_construct_assembly_ordering_labels(self, start_sequence = 0, do_second_iteration=True, verbose=1):
 		# constructs a fuzzy partial ordering of all relevant sequences based on directed graph structure and sequence lengths:
@@ -1483,63 +1295,6 @@ class GraphData:
 			self.contract_unique_overlaps(verbose = verbose)
 		self.construct_assembly_ordering_labels(verbose = 0)
 		
-	def greedy_reduce_to_single_path_max_weight(self, verbose=False):
-		# greedy algo that traverses through graph by choosing following nodes with max weight, deletes everythin else
-		# method assumes that graph has only one component // and no cycles
-		# and sequences have position- and weight-labels
-		
-		print ("Greedy reduction to single path with local max weight")
-		
-		components = self.get_components()
-		print ("Number of components: "+str(len(components)))
-		component_id = 0
-		while component_id < len(components):
-			c = components[component_id]
-			component_id += 1
-			if verbose:
-				print ("next component")
-			start_seq_id = self.min_sequence_p
-			
-			current_seq_id = start_seq_id
-			last_seq_id = -1
-			if verbose:
-				print "start_id: " +str(current_seq_id)
-			while len(self.sequences[current_seq_id].overlaps_out) > 0:
-				if verbose:
-					print ("Current seq: "+str(current_seq_id))
-				next_sequences = []
-				for target_id in self.sequences[current_seq_id].overlaps_out:
-					next_sequences.append(target_id)
-				max_seq_id = -1
-				max_seq_weight = -1
-				for seq_id in next_sequences:
-					if not seq_id == current_seq_id:
-						if self.sequences[seq_id].is_relevant and self.sequences[seq_id].get_total_weight() > max_seq_weight:
-							max_seq_weight = self.sequences[seq_id].get_total_weight()
-							max_seq_id = seq_id
-				
-				if verbose:
-					print ("Next sequence is sequence "+str(max_seq_id)+" with weight "+str(max_seq_weight))
-				# delete all incoming sequences except path:
-				if not last_seq_id == -1:
-					incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
-					for seq_id in incoming_sequences:
-						if not seq_id == last_seq_id:
-							self.delete_sequence(seq_id, verbose=False)
-				# set next sequence and delete other outgoing sequences:
-				for seq_id in next_sequences:
-					if seq_id == max_seq_id:
-						last_seq_id = current_seq_id
-						current_seq_id = seq_id
-					else:#if not branching:
-						self.delete_sequence(seq_id, verbose=False)
-			# delete incoming sequences at final sequence, if there are any:
-			if not last_seq_id == -1:
-				incoming_sequences = [seq_id for seq_id in self.sequences[current_seq_id].overlaps_in]
-				for seq_id in incoming_sequences:
-					if not seq_id == last_seq_id:
-						self.delete_sequence(seq_id, verbose=False)
-		
 	def reduce_to_single_largest_component(self, verbose=False):
 		# deletes all sequences that are not part of the largest (by number of sequences) component
 		# thus only the largest component will remain.
@@ -1568,13 +1323,6 @@ class GraphData:
 					for seq_id in components[i]:
 						self.delete_sequence(seq_id)
 					
-	def remove_short_sequences(self, length_bound_by_multiple_of_k=5):
-		# brutally removes all sequences with length less than 5 times k_value (if not specified otherwise)
-		for seq in self.sequences:
-			if seq.is_relevant:
-				if seq.get_length() < length_bound_by_multiple_of_k*self.k_value:
-					self.delete_sequence(seq.id)
-	
 	def get_label_span(self):
 		# get an approximation of the length of the genome
 		# this depends on the quality of the labels. if graph containes cycles, this may be significantly incorrect.
@@ -1824,27 +1572,6 @@ class GraphData:
 			hubreads.append(hubread+","+hubread_weight)
 						
 		return hubreads
-
-	def compute_common_genome_evidence(self, verbose=False):
-		# needs node position labels based on structural position of nodes, not sequence lengths
-		common_genome_evidence = {}
-
-		sequences_by_node_labels = {}
-		for seq in self.sequences:
-			if seq.label_n not in sequences_by_node_labels:
-				sequences_by_node_labels[seq.label_n] = []
-			sequences_by_node_labels[seq.label_n].append(seq.id)
-
-		for seq in self.sequences:
-			seq_read_ids = self.get_read_of_sequences([seq])
-			for other_seq_id in sequences_by_node_labels[seq.label_n]:
-				other_seq_read_ids = self.get_read_of_sequences([self.sequences[other_seq_id]])
-				for r_id in seq_read_ids:
-					if r_id not in common_genome_evidence:
-						common_genome_evidence[r_id] = {}
-					for or_id in other_seq_read_ids:
-						common_genome_evidence[r_id][or_id] = -1
-		return common_genome_evidence
 		
 	def compute_overlap_evidence_distribution(self):
 		print ("Compute distribution of overlap evidences")
@@ -2125,15 +1852,18 @@ class GraphData:
 		print ("Removal of low coverage sequences stopped at min_cov_depth = "+str(min_cov_depth))
 				
 	def get_tip_classification(self, verbose=False):
-		#get all ids of sequences that are tips, and classify them as 'deletable', if their parent node has other adjacent nodes in the same orientation that are not tips or have significant higher coverage depth:
-		print ("Classify nodes into (hubs, important tips, deletable tips) ...")
+		# classify all sequences into:
+		# - hubs: sequences that are not tips
+		# - primary tips: tips whose parent node is not connected to any hub or longer tip in the same orientation
+		# - deletable tips: tips whose parent node is also connected to a hub or a primary tip in the same orientation
+		print ("Classify nodes into (hubs, primary tips, deletable tips) ...")
 		
 		if verbose:
 			print ("\tnumber of sequences: "+str(len(self.get_relevant_sequences())))
 		
 		hubs = []
 		tips_deletable = []
-		tips_keep = []
+		tips_primary = []
 		
 		visited_sequences = {seqid : False for seqid in self.get_relevant_sequences(only_id=True)}
 		for i in range(len(self.sequences)):
@@ -2193,11 +1923,11 @@ class GraphData:
 						maxweight = max([self.sequences[tip_id].get_total_weight() for tip_id in local_tips])
 						local_tips_to_delete = [tip_id for tip_id in local_tips if self.sequences[tip_id].get_total_weight() < maxweight]
 						tips_deletable += local_tips_to_delete
-						tips_keep += [tip_id for tip_id in local_tips if not tip_id in local_tips_to_delete]
+						tips_primary += [tip_id for tip_id in local_tips if not tip_id in local_tips_to_delete]
 						
 		self.hubs = hubs
-		self.tips_to_keep = tips_keep
+		self.tips_primary = tips_primary
 		self.tips_to_delete = tips_deletable
 		if verbose:
-			print ("\tnumber of tips to keep: "+str(len(tips_keep)))
+			print ("\tnumber of tips to keep: "+str(len(tips_primary)))
 			print ("\tnumber of tips to delete: "+str(len(tips_deletable)))
