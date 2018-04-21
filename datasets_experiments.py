@@ -101,10 +101,10 @@ set_cons3g_i_hc_rc = {
     "numbers_of_reads" : [400,500,600],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
-	"k_base" : [25],
-	"k_part" : [13,15],
-	"number_of_parts" : [10],
-	"overlaps" : [5],
+	"k_base" : [19],
+	"k_part" : [13],
+	"number_of_parts" : [8,10],
+	"overlaps" : [3,5,7],
 	"name" : "cons_3g_rc_indel"}
 	
 set_cons3g_r_hc_large = {
