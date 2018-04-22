@@ -115,8 +115,8 @@ set_cons3g_i_hc_rc_small = {
 	"error_rates" : [15.0],
 	"k_base" : [19],
 	"k_part" : [11],
-	"number_of_parts" : [30,40],
-	"overlaps" : [5,10],
+	"number_of_parts" : [30,40,50],
+	"overlaps" : [3,5,10],
 	"name" : "cons_3g_rc_indel_small"}
 	
 set_cons3g_r_hc_large = {
