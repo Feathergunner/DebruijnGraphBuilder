@@ -155,12 +155,9 @@ set_cons3g_r_hc_detail = {
 set_cons3g_i_hc_detail = {
 	"kmer_lengths" : [13, 14,15,16,17,18,19],
 	"readlengths" : [1000],
-    "numbers_of_reads" : [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300],
+    "numbers_of_reads" : [400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
-	"k_base" : 25,
-	"number_of_parts" : [10,25,50],
-	"overlaps" : [5,10,20],
 	"name" : "cons_3g_indel_hc"}
 
 set_dbgbasic_sr_lc = {
