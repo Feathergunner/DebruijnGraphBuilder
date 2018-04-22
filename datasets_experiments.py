@@ -96,15 +96,15 @@ set_cons3g_i_hc_rc_t = {
 	"name" : "cons_3g_rc_indel_rangetest"}
 	
 set_cons3g_i_hc_rc = {
-	"kmer_lengths" : [17,19,21],
+	"kmer_lengths" : [17],#,19,21],
 	"readlengths" : [1000],
-    "numbers_of_reads" : [400,500,600],
+    "numbers_of_reads" : [300,400,500,600,1000],
 	"error_type" : "indel",
 	"error_rates" : [15.0],
 	"k_base" : [19],
 	"k_part" : [13],
 	"number_of_parts" : [8,10],
-	"overlaps" : [3,5,7],
+	"overlaps" : [3,5],#,7],
 	"name" : "cons_3g_rc_indel"}
 	
 set_cons3g_r_hc_large = {
