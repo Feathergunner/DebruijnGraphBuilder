@@ -1041,6 +1041,7 @@ class GraphData:
 		# 	is not empty and
 		#	has only one component and
 		# 	has no cycles, i.e. implies a partial order
+		# if the graph contains cycles, the parial order may be arbitrarily fuzzy
 		if verbose > 0:
 			print "Construct assembly ordering labels..."
 		
@@ -1788,7 +1789,7 @@ class GraphData:
 			self.reduce_to_single_largest_component()
 			self.remove_tips()			
 			
-	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.05, max_coverage_depth_to_remove = 50, verbose=False):
+	def remove_low_coverage_sequences_until_graph_decomposes(self, relative_component_size_bound=0.05, max_coverage_depth_to_remove = 200, verbose=False):
 		# remove sequences with low coverage depth until graph decomposes
 		print ("Remove low-coverage sequences until graph decomposes:")
 		
@@ -1830,14 +1831,8 @@ class GraphData:
 			self.remove_tips(verbose=verbose)
 			# simplify graph:
 			#self.contract_unique_overlaps()
-	
-			if len(small_cov_depth_sequences) < 10:
-				# if last iteration had very little effect, increase the cutoff bound by 2
-				min_cov_depth += 2
-			else:
-				# normal case: increase cutoff bound by 1
-				min_cov_depth += 1
-				
+			
+			min_cov_depth += 1	
 			# compute set of nodes to remove in next iteration, do not consider tips:
 			small_cov_depth_sequences = [id for id in relevant_sequences if self.sequences[id].is_relevant and self.sequences[id].get_total_weight() < min_cov_depth and id in self.hubs]
 			
