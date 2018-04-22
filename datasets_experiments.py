@@ -107,6 +107,18 @@ set_cons3g_i_hc_rc = {
 	"overlaps" : [3,5],#,7],
 	"name" : "cons_3g_rc_indel"}
 	
+set_cons3g_i_hc_rc_small = {
+	"kmer_lengths" : [17],#[13,15,17,19,21],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [200,300,400],
+	"error_type" : "indel",
+	"error_rates" : [15.0],
+	"k_base" : [19],
+	"k_part" : [11],
+	"number_of_parts" : [30,40],
+	"overlaps" : [5,10],
+	"name" : "cons_3g_rc_indel_small"}
+	
 set_cons3g_r_hc_large = {
 	"kmer_lengths" : [13,15,17,19,21,23,25,29,33,37,41],
 	"readlengths" : [1000],
@@ -215,5 +227,6 @@ allsettings = [ set_cons2g_lowcov,		# 1
 				set_cons3g_r_hc_detail, # 14
 				set_cons3g_i_hc_detail,	# 15
 				set_cons3g_i_hc_rc_t,	# 16
-				set_cons3g_i_hc_rc		# 17
+				set_cons3g_i_hc_rc,		# 17
+				set_cons3g_i_hc_rc_small # 18
 				]
