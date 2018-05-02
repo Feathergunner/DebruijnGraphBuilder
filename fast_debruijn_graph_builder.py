@@ -22,10 +22,6 @@ class Read:
 		self.length = len(sequence)
 		self.kmers = []
 		self.weight = weight
-		#self.paired_end_partner = -1
-		
-	#def add_paired_end_partner(self, partner_id):
-	#	self.paired_end_partner = partner_id
 		
 	def add_kmer(self, kmer_id):
 		self.kmers.append(kmer_id)
@@ -183,13 +179,6 @@ class GraphData:
 		self.min_sequence_p = -1
 		self.max_sequence_p = -1
 		self.max_path_length_p = 0
-
-		'''
-		self.min_label_n = 0
-		self.max_label_n = 0
-		self.min_sequence_n = -1
-		self.max_sequence_n = -1
-		'''
 		
 		self.removed_reads = []
 		
@@ -211,7 +200,6 @@ class GraphData:
 				self.contract_unique_overlaps(verbose=verbose)
 				
 				if remove_tips:
-					#self.remove_tips(remove_only_unique_tips=True, verbose=verbose)
 					self.remove_tips_simple()
 					self.remove_single_sequence_components(verbose=verbose)
 			
@@ -1642,8 +1630,6 @@ class GraphData:
 					max_comp_size = s
 				elif s > second_max_comp_size:
 					second_max_comp_size = s
-			#comp_sizes = [len(c) for c in components]
-			#max_comp_size = max([len(c) for c in components])
 		
 		if verbose:
 			print ("Number of Components after overlaps have been removed: "+str(len(components)))
@@ -1752,9 +1738,6 @@ class GraphData:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
 			self.remove_tips()#maximum_tip_weight = min_overlap_number)
-			# simplify graph:
-			#self.contract_unique_overlaps()
-			#self.remove_single_sequence_components()
 	
 			if len(overlaps_with_small_evidence) < 10:
 				# if last iteration had very little effect, increase the cutoff bound by 2
@@ -1829,8 +1812,6 @@ class GraphData:
 			self.reduce_to_single_largest_component()
 			# remove new tips:
 			self.remove_tips(verbose=verbose)
-			# simplify graph:
-			#self.contract_unique_overlaps()
 			
 			min_cov_depth += 1	
 			# compute set of nodes to remove in next iteration, do not consider tips:

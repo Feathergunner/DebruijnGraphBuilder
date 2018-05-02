@@ -331,6 +331,7 @@ def create_dataset(	algorithm,
 					print ("Error! Focus '"+focus+"' unknown!")
 			elif algorithm == "covref":
 				filename_suffix = "_4_singlepath"
+				'''
 				if len(overlaps) > 1 or len(number_of_parts) > 1:
 					for kb in k_base:
 						for kp in k_part:
@@ -345,9 +346,10 @@ def create_dataset(	algorithm,
 							for kp in k_part:
 								for kb in k_base:
 									outputname_suffix = "_ov"+str(ov)+"_np"+str(np)+"_kp"+str(kp)
-									csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, algorithm=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_part, k_base=kb, k_part=kp, num_parts=np, overlap=ov, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
-				
-				outputname_suffix = "_overview"
+									csp.construct_heatmaps_cons_rlvsk(datadir=outputdir, basename=algorithm, algorithm=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_values=k_lengths, k_base=kb, k_part=kp, num_parts=np, overlap=ov, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
+				'''
+				outputname_suffix = "_"+name+"_overview"
+				#outputname_suffix += "_all_nr1000_kb19"
 				csp.construct_heatmaps_cons_rlvsk_covref_all(datadir=outputdir, basename=algorithm, outputdir=outputdir+"/plots", filename_suffix=filename_suffix, outputname_suffix=outputname_suffix, number_of_reads=num_of_reads, k_base=k_base, k_part=k_part, k_merge=k_lengths, num_parts=number_of_parts, overlaps=overlaps, error_rate=error_rates[0], error_type=error_type, dna_length=dna_length, readlength=readlength, dimension_of_set=dimension_of_set)
 
 		else:
