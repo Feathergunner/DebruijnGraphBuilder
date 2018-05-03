@@ -1,13 +1,11 @@
 #!usr/bin/python
 # -*- coding: utf-8 -*-
 
-import random
 import re
 import sys
 
 import numpy as np
 import scipy.sparse
-from scipy.sparse import linalg as la
 import math
 import gc
 import Queue

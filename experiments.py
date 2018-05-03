@@ -362,7 +362,8 @@ def create_dataset_from_setting(algorithm,
 								threaded,
 								overwrite,
 								arclevel,
-								verbose	= False):
+								namesuffix	= "",
+								verbose		= False):
 	# algorithm: 		"simplecons", "locofere", "covref" or "noreconstruct"
 	# setting:			a dictionary from datasets_experiments.py
 	# dimension_of_set: int > 0
@@ -370,6 +371,7 @@ def create_dataset_from_setting(algorithm,
 	# threaded:			boolean
 	# overwrite:		"nothing", "results", "everything", or "addmissing"
 	# arclevel:			"all", "reults, or "none"
+	# namesuffix:		string
 	# verbose:			boolean
 	
 	numrreads = setting["numbers_of_reads"]
@@ -401,6 +403,9 @@ def create_dataset_from_setting(algorithm,
 	else:
 		name = "basic_debruijn_graph"+"_"+setting["name"]
 	
+	if not namesuffix == "":
+		name += "_"+namesuffix
+	
 	if len(error_rates) == 1:
 		focus = "rl_vs_k"
 	else:
@@ -428,6 +433,13 @@ def create_dataset_from_setting(algorithm,
 					arclevel=arclevel,
 					verbose=verbose)
 	
+def print_manpage():
+	with open("readme_experiments.txt") as manfile:
+		lines = manfile.readlines()
+		for line in lines:
+			line_without_extra_linebreak = re.split(r'\n', line)[:-1]
+			print (''.join(line_without_extra_linebreak))
+		
 def parse_input_start_experiments(params):
 	set_id = 0
 	dim = 1
@@ -444,6 +456,7 @@ def parse_input_start_experiments(params):
 	overwrite = "nothing"
 	arclevel = "results"
 	verbose = False
+	show_manpage = False
 	
 	for arg in params:
 		arg_data = re.split(r'=', arg)
@@ -470,11 +483,13 @@ def parse_input_start_experiments(params):
 				algo = "noreconstruct"
 			else:
 				print ("Error! Parameter '"+arg_data[1]+"' unknown!")
+				show_manpage = True
 		elif arg_data[0] == "arc":
 			if arg_data[1] in ["results", "all", "none"]:
 				arclevel = arg_data[1]
 			else:
 				print ("Error! Parameter '"+arg_data[1]+"' unknown!")
+				show_manpage = True
 			
 		elif arg_data[0] == "ucd":
 			ucd = True
@@ -493,7 +508,7 @@ def parse_input_start_experiments(params):
 				overwrite = "addmissing"
 			else:
 				print ("Error! Parameter '"+arg_data[0]+"' unkown!")
-				return
+				show_manpage = True
 			
 		elif arg_data[0] == "set":
 			set_id = int(arg_data[1])
@@ -503,9 +518,15 @@ def parse_input_start_experiments(params):
 			scope = "data"
 		elif arg_data[0] == "onlystat":
 			scope = "stat"
+		elif "help" in arg_data[0] or "man" in arg_data[0] or arg_data[0] == "-h":
+			show_manpage = True
 		else:
 			print ("Error! Parameter '"+arg_data[0]+"' unkown!")
-			return
+			show_manpage = True
+		
+	if len(params) == 0  or show_manpage:
+		print_manpage()
+		return
 	
 	if set_id == 0 and not test:
 		if k_lengths == []:
@@ -514,6 +535,8 @@ def parse_input_start_experiments(params):
 			num_reads = [2000]
 		if error_rate == []:
 			error_rate = [0.1]
+		if read_lengths == []:
+			read_lengths = [100]
 			
 		if name == "":
 			name = algo+"_experiment"
@@ -557,11 +580,11 @@ def parse_input_start_experiments(params):
 			testset = dse.testset_3g_locofere
 		elif algo == "covref":
 			testset = dse.testset_3g_covref
-		create_dataset_from_setting(algo, testset, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
+		create_dataset_from_setting(algo, testset, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel, namesuffix=name)
 		
 	elif set_id in range(1, len(dse.allsettings)+1):
 		setting = dse.allsettings[set_id-1]
-		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel)
+		create_dataset_from_setting(algo, setting, dimension_of_set=dim, scope=scope, threaded=threaded, overwrite=overwrite, arclevel=arclevel, namesuffix=name)
 		
 if __name__ == "__main__":
 	parse_input_start_experiments(sys.argv[1:])

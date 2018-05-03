@@ -106,6 +106,14 @@ set_cons2g_highcov = {
 
 # settings for 3rd gen reconstruction:
 # settings for low-coverage-feature-removal:
+set_cons3g_lcfr_r = {
+	"kmer_lengths" : [13, 14,15,16,17,18,19],
+	"readlengths" : [1000],
+    "numbers_of_reads" : [400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300],
+	"error_type" : "replace",
+	"error_rates" : [15.0],
+	"name" : "cons_3g_indel_lcfr"}
+	
 set_cons3g_lcfr_i = {
 	"kmer_lengths" : [13, 14,15,16,17,18,19],
 	"readlengths" : [1000],
@@ -160,8 +168,9 @@ allsettings = [ set_dbgbasic_sr_lc,		# 1
 				set_cons2g_verylowcov,	# 7
 				set_cons2g_lowcov,		# 8
 				set_cons2g_highcov,		# 9
-				set_cons3g_lcfr_i,		# 10
-				set_cons3g_cr_i_t,		# 11
-				set_cons3g_cr_i,		# 12
-				set_cons3g_cr_i_lc		# 13
+				set_cons3g_lcfr_r,		# 10
+				set_cons3g_lcfr_i,		# 11
+				set_cons3g_cr_i_t,		# 12
+				set_cons3g_cr_i,		# 13
+				set_cons3g_cr_i_lc		# 14
 				]

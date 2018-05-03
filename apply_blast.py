@@ -28,12 +28,7 @@ def compute_blast_results(data_dir_sub, dna_fasta_filename, new_data=False):
 
 if __name__ == "__main__":
 	data_dir_base = "Output"
-	#data_dir_sub = data_dir_base+"/rcr5"
-	#data_dir_sub = data_dir_base+"/example_thirdgen_reconstruct_long_v2"
-	#data_dir_sub = data_dir_base+"/examples_for_thesis/example_error_reduction_2"#/example_cons_recons_3rdgen"
-	#data_dir_sub = data_dir_base+"/example_simple_consensus_test0412"
-	data_dir_sub = data_dir_base+"/example_simple_consensus_exp_0413"
-	#data_dir_sub = data_dir_base+"/example_simplecons"
+	data_dir_sub = data_dir_base+"/example_simplecons"
 	
 	dna_fasta_filename = data_dir_sub+"/dna.fasta"
 	
